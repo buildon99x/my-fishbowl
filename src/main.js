@@ -1,10 +1,16 @@
-import './styles/index.css';
+﻿import './styles/index.css';
 import {
   bindFishInputEvents,
   createFishInputState,
   renderFishInputPanel,
 } from './features/fish-input/index.js';
 import {
+  bindFeedingEvents,
+  createFeedingState,
+  renderFeedingControls,
+  renderFoods,
+  tickFeeding,
+} from './features/feeding/index.js';
   normalizeAquariumFishMovement,
   shouldFlipFishForMovement,
   startFishMovement,
@@ -52,8 +58,9 @@ function normalizeAquarium(aquarium) {
   const fallback = createAquarium();
   const fishes = Array.isArray(aquarium?.fishes)
     ? aquarium.fishes.map((fish) => ({
-        hidden: false,
         ...fish,
+        hidden: Boolean(fish?.hidden),
+        hidden: false,
         vx: Number.isFinite(fish?.vx) ? fish.vx : 0,
         vy: Number.isFinite(fish?.vy) ? fish.vy : 0,
         speed: Number.isFinite(fish?.speed) ? fish.speed : 0,
@@ -73,6 +80,7 @@ function normalizeAquarium(aquarium) {
         scaleY: Number.isFinite(fish?.scaleY) ? fish.scaleY : 1,
         flipped: Boolean(fish?.flipped),
         flippedY: Boolean(fish?.flippedY),
+        hunger: Number.isFinite(fish?.hunger) ? fish.hunger : 0,
       }))
     : [];
 
@@ -264,7 +272,7 @@ function renderEmptyState(fishCount) {
     return '';
   }
 
-  return '<p class="aquarium-empty">아직 물고기가 없습니다.</p>';
+  return '<p class="aquarium-empty">?꾩쭅 臾쇨퀬湲곌? ?놁뒿?덈떎.</p>';
 }
 
 function formatRegisteredTime(value) {
@@ -284,13 +292,13 @@ function formatRegisteredTime(value) {
   }
 }
 
-function renderFishes(fishes, selectedFishId, editingFishId) {
+function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId) {
   return fishes
     .filter((fish) => !fish.hidden)
     .map(
       (fish) => `
         <img
-          class="fish-sprite ${fish.id === selectedFishId ? 'is-selected' : ''} ${fish.id === editingFishId ? 'is-editing' : ''}"
+          class="fish-sprite ${fish.id === selectedFishId ? 'is-selected' : ''} ${fish.id === editingFishId ? 'is-editing' : ''} ${fish.id === fishEatingId ? 'is-eating' : ''}"
           data-fish-sprite="${fish.id}"
           src="${fish.imageUrl}"
           alt="${escapeHtml(fish.name)}"
@@ -299,6 +307,44 @@ function renderFishes(fishes, selectedFishId, editingFishId) {
       `,
     )
     .join('');
+}
+
+function startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState) {
+  if (appState.feedingAnimationId) {
+    return;
+  }
+
+  const runFrame = (now) => {
+    const result = tickFeeding(feedingState, aquarium.fishes, now);
+    const fishChanged = result.fishes !== aquarium.fishes;
+
+    aquarium.fishes = result.fishes;
+
+    if (fishChanged || result.didEat) {
+      aquarium.updatedAt = new Date().toISOString();
+      saveAquarium(aquarium);
+    }
+
+    if (result.didChange) {
+      renderApp(root, aquarium, fishInputState, feedingState, appState);
+    }
+
+    if (feedingState.foods.length > 0) {
+      appState.feedingAnimationId = window.requestAnimationFrame(runFrame);
+      return;
+    }
+
+    appState.feedingAnimationId = null;
+
+    if (feedingState.fishEating) {
+      window.setTimeout(() => {
+        feedingState.fishEating = null;
+        renderApp(root, aquarium, fishInputState, feedingState, appState);
+      }, 260);
+    }
+  };
+
+  appState.feedingAnimationId = window.requestAnimationFrame(runFrame);
 }
 
 function renderFishEditor(fish) {
@@ -422,7 +468,55 @@ function renderFishList(fishes, selectedFishId, editingFishId) {
   `;
 }
 
+function renderAquariumStatus(aquarium, appState) {
+  const bodyId = 'fish-list-panel-body';
+
+  return `
+    <aside class="aquarium-status ${appState.isFishListCollapsed ? 'is-collapsed' : ''}" aria-labelledby="aquarium-title">
+      <button
+        class="aquarium-status-toggle"
+        type="button"
+        data-toggle-fish-list
+        aria-expanded="${!appState.isFishListCollapsed}"
+        aria-controls="${bodyId}"
+      >
+        <span class="aquarium-status-toggle-copy">
+          <span id="aquarium-title">물고기 목록</span>
+          <span>${aquarium.fishes.length}마리</span>
+        </span>
+        <span class="aquarium-status-toggle-icon" aria-hidden="true">
+          <span>${appState.isFishListCollapsed ? '+' : '-'}</span>
+          <span>${appState.isFishListCollapsed ? '펼치기' : '접기'}</span>
+        </span>
+      </button>
+
+      <div class="aquarium-status-body" id="${bodyId}" ${appState.isFishListCollapsed ? 'hidden' : ''}>
+        <dl class="status-list">
+          <div>
+            <dt>청결도</dt>
+            <dd>${aquarium.cleanliness}%</dd>
+          </div>
+          <div>
+            <dt>물고기 수</dt>
+            <dd>${aquarium.fishes.length}</dd>
+          </div>
+          <div>
+            <dt>이끼 단계</dt>
+            <dd>${aquarium.algaeLevel}</dd>
+          </div>
+        </dl>
+        ${renderFishList(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
+      </div>
+    </aside>
+  `;
+}
+
 function bindAquariumControls(root, aquarium, appState, render) {
+  root.querySelector('[data-toggle-fish-list]')?.addEventListener('click', () => {
+    appState.isFishListCollapsed = !appState.isFishListCollapsed;
+    render();
+  });
+
   root.querySelectorAll('[data-select-fish]').forEach((button) => {
     button.addEventListener('click', () => {
       appState.selectedFishId = button.dataset.selectFish;
@@ -636,7 +730,7 @@ function bindAquariumControls(root, aquarium, appState, render) {
   });
 }
 
-function renderApp(root, aquarium, fishInputState, appState) {
+function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   appState.movementController?.stop();
 
   root.innerHTML = `
@@ -644,6 +738,7 @@ function renderApp(root, aquarium, fishInputState, appState) {
       <header class="page-header">
         <p class="eyebrow">My Fishbowl</p>
         <h1>${aquarium.name}</h1>
+        ${renderFeedingControls(feedingState)}
       </header>
 
       <section class="aquarium-layout" aria-labelledby="aquarium-title">
@@ -657,30 +752,16 @@ function renderApp(root, aquarium, fishInputState, appState) {
             <div class="swim-boundary" aria-hidden="true"></div>
             ${renderDecoration()}
             <div class="fish-layer" data-fish-layer>
-              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
+              <div class="food-layer" aria-hidden="true">
+                ${renderFoods(feedingState.foods)}
+              </div>
+              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.editingFishId, feedingState.fishEating)}
             </div>
             ${renderEmptyState(aquarium.fishes.length)}
           </div>
         </div>
 
-        <aside class="aquarium-status" aria-labelledby="aquarium-title">
-          <h2 id="aquarium-title">물고기 목록</h2>
-          <dl class="status-list">
-            <div>
-              <dt>청결도</dt>
-              <dd>${aquarium.cleanliness}%</dd>
-            </div>
-            <div>
-              <dt>물고기 수</dt>
-              <dd>${aquarium.fishes.length}</dd>
-            </div>
-            <div>
-              <dt>이끼 단계</dt>
-              <dd>${aquarium.algaeLevel}</dd>
-            </div>
-          </dl>
-          ${renderFishList(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
-        </aside>
+        ${renderAquariumStatus(aquarium, appState)}
       </section>
 
       ${renderFishInputPanel(fishInputState)}
@@ -690,7 +771,7 @@ function renderApp(root, aquarium, fishInputState, appState) {
   bindFishInputEvents(
     root,
     fishInputState,
-    () => renderApp(root, aquarium, fishInputState, appState),
+    () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     {
       onRegister: (draft) => {
         const fish = addFishToAquarium(aquarium, draft);
@@ -699,6 +780,10 @@ function renderApp(root, aquarium, fishInputState, appState) {
       },
     },
   );
+  bindAquariumControls(root, aquarium, appState, () => renderApp(root, aquarium, fishInputState, feedingState, appState));
+  bindFeedingEvents(root, feedingState, {
+    render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+    startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
   bindAquariumControls(root, aquarium, appState, () => renderApp(root, aquarium, fishInputState, appState));
   appState.movementController = startFishMovement(root, aquarium, {
     getPausedFishIds: () => new Set(appState.editingFishId ? [appState.editingFishId] : []),
@@ -710,15 +795,19 @@ function initApp() {
   const app = document.querySelector(SELECTORS.app);
   const aquarium = loadAquarium();
   const fishInputState = createFishInputState();
+  const feedingState = createFeedingState();
   const appState = {
     selectedFishId: null,
     editingFishId: null,
+    feedingAnimationId: null,
+    isFishListCollapsed: false,
     movementController: null,
   };
 
   normalizeAquariumFishMovement(aquarium, performance.now());
   saveAquarium(aquarium);
-  renderApp(app, aquarium, fishInputState, appState);
+  renderApp(app, aquarium, fishInputState, feedingState, appState);
 }
 
 initApp();
+
