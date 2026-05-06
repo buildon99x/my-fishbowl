@@ -44,7 +44,7 @@
 | S-011 | 어항 거품 효과 | done | done | not-tested | `docs/spec/S-011-aquarium-bubble-effects.md` |
 | S-011 | 물고기 목록 스크롤 위치 보존 | ready | done | tested | `docs/spec/S-011-fish-list-scroll-preservation.md` |
 | S-013 | 속성 패널(prop-panel) 분리 및 신설 | draft | not-started | not-tested | `docs/spec/S-013-prop-panel.md` |
-| S-016 | Dev harness improve | draft | not-started | not-tested | `docs/spec/S-016-dev-harness_improve.md` |
+| S-016 | Dev harness improve | done | done | tested | `docs/spec/S-016-dev-harness_improve.md` |
 
 ## 상태 값
 
@@ -79,3 +79,4 @@
 | S-008 | 보이는 이끼 픽셀 기준 청소 진행률, 완료 처리, Canvas 즉시 비우기 구현 | `npm test`, `npm run build` 통과 |
 | S-009 | 물고기 이동 상태와 방향 전환 보정 구현 | `npm test`, `npm run build` 통과 |
 | S-011 | 물고기 목록 리렌더링 시 스크롤 위치 보존 구현 | `npm test`, `npm run build` 통과 |
+| S-016 | 스펙 명령 패턴/체크리스트/코드 수정 위치 맵을 `docs/spec-command-patterns.md`로 분리, `Claude.md` 라우터화, `docs/learn/_template.md` 추가 | `npm run build` 통과 |
