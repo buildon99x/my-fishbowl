@@ -46,6 +46,7 @@
 | S-013 | 속성 패널(prop-panel) 분리 및 신설 | done | done | tested | `docs/spec/S-013-prop-panel.md` |
 | S-016 | Dev harness improve | draft | not-started | not-tested | `docs/spec/S-016-dev-harness_improve.md` |
 | S-017 | Main and components structure | draft | not-started | not-tested | `docs/spec/S-017-main-components-structure.md` |
+| S-018 | ARCHITECTURE.md / SPEC.md 동기화 | draft | not-started | not-tested | `docs/spec/S-018-docs-sync.md` |
 
 ## 상태 값
 
