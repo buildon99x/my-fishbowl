@@ -1,27 +1,44 @@
 import { describe, expect, it } from 'vitest';
-import { calcAlgaeLevel, calcCleanliness } from './state.js';
+import {
+  ALGAE_MAX_LEVEL,
+  calcAlgaeLevel,
+  calcCleanliness,
+  calcLastCleanedAtForAlgaeLevel,
+  getAlgaeStateName,
+} from './state.js';
 
+const MINUTE = 60 * 1000;
 const HOUR = 60 * 60 * 1000;
 
 describe('calcAlgaeLevel', () => {
-  it('returns 0 when elapsed time is under 12 hours', () => {
+  it('returns 0 when elapsed time is under 30 minutes', () => {
     const now = Date.now();
-    expect(calcAlgaeLevel(new Date(now - 11 * HOUR).toISOString(), now)).toBe(0);
+    expect(calcAlgaeLevel(new Date(now - 29 * MINUTE).toISOString(), now)).toBe(0);
   });
 
-  it('returns 1 when elapsed time is between 12 and 24 hours', () => {
+  it('returns 1 exactly at the 30-minute boundary', () => {
     const now = Date.now();
-    expect(calcAlgaeLevel(new Date(now - 13 * HOUR).toISOString(), now)).toBe(1);
+    expect(calcAlgaeLevel(new Date(now - 30 * MINUTE).toISOString(), now)).toBe(1);
   });
 
-  it('returns 2 when elapsed time is between 24 and 48 hours', () => {
+  it('increments one level every 30 minutes', () => {
     const now = Date.now();
-    expect(calcAlgaeLevel(new Date(now - 36 * HOUR).toISOString(), now)).toBe(2);
+    expect(calcAlgaeLevel(new Date(now - 90 * MINUTE).toISOString(), now)).toBe(3);
   });
 
-  it('returns 3 when elapsed time exceeds 48 hours', () => {
+  it('returns 95 just before the 48-hour maximum', () => {
     const now = Date.now();
-    expect(calcAlgaeLevel(new Date(now - 49 * HOUR).toISOString(), now)).toBe(3);
+    expect(calcAlgaeLevel(new Date(now - 48 * HOUR + 1).toISOString(), now)).toBe(95);
+  });
+
+  it('returns the maximum level at 48 hours', () => {
+    const now = Date.now();
+    expect(calcAlgaeLevel(new Date(now - 48 * HOUR).toISOString(), now)).toBe(ALGAE_MAX_LEVEL);
+  });
+
+  it('does not exceed the maximum level after 48 hours', () => {
+    const now = Date.now();
+    expect(calcAlgaeLevel(new Date(now - 72 * HOUR).toISOString(), now)).toBe(ALGAE_MAX_LEVEL);
   });
 
   it('returns 0 when lastCleanedAt is null', () => {
@@ -37,14 +54,14 @@ describe('calcAlgaeLevel', () => {
     expect(calcAlgaeLevel(new Date(now + 1 * HOUR).toISOString(), now)).toBe(0);
   });
 
-  it('returns 0 exactly at the 12-hour boundary', () => {
+  it('supports custom growth settings', () => {
     const now = Date.now();
-    expect(calcAlgaeLevel(new Date(now - 12 * HOUR + 1).toISOString(), now)).toBe(0);
-  });
-
-  it('returns 1 exactly at the 12-hour boundary', () => {
-    const now = Date.now();
-    expect(calcAlgaeLevel(new Date(now - 12 * HOUR).toISOString(), now)).toBe(1);
+    expect(
+      calcAlgaeLevel(new Date(now - 2 * HOUR).toISOString(), now, {
+        intervalMinutes: 15,
+        maxHours: 1,
+      }),
+    ).toBe(4);
   });
 });
 
@@ -53,15 +70,40 @@ describe('calcCleanliness', () => {
     expect(calcCleanliness(0)).toBe(100);
   });
 
-  it('maps algaeLevel 1 to 70', () => {
-    expect(calcCleanliness(1)).toBe(70);
+  it('decreases gradually as algae level rises', () => {
+    expect(calcCleanliness(ALGAE_MAX_LEVEL / 2)).toBe(55);
   });
 
-  it('maps algaeLevel 2 to 40', () => {
-    expect(calcCleanliness(2)).toBe(40);
+  it('maps the maximum algae level to 10', () => {
+    expect(calcCleanliness(ALGAE_MAX_LEVEL)).toBe(10);
   });
 
-  it('maps algaeLevel 3 to 10', () => {
-    expect(calcCleanliness(3)).toBe(10);
+  it('clamps algae levels above the maximum', () => {
+    expect(calcCleanliness(ALGAE_MAX_LEVEL + 10)).toBe(10);
+  });
+});
+
+describe('getAlgaeStateName', () => {
+  it('labels clean and broad algae intensity bands', () => {
+    expect(getAlgaeStateName(0)).toBe('clean');
+    expect(getAlgaeStateName(1)).toBe('lightAlgae');
+    expect(getAlgaeStateName(ALGAE_MAX_LEVEL / 2)).toBe('mediumAlgae');
+    expect(getAlgaeStateName(ALGAE_MAX_LEVEL)).toBe('heavyAlgae');
+  });
+});
+
+describe('calcLastCleanedAtForAlgaeLevel', () => {
+  it('returns a timestamp that restores to the requested algae level', () => {
+    const now = Date.now();
+    const lastCleanedAt = calcLastCleanedAtForAlgaeLevel(37, now);
+
+    expect(calcAlgaeLevel(lastCleanedAt, now)).toBe(37);
+  });
+
+  it('clamps requested algae level before calculating timestamp', () => {
+    const now = Date.now();
+    const lastCleanedAt = calcLastCleanedAtForAlgaeLevel(ALGAE_MAX_LEVEL + 20, now);
+
+    expect(calcAlgaeLevel(lastCleanedAt, now)).toBe(ALGAE_MAX_LEVEL);
   });
 });

@@ -17,10 +17,23 @@ import {
   startFishMovement,
 } from './features/fish-movement/index.js';
 import {
-  ALGAE_STATE_NAMES,
+  ALGAE_INTERVAL_MINUTES,
+  ALGAE_MAX_LEVEL,
+  calcCleanliness,
+  calcLastCleanedAtForAlgaeLevel,
   drawAlgaeLayer,
+  getAlgaeStateName,
   restoreAlgaeState,
 } from './features/algae/index.js';
+
+const IS_DEV = import.meta.env.DEV;
+import {
+  COMPLETION_THRESHOLD,
+  applyBrush,
+  clearAlgaeCanvas,
+  createCleaningState,
+  snapshotCanvas,
+} from './features/cleaning/index.js';
 
 const SELECTORS = {
   app: '#app',
@@ -249,6 +262,82 @@ function getFishById(aquarium, fishId) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function renderGodModePanel(godModeState, aquarium) {
+  const level = aquarium.algaeLevel;
+  const levelName = getAlgaeStateName(level);
+
+  return `
+    <div class="god-mode-panel" data-god-mode-panel>
+      <div class="god-mode-header">
+        <span class="god-mode-title">⚡ God Mode</span>
+        <button class="god-mode-close" type="button" data-close-god-mode>✕</button>
+      </div>
+      <div class="god-mode-section">
+        <p class="god-mode-section-label">이끼 레벨 직접 설정</p>
+        <label class="god-mode-field">
+          <span>algaeLevel</span>
+          <input class="god-mode-input" type="number" min="0" max="${ALGAE_MAX_LEVEL}" step="1"
+            value="${level}" data-algae-level-input>
+          <span class="god-mode-unit">/ ${ALGAE_MAX_LEVEL}</span>
+        </label>
+      </div>
+      <div class="god-mode-status">
+        algaeLevel: <strong>${level}</strong> / ${ALGAE_MAX_LEVEL} (${levelName})
+        &nbsp;·&nbsp;
+        cleanliness: <strong>${aquarium.cleanliness}</strong>
+      </div>
+    </div>
+  `;
+}
+
+function renderCleanButton(aquarium, cleaningState) {
+  if (cleaningState.cleaningMode) {
+    return `
+      <button type="button" class="button button-secondary clean-cancel-button" data-cancel-cleaning>
+        청소 취소
+      </button>
+    `;
+  }
+  const disabled = aquarium.algaeLevel === 0;
+  return `
+    <button
+      type="button"
+      class="button button-secondary clean-button"
+      data-clean-button
+      ${disabled ? 'disabled title="이미 깨끗해요"' : ''}
+    >
+      청소하기
+    </button>
+  `;
+}
+
+function renderCleaningProgressBar(cleaningState) {
+  const pct = Math.round(cleaningState.cleaningProgress * 100);
+  return `
+    <div
+      class="cleaning-progress-bar"
+      data-cleaning-progress-bar
+      role="progressbar"
+      aria-label="청소 진행률"
+      aria-valuenow="${pct}"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      <div class="cleaning-progress-fill" data-cleaning-progress-fill style="width:${pct}%"></div>
+      <span class="cleaning-progress-label" data-cleaning-progress-label>${pct}%</span>
+    </div>
+  `;
+}
+
+function renderCleaningOverlay(cleaningState) {
+  return `
+    <div class="cleaning-overlay" data-cleaning-overlay aria-hidden="true">
+      <div class="cleaning-cursor" data-cleaning-cursor></div>
+      ${cleaningState.cleaned ? '<div class="cleaning-complete-message" data-cleaning-complete>✨ 청소 완료!</div>' : ''}
+    </div>
+  `;
 }
 
 function renderDecoration() {
@@ -493,7 +582,7 @@ function renderFishList(fishes, selectedFishId, editingFishId) {
   }
 
   return `
-    <div class="fish-list" role="list">
+    <div class="fish-list" role="list" data-fish-list>
       ${fishes
         .map(
           (fish) => `
@@ -521,6 +610,20 @@ function renderFishList(fishes, selectedFishId, editingFishId) {
         .join('')}
     </div>
   `;
+}
+
+function captureFishListScroll(root, appState) {
+  const fishList = root.querySelector('[data-fish-list]');
+  if (!fishList) return;
+
+  appState.fishListScrollTop = fishList.scrollTop;
+}
+
+function restoreFishListScroll(root, appState) {
+  const fishList = root.querySelector('[data-fish-list]');
+  if (!fishList) return;
+
+  fishList.scrollTop = appState.fishListScrollTop ?? 0;
 }
 
 function renderAquariumStatus(aquarium, appState) {
@@ -557,7 +660,7 @@ function renderAquariumStatus(aquarium, appState) {
           </div>
           <div>
             <dt>이끼 단계</dt>
-            <dd>${aquarium.algaeLevel} · ${ALGAE_STATE_NAMES[aquarium.algaeLevel] ?? 'clean'}</dd>
+            <dd>${aquarium.algaeLevel} / ${ALGAE_MAX_LEVEL} · ${getAlgaeStateName(aquarium.algaeLevel)}</dd>
           </div>
         </dl>
         ${renderFishList(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
@@ -786,7 +889,10 @@ function bindAquariumControls(root, aquarium, appState, render) {
 }
 
 function renderApp(root, aquarium, fishInputState, feedingState, appState) {
+  captureFishListScroll(root, appState);
   appState.movementController?.stop();
+
+  const { cleaningState } = appState;
 
   root.innerHTML = `
     <main class="fishbowl-page">
@@ -794,15 +900,18 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         <p class="eyebrow">My Fishbowl</p>
         <h1>${aquarium.name}</h1>
         ${renderFeedingControls(feedingState)}
+        ${renderCleanButton(aquarium, cleaningState)}
+        ${IS_DEV ? '<button type="button" class="button button-secondary god-mode-button" data-toggle-god-mode>God Mode</button>' : ''}
       </header>
 
       <section class="aquarium-layout" aria-labelledby="aquarium-title">
         <div class="aquarium-shell">
           <div
-            class="aquarium-bowl"
+            class="aquarium-bowl ${cleaningState.cleaningMode ? 'is-cleaning' : ''}"
             data-shape="${aquarium.bounds.shape}"
             style="--bowl-width: ${aquarium.bounds.width}px; --bowl-height: ${aquarium.bounds.height}px;"
           >
+            ${cleaningState.cleaningMode ? renderCleaningProgressBar(cleaningState) : ''}
             <div class="water-surface" aria-hidden="true"></div>
             <div class="swim-boundary" aria-hidden="true"></div>
             ${renderDecoration()}
@@ -814,6 +923,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
               ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.editingFishId, feedingState.fishEating)}
             </div>
             ${renderEmptyState(aquarium.fishes.length)}
+            ${cleaningState.cleaningMode ? renderCleaningOverlay(cleaningState) : ''}
           </div>
         </div>
 
@@ -821,12 +931,17 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       </section>
 
       ${renderFishInputPanel(fishInputState)}
+      ${IS_DEV && appState.godModeState?.visible ? renderGodModePanel(appState.godModeState, aquarium) : ''}
     </main>
   `;
+  restoreFishListScroll(root, appState);
 
   const algaeCanvas = root.querySelector('[data-algae-canvas]');
   if (algaeCanvas) {
-    drawAlgaeLayer(algaeCanvas, aquarium.algaeLevel);
+    drawAlgaeLayer(algaeCanvas, aquarium.algaeLevel, aquarium.lastCleanedAt);
+    if (cleaningState.cleaningMode) {
+      snapshotCanvas(algaeCanvas, cleaningState);
+    }
   }
 
   bindFishInputEvents(
@@ -846,10 +961,197 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
   });
+  bindCleaningEvents(root, aquarium, appState, () =>
+    renderApp(root, aquarium, fishInputState, feedingState, appState),
+  );
+  if (IS_DEV) {
+    bindGodModeEvents(root, aquarium, appState, () =>
+      renderApp(root, aquarium, fishInputState, feedingState, appState),
+    );
+  }
   appState.movementController = startFishMovement(root, aquarium, {
     getPausedFishIds: () => new Set(appState.editingFishId ? [appState.editingFishId] : []),
     onSave: () => saveAquarium(aquarium),
   });
+}
+
+function addTouchRipple(overlay, clientX, clientY) {
+  const rect = overlay.getBoundingClientRect();
+  const ripple = document.createElement('div');
+  ripple.className = 'cleaning-touch-ripple';
+  ripple.style.left = `${clientX - rect.left}px`;
+  ripple.style.top = `${clientY - rect.top}px`;
+  overlay.appendChild(ripple);
+  ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+}
+
+function bindCleaningEvents(root, aquarium, appState, render) {
+  const { cleaningState } = appState;
+
+  root.querySelector('[data-clean-button]')?.addEventListener('click', () => {
+    if (aquarium.algaeLevel === 0) return;
+    cleaningState.cleaningMode = true;
+    cleaningState.cleaning = false;
+    cleaningState.cleaned = false;
+    cleaningState.cleaningProgress = 0;
+    cleaningState.snapshotData = null;
+    cleaningState.initialAlphaSum = 0;
+    cleaningState.initialAlgaePixels = 0;
+    render();
+  });
+
+  root.querySelector('[data-cancel-cleaning]')?.addEventListener('click', () => {
+    exitCleaningMode(cleaningState);
+    render();
+  });
+
+  const overlay = root.querySelector('[data-cleaning-overlay]');
+  if (!overlay) return;
+
+  const algaeCanvas = root.querySelector('[data-algae-canvas]');
+  const cursor = root.querySelector('[data-cleaning-cursor]');
+  const progressFill = root.querySelector('[data-cleaning-progress-fill]');
+  const progressLabel = root.querySelector('[data-cleaning-progress-label]');
+  const progressBar = root.querySelector('[data-cleaning-progress-bar]');
+
+  function updateProgressUI() {
+    const pct = Math.round(cleaningState.cleaningProgress * 100);
+    if (progressFill) progressFill.style.width = `${pct}%`;
+    if (progressLabel) progressLabel.textContent = `${pct}%`;
+    if (progressBar) progressBar.setAttribute('aria-valuenow', String(pct));
+  }
+
+  function onBrush(clientX, clientY) {
+    const progress = applyBrush(algaeCanvas, clientX, clientY, cleaningState);
+    updateProgressUI();
+
+    if (progress >= COMPLETION_THRESHOLD && !cleaningState.cleaned) {
+      cleaningState.cleaned = true;
+      cleaningState.cleaningProgress = 1;
+      clearAlgaeCanvas(algaeCanvas);
+      updateProgressUI();
+      aquarium.cleanliness = 100;
+      aquarium.algaeLevel = 0;
+      aquarium.lastCleanedAt = new Date().toISOString();
+      aquarium.updatedAt = new Date().toISOString();
+      saveAquarium(aquarium);
+
+      const msg = document.createElement('div');
+      msg.className = 'cleaning-complete-message';
+      msg.dataset.cleaningComplete = '';
+      msg.textContent = '✨ 청소 완료!';
+      overlay.appendChild(msg);
+
+      cleaningState.completionTimer = window.setTimeout(() => {
+        exitCleaningMode(cleaningState);
+        render();
+      }, 1500);
+    }
+  }
+
+  function moveCursor(clientX, clientY) {
+    if (!cursor) return;
+    const rect = overlay.getBoundingClientRect();
+    cursor.style.left = `${clientX - rect.left}px`;
+    cursor.style.top = `${clientY - rect.top}px`;
+    cursor.style.display = 'block';
+  }
+
+  overlay.addEventListener('mouseenter', (e) => moveCursor(e.clientX, e.clientY));
+
+  overlay.addEventListener('mousemove', (e) => {
+    moveCursor(e.clientX, e.clientY);
+    if (cleaningState.cleaning) onBrush(e.clientX, e.clientY);
+  });
+
+  overlay.addEventListener('mouseleave', () => {
+    if (cursor) cursor.style.display = 'none';
+    cleaningState.cleaning = false;
+  });
+
+  overlay.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    cleaningState.cleaning = true;
+    onBrush(e.clientX, e.clientY);
+  });
+
+  overlay.addEventListener('mouseup', () => {
+    cleaningState.cleaning = false;
+  });
+
+  overlay.addEventListener(
+    'touchstart',
+    (e) => {
+      e.preventDefault();
+      cleaningState.cleaning = true;
+      const touch = e.touches[0];
+      onBrush(touch.clientX, touch.clientY);
+      addTouchRipple(overlay, touch.clientX, touch.clientY);
+    },
+    { passive: false },
+  );
+
+  overlay.addEventListener(
+    'touchmove',
+    (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      onBrush(touch.clientX, touch.clientY);
+      addTouchRipple(overlay, touch.clientX, touch.clientY);
+    },
+    { passive: false },
+  );
+
+  overlay.addEventListener('touchend', () => {
+    cleaningState.cleaning = false;
+  });
+
+  overlay.addEventListener('touchcancel', () => {
+    cleaningState.cleaning = false;
+  });
+}
+
+function bindGodModeEvents(root, aquarium, appState, render) {
+  root.querySelector('[data-toggle-god-mode]')?.addEventListener('click', () => {
+    appState.godModeState.visible = !appState.godModeState.visible;
+    render();
+  });
+
+  const panel = root.querySelector('[data-god-mode-panel]');
+  if (!panel) return;
+
+  panel.querySelector('[data-close-god-mode]')?.addEventListener('click', () => {
+    appState.godModeState.visible = false;
+    render();
+  });
+
+  panel.querySelector('[data-algae-level-input]')?.addEventListener('change', (event) => {
+    const value = parseInt(event.target.value, 10);
+    if (!Number.isFinite(value)) return;
+
+    const level = clamp(value, 0, ALGAE_MAX_LEVEL);
+    const now = Date.now();
+    aquarium.algaeLevel = level;
+    aquarium.cleanliness = calcCleanliness(level);
+    aquarium.lastCleanedAt = calcLastCleanedAtForAlgaeLevel(level, now, ALGAE_INTERVAL_MINUTES);
+    aquarium.updatedAt = new Date(now).toISOString();
+    saveAquarium(aquarium);
+    render();
+  });
+}
+
+function exitCleaningMode(cleaningState) {
+  if (cleaningState.completionTimer) {
+    window.clearTimeout(cleaningState.completionTimer);
+    cleaningState.completionTimer = null;
+  }
+  cleaningState.cleaningMode = false;
+  cleaningState.cleaning = false;
+  cleaningState.cleaned = false;
+  cleaningState.cleaningProgress = 0;
+  cleaningState.snapshotData = null;
+  cleaningState.initialAlphaSum = 0;
+  cleaningState.initialAlgaePixels = 0;
 }
 
 function initApp() {
@@ -862,13 +1164,24 @@ function initApp() {
     editingFishId: null,
     feedingAnimationId: null,
     isFishListCollapsed: false,
+    fishListScrollTop: 0,
     movementController: null,
+    cleaningState: createCleaningState(),
+    godModeState: IS_DEV ? { visible: false } : null,
   };
 
   normalizeAquariumFishMovement(aquarium, performance.now());
   restoreAlgaeState(aquarium);
   saveAquarium(aquarium);
   renderApp(app, aquarium, fishInputState, feedingState, appState);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && appState.cleaningState.cleaningMode) {
+      exitCleaningMode(appState.cleaningState);
+      renderApp(app, aquarium, fishInputState, feedingState, appState);
+    }
+
+  });
 }
 
 initApp();

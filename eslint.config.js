@@ -20,6 +20,10 @@ export default [
         requestAnimationFrame: 'readonly',
         cancelAnimationFrame: 'readonly',
         crypto: 'readonly',
+        Path2D: 'readonly',
+        DOMMatrix: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
       },
     },
     rules: {
