@@ -168,6 +168,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   const toggleButton = root.querySelector('[data-toggle-fish-input]');
   const fileInput = root.querySelector('[data-fish-file]');
   const nameInput = root.querySelector('[data-fish-name]');
+  const movementSelect = root.querySelector('[data-fish-movement]');
   const registerButton = root.querySelector('[data-register-fish-image]');
 
   toggleButton?.addEventListener('click', () => {
@@ -181,6 +182,10 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     if (registerButton) {
       registerButton.disabled = !state.spriteDataUrl || state.status === 'invalid';
     }
+  });
+
+  movementSelect?.addEventListener('change', (event) => {
+    state.movementEnabled = event.target.value !== 'off';
   });
 
   fileInput?.addEventListener('change', async (event) => {

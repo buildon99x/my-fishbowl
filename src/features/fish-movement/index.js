@@ -1,4 +1,4 @@
-import { normalizeFishMovement, stepFishesMovement } from './state.js';
+import { normalizeFishMovement, shouldFlipFishForMovement, stepFishesMovement } from './state.js';
 
 const SAVE_INTERVAL_MS = 2000;
 
@@ -11,7 +11,7 @@ function applyFishMotion(root, fish) {
 
   sprite.style.setProperty('--fish-x', `${fish.x}%`);
   sprite.style.setProperty('--fish-y', `${fish.y}%`);
-  sprite.style.setProperty('--fish-flip', fish.flipped ? '-1' : '1');
+  sprite.style.setProperty('--fish-flip', shouldFlipFishForMovement(fish) ? '-1' : '1');
   sprite.dataset.movementStatus = fish.movementStatus ?? 'swimming';
 }
 
@@ -33,7 +33,7 @@ export function startFishMovement(root, aquarium, options = {}) {
     lastFrameMs = nowMs;
 
     aquarium.fishes.forEach((fish) => {
-      if (!fish.hidden && !pausedFishIds.has(fish.id)) {
+      if (!fish.hidden && fish.movementEnabled !== false && !pausedFishIds.has(fish.id)) {
         applyFishMotion(root, fish);
       }
     });
@@ -55,4 +55,4 @@ export function startFishMovement(root, aquarium, options = {}) {
   };
 }
 
-export { stepFishMovement, stepFishesMovement } from './state.js';
+export { shouldFlipFishForMovement, stepFishMovement, stepFishesMovement } from './state.js';

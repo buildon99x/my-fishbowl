@@ -10,6 +10,7 @@ export function createFishInputState() {
     status: draft?.spriteDataUrl ? 'preview' : 'idle',
     message: draft?.spriteDataUrl ? 'Saved fish image is ready.' : '',
     source: draft?.source ?? '',
+    movementEnabled: draft?.movementEnabled !== false,
     isExpanded: false,
   };
 }
@@ -31,6 +32,7 @@ export function saveFishDraft(state) {
     name: state.name.trim() || DEFAULT_FISH_NAME,
     spriteDataUrl: state.spriteDataUrl,
     source: state.source,
+    movementEnabled: state.movementEnabled !== false,
     createdAt: now,
     updatedAt: now,
   };

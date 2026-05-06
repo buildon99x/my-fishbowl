@@ -320,8 +320,19 @@
   font-weight: 600;
 }
 
-.fish-editor input {
+.fish-editor input,
+.fish-editor select {
   width: 100%;
+}
+
+.fish-editor select {
+  min-height: 32px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xxs) var(--space-xs);
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  font: inherit;
 }
 
 .fish-input-widget {
@@ -423,7 +434,8 @@
 }
 
 .text-input,
-.file-input {
+.file-input,
+.select-input {
   width: 100%;
   min-height: 44px;
   border: 1px solid var(--color-hairline);
@@ -436,7 +448,8 @@
 }
 
 .text-input:focus,
-.file-input:focus {
+.file-input:focus,
+.select-input:focus {
   outline: none;
   border-color: var(--color-ink);
   border-width: 2px;

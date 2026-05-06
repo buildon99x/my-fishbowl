@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { MOVEMENT_BOUNDS, normalizeFishMovement, stepFishMovement, stepFishesMovement } from './state.js';
+import {
+  MOVEMENT_BOUNDS,
+  normalizeFishMovement,
+  shouldFlipFishForMovement,
+  stepFishMovement,
+  stepFishesMovement,
+} from './state.js';
 
 describe('normalizeFishMovement', () => {
   it('adds swimming movement state to a fish without motion values', () => {
@@ -8,6 +14,8 @@ describe('normalizeFishMovement', () => {
     expect(fish.movementStatus).toBe('swimming');
     expect(fish.speed).toBeGreaterThan(0);
     expect(fish.vx).toBeGreaterThan(0);
+    expect(fish.headDirection).toBe('right');
+    expect(fish.movementEnabled).toBe(true);
   });
 });
 
@@ -35,7 +43,6 @@ describe('stepFishMovement', () => {
 
     expect(fish.x).toBe(MOVEMENT_BOUNDS.maxX);
     expect(fish.vx).toBeLessThan(0);
-    expect(fish.flipped).toBe(true);
     expect(fish.movementStatus).toBe('turning');
   });
 
@@ -52,8 +59,36 @@ describe('stepFishMovement', () => {
   });
 });
 
+describe('shouldFlipFishForMovement', () => {
+  it('faces right-headed fish toward the movement direction', () => {
+    expect(shouldFlipFishForMovement({ headDirection: 'right', vx: 4, flipped: false })).toBe(false);
+    expect(shouldFlipFishForMovement({ headDirection: 'right', vx: -4, flipped: false })).toBe(true);
+  });
+
+  it('faces left-headed fish toward the movement direction', () => {
+    expect(shouldFlipFishForMovement({ headDirection: 'left', vx: -4, flipped: false })).toBe(false);
+    expect(shouldFlipFishForMovement({ headDirection: 'left', vx: 4, flipped: false })).toBe(true);
+  });
+
+  it('combines movement direction with manual flip correction', () => {
+    expect(shouldFlipFishForMovement({ headDirection: 'right', vx: -4, flipped: true })).toBe(false);
+  });
+});
+
 describe('stepFishesMovement', () => {
   it('returns an empty list without throwing when there are no fish', () => {
     expect(stepFishesMovement([], 16, 16)).toEqual([]);
+  });
+
+  it('does not move disabled fish', () => {
+    const [fish] = stepFishesMovement(
+      [{ id: 'fish-1', x: 50, y: 50, vx: 4, vy: 2, speed: 4, movementEnabled: false }],
+      1000,
+      1000,
+      { random: () => 0.5, maxFrameMs: 1000 },
+    );
+
+    expect(fish.x).toBe(50);
+    expect(fish.y).toBe(50);
   });
 });

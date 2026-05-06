@@ -6,6 +6,7 @@ import {
 } from './features/fish-input/index.js';
 import {
   normalizeAquariumFishMovement,
+  shouldFlipFishForMovement,
   startFishMovement,
 } from './features/fish-movement/index.js';
 
@@ -60,6 +61,8 @@ function normalizeAquarium(aquarium) {
         turnUntilMs: Number.isFinite(fish?.turnUntilMs) ? fish.turnUntilMs : 0,
         nextTargetAtMs: Number.isFinite(fish?.nextTargetAtMs) ? fish.nextTargetAtMs : 0,
         bobPhase: Number.isFinite(fish?.bobPhase) ? fish.bobPhase : 0,
+        headDirection: fish?.headDirection === 'left' ? 'left' : 'right',
+        movementEnabled: fish?.movementEnabled !== false,
         size: Number.isFinite(fish?.size) ? fish.size : 120,
         rotation: Number.isFinite(fish?.rotation) ? fish.rotation : 0,
         scaleX: Number.isFinite(fish?.scaleX)
@@ -124,6 +127,8 @@ function createFishFromDraft(draft, index) {
     turnUntilMs: 0,
     nextTargetAtMs: 0,
     bobPhase: 0,
+    headDirection: 'right',
+    movementEnabled: draft.movementEnabled !== false,
     size: 120,
     rotation: 0,
     scaleX: 1,
@@ -194,7 +199,7 @@ function renderDecoration() {
           <path d="M180 68 C204 32 941 34 972 68 C984 83 979 154 949 177 C1065 279 1116 404 1091 523 C1057 685 878 769 583 769 C287 769 113 672 77 515 C50 398 96 278 213 177 C181 148 169 88 180 68 Z" />
         </clipPath>
         <clipPath id="water-shape">
-          <path d="M93 390 C126 268 224 243 352 320 C414 357 421 277 555 327 C666 368 626 216 798 300 C901 350 865 232 974 246 C1052 341 1068 494 1000 612 C913 763 684 766 500 744 C240 713 53 547 93 390 Z" />
+          <path d="M118 142 C238 118 341 164 455 142 C571 119 656 166 774 142 C856 126 916 141 972 158 C1066 260 1116 403 1091 523 C1057 685 878 769 583 769 C287 769 113 672 77 515 C50 397 71 244 118 142 Z" />
         </clipPath>
       </defs>
 
@@ -202,10 +207,10 @@ function renderDecoration() {
         <rect x="180" y="34" width="792" height="84" fill="#80caf0" />
         <ellipse cx="576" cy="70" rx="398" ry="52" fill="#9ccfed" />
         <path d="M180 68 C204 32 941 34 972 68 C984 83 979 154 949 177 C1065 279 1116 404 1091 523 C1057 685 878 769 583 769 C287 769 113 672 77 515 C50 398 96 278 213 177 C181 148 169 88 180 68 Z" fill="#b8dcf3" />
-        <path d="M93 390 C126 268 224 243 352 320 C414 357 421 277 555 327 C666 368 626 216 798 300 C901 350 865 232 974 246 C1052 341 1068 494 1000 612 C913 763 684 766 500 744 C240 713 53 547 93 390 Z" fill="#58bdd4" />
+        <path d="M118 142 C238 118 341 164 455 142 C571 119 656 166 774 142 C856 126 916 141 972 158 C1066 260 1116 403 1091 523 C1057 685 878 769 583 769 C287 769 113 672 77 515 C50 397 71 244 118 142 Z" fill="#58bdd4" />
         <g clip-path="url(#water-shape)">
-          <path d="M205 346 C258 247 257 583 544 691 C695 748 409 790 238 641 C105 526 128 435 205 346 Z" fill="#49aeca" opacity="0.42" />
-          <path d="M610 307 C727 259 785 368 890 303 C949 266 980 310 1005 407 C961 298 891 308 860 338 C792 403 721 299 610 307 Z" fill="#7bc7dc" opacity="0.55" />
+          <path d="M181 190 C267 127 369 211 476 178 C608 137 680 217 817 174 C894 151 943 173 1000 241 C942 158 856 167 779 198 C661 246 587 158 453 194 C334 227 265 157 181 190 Z" fill="#7bc7dc" opacity="0.58" />
+          <path d="M205 210 C258 112 257 583 544 691 C695 748 409 790 238 641 C105 526 128 299 205 210 Z" fill="#49aeca" opacity="0.42" />
         </g>
 
         <g class="reference-bubbles">
@@ -220,6 +225,9 @@ function renderDecoration() {
         <path d="M936 112 C970 113 980 116 970 139 C956 172 925 207 914 191 C907 181 927 129 936 112 Z" fill="#e6f5ff" opacity="0.85" />
         <path d="M935 224 C994 228 1072 340 1035 394 C1006 436 965 267 935 224 Z" fill="#e6f5ff" opacity="0.7" />
         <ellipse cx="1071" cy="458" rx="25" ry="36" fill="#e6f5ff" opacity="0.52" />
+        <path d="M180 68 C204 32 941 34 972 68 C984 83 979 154 949 177 C1065 279 1116 404 1091 523 C1057 685 878 769 583 769 C287 769 113 672 77 515 C50 398 96 278 213 177 C181 148 169 88 180 68 Z" fill="none" stroke="#e6f5ff" stroke-width="16" stroke-linejoin="round" opacity="0.78" />
+        <path d="M183 72 C226 39 923 42 969 72" fill="none" stroke="#f7fcff" stroke-width="9" stroke-linecap="round" opacity="0.86" />
+        <path d="M181 69 C205 33 941 35 971 69" fill="none" stroke="#498aa8" stroke-width="4" stroke-linecap="round" opacity="0.32" />
       </g>
     </svg>
   `;
@@ -260,7 +268,7 @@ function renderFishes(fishes, selectedFishId, editingFishId) {
           data-fish-sprite="${fish.id}"
           src="${fish.imageUrl}"
           alt="${escapeHtml(fish.name)}"
-          style="--fish-x: ${fish.x}%; --fish-y: ${fish.y}%; --fish-size: ${fish.size}px; --fish-scale-x: ${fish.scaleX}; --fish-scale-y: ${fish.scaleY}; --fish-rotation: ${fish.rotation}deg; --fish-flip: ${fish.flipped ? -1 : 1}; --fish-flip-y: ${fish.flippedY ? -1 : 1};"
+          style="--fish-x: ${fish.x}%; --fish-y: ${fish.y}%; --fish-size: ${fish.size}px; --fish-scale-x: ${fish.scaleX}; --fish-scale-y: ${fish.scaleY}; --fish-rotation: ${fish.rotation}deg; --fish-flip: ${shouldFlipFishForMovement(fish) ? -1 : 1}; --fish-flip-y: ${fish.flippedY ? -1 : 1};"
         >
       `,
     )
@@ -290,6 +298,20 @@ function renderFishEditor(fish) {
           초기화
         </button>
       </div>
+      <label>
+        <span>머리</span>
+        <select data-edit-fish-head-direction="${fish.id}">
+          <option value="right" ${fish.headDirection === 'left' ? '' : 'selected'}>오른쪽</option>
+          <option value="left" ${fish.headDirection === 'left' ? 'selected' : ''}>왼쪽</option>
+        </select>
+      </label>
+      <label>
+        <span>이동</span>
+        <select data-edit-fish-movement="${fish.id}">
+          <option value="on" ${fish.movementEnabled === false ? '' : 'selected'}>On</option>
+          <option value="off" ${fish.movementEnabled === false ? 'selected' : ''}>Off</option>
+        </select>
+      </label>
       <label>
         <span>크기</span>
         <input
@@ -451,6 +473,30 @@ function bindAquariumControls(root, aquarium, appState, render) {
       appState.selectedFishId = input.dataset.editFishScaleY;
       updateFishAppearance(aquarium, input.dataset.editFishScaleY, {
         scaleY: Number(input.value),
+      });
+      render();
+    });
+  });
+
+  root.querySelectorAll('[data-edit-fish-head-direction]').forEach((select) => {
+    select.addEventListener('change', () => {
+      const fishId = select.dataset.editFishHeadDirection;
+
+      appState.selectedFishId = fishId;
+      updateFishAppearance(aquarium, fishId, {
+        headDirection: select.value === 'left' ? 'left' : 'right',
+      });
+      render();
+    });
+  });
+
+  root.querySelectorAll('[data-edit-fish-movement]').forEach((select) => {
+    select.addEventListener('change', () => {
+      const fishId = select.dataset.editFishMovement;
+
+      appState.selectedFishId = fishId;
+      updateFishAppearance(aquarium, fishId, {
+        movementEnabled: select.value !== 'off',
       });
       render();
     });

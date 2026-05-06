@@ -13,6 +13,10 @@ const MIN_TARGET_INTERVAL_MS = 2600;
 const MAX_TARGET_INTERVAL_MS = 5600;
 const MAX_FRAME_MS = 80;
 
+export function normalizeHeadDirection(value) {
+  return value === 'left' ? 'left' : 'right';
+}
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
@@ -61,8 +65,17 @@ export function normalizeFishMovement(fish, index = 0, nowMs = 0, random = Math.
   return {
     ...fish,
     ...movement,
-    flipped: movement.vx < 0,
+    headDirection: normalizeHeadDirection(fish?.headDirection),
+    movementEnabled: fish?.movementEnabled !== false,
   };
+}
+
+export function shouldFlipFishForMovement(fish) {
+  const headDirection = normalizeHeadDirection(fish?.headDirection);
+  const movingLeft = Number.isFinite(fish?.vx) && fish.vx < 0;
+  const movementFlip = headDirection === 'right' ? movingLeft : !movingLeft;
+
+  return movementFlip !== Boolean(fish?.flipped);
 }
 
 export function stepFishMovement(fish, elapsedMs, nowMs, options = {}) {
@@ -114,7 +127,6 @@ export function stepFishMovement(fish, elapsedMs, nowMs, options = {}) {
     turnUntilMs,
     nextTargetAtMs,
     bobPhase,
-    flipped: vx < 0,
   };
 }
 
@@ -126,7 +138,7 @@ export function stepFishesMovement(fishes, elapsedMs, nowMs, options = {}) {
   const pausedFishIds = options.pausedFishIds ?? new Set();
 
   return fishes.map((fish, index) => {
-    if (fish.hidden || pausedFishIds.has(fish.id)) {
+    if (fish.hidden || fish.movementEnabled === false || pausedFishIds.has(fish.id)) {
       return fish;
     }
 
