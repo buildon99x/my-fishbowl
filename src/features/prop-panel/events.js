@@ -1,4 +1,9 @@
 import { DEFAULT_ALGAE_THRESHOLDS, restoreAlgaeState } from '../algae/index.js';
+import { savePropPanelPosition } from './state.js';
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
 
 function getFishByTarget(aquarium, target) {
   if (!target || target.type !== 'fish') return null;
@@ -167,5 +172,52 @@ export function bindCommonPanelEvents(root, appState, render) {
   root.querySelector('[data-close-prop-panel]')?.addEventListener('click', () => {
     appState.propPanel.editingTarget = null;
     render();
+  });
+
+  const panel = root.querySelector('.prop-panel');
+  if (panel) bindPropPanelDrag(panel, appState.propPanel);
+}
+
+function bindPropPanelDrag(panel, propPanelState) {
+  const header = panel.querySelector('.prop-panel-header');
+  if (!header) return;
+
+  header.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('[data-close-prop-panel]')) return;
+    e.preventDefault();
+
+    const rect = panel.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    panel.style.right = 'auto';
+    panel.style.left = `${rect.left}px`;
+    panel.style.top = `${rect.top}px`;
+    header.style.cursor = 'grabbing';
+    header.setPointerCapture(e.pointerId);
+
+    function onMove(moveEvent) {
+      const x = clamp(moveEvent.clientX - offsetX, 0, window.innerWidth - panel.offsetWidth);
+      const y = clamp(moveEvent.clientY - offsetY, 0, window.innerHeight - panel.offsetHeight);
+      panel.style.left = `${x}px`;
+      panel.style.top = `${y}px`;
+    }
+
+    function onUp() {
+      header.releasePointerCapture(e.pointerId);
+      header.removeEventListener('pointermove', onMove);
+      header.removeEventListener('pointerup', onUp);
+      header.style.cursor = '';
+
+      const pos = {
+        x: parseFloat(panel.style.left),
+        y: parseFloat(panel.style.top),
+      };
+      propPanelState.position = pos;
+      savePropPanelPosition(pos);
+    }
+
+    header.addEventListener('pointermove', onMove);
+    header.addEventListener('pointerup', onUp);
   });
 }

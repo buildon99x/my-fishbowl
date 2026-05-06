@@ -1001,6 +1001,12 @@
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-hairline);
   background: var(--color-surface-card);
+  cursor: grab;
+  user-select: none;
+}
+
+.prop-panel-header:active {
+  cursor: grabbing;
 }
 
 .prop-panel-identity {

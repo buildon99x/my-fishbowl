@@ -26,7 +26,12 @@ function findEntityByTarget(aquarium, target, propPanelState) {
   return aquarium.fishes.find((f) => f.id === target.id) ?? null;
 }
 
-function renderPanelShell(entity, target, typeBadge, contentHtml) {
+function positionStyle(pos) {
+  if (!pos) return '';
+  return ` style="left:${pos.x}px;top:${pos.y}px;right:auto;"`;
+}
+
+function renderPanelShell(entity, target, typeBadge, contentHtml, pos) {
   const isGodMode = import.meta.env.DEV && target.type === 'godmode';
   const thumbHtml = isGodMode
     ? '<span class="prop-panel-thumb-icon" aria-hidden="true">🛠️</span>'
@@ -35,7 +40,7 @@ function renderPanelShell(entity, target, typeBadge, contentHtml) {
   const badgeClass = isGodMode ? 'prop-panel-badge is-dev' : 'prop-panel-badge';
 
   return `
-    <div class="prop-panel" role="complementary" aria-label="속성 패널">
+    <div class="prop-panel" role="complementary" aria-label="속성 패널"${positionStyle(pos)}>
       <div class="prop-panel-header">
         <div class="prop-panel-identity">
           ${thumbHtml}
@@ -59,9 +64,9 @@ function renderPanelShell(entity, target, typeBadge, contentHtml) {
   `;
 }
 
-function renderUnsupportedProp(target) {
+function renderUnsupportedProp(target, pos) {
   return `
-    <div class="prop-panel" role="complementary" aria-label="속성 패널">
+    <div class="prop-panel" role="complementary" aria-label="속성 패널"${positionStyle(pos)}>
       <div class="prop-panel-header">
         <span class="prop-panel-name">알 수 없는 타입</span>
         <button
@@ -82,8 +87,9 @@ function renderUnsupportedProp(target) {
 export function renderPropPanel(target, aquarium, propPanelState) {
   if (!target) return '';
 
+  const pos = propPanelState?.position ?? null;
   const renderer = PROP_RENDERERS[target.type];
-  if (!renderer) return renderUnsupportedProp(target);
+  if (!renderer) return renderUnsupportedProp(target, pos);
 
   const entity = findEntityByTarget(aquarium, target, propPanelState);
   if (!entity) return '';
@@ -93,7 +99,7 @@ export function renderPropPanel(target, aquarium, propPanelState) {
     ? renderer(aquarium, entity)
     : renderer(entity);
 
-  return renderPanelShell(entity, target, typeBadge, contentHtml);
+  return renderPanelShell(entity, target, typeBadge, contentHtml, pos);
 }
 
 export function renderActionCluster({ feedingState, fishInputState, propPanelState }) {
