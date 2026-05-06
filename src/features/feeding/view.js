@@ -1,13 +1,5 @@
 import { FOOD_CONFIGS, FOOD_TYPES } from './foodConfig.js';
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
+import { escapeHtml } from '../../lib/utils.js';
 
 export function renderFeedingControls(state) {
   const paletteHtml = state.feedingMode

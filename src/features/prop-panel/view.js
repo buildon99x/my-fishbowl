@@ -1,14 +1,6 @@
 import { renderFishProps } from './fish-props.js';
 import { FOOD_CONFIGS, FOOD_TYPES } from '../feeding/foodConfig.js';
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
+import { escapeHtml } from '../../lib/utils.js';
 
 const PROP_RENDERERS = {
   fish: renderFishProps,

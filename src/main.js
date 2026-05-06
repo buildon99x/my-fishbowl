@@ -38,7 +38,7 @@ import {
   createCleaningState,
   snapshotCanvas,
 } from './features/cleaning/index.js';
-import { clamp } from './lib/utils.js';
+import { clamp, escapeHtml } from './lib/utils.js';
 
 const SELECTORS = {
   app: '#app',
@@ -52,15 +52,6 @@ const DEFAULT_BOUNDS = {
   height: 780,
   padding: 66,
 };
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
 
 function createAquarium() {
   const now = new Date().toISOString();

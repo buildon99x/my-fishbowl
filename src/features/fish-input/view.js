@@ -1,17 +1,10 @@
+import { escapeHtml } from '../../lib/utils.js';
+
 const STATUS_TEXT = {
   idle: 'Choose an image or draw a fish.',
   preview: 'Fish image preview is ready.',
   invalid: 'This file type cannot be registered.',
 };
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
 
 function positionStyle(pos) {
   if (!pos) return '';
