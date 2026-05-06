@@ -2,7 +2,6 @@ export const COMPLETION_THRESHOLD = 0.8;
 
 const BRUSH_RADIUS = 40;
 const SAMPLE_STEP = 4;
-const ALPHA_VISIBILITY_THRESHOLD = 32;
 
 export function createCleaningState() {
   return {
@@ -11,18 +10,18 @@ export function createCleaningState() {
     cleaned: false,
     cleaningProgress: 0,
     snapshotData: null,
-    initialOpaqueCount: 0,
+    initialAlphaSum: 0,
     completionTimer: null,
   };
 }
 
-function countOpaquePixels(imageData) {
+function sumAlpha(imageData) {
   const { data } = imageData;
-  let count = 0;
+  let sum = 0;
   for (let i = 3; i < data.length; i += 4 * SAMPLE_STEP) {
-    if (data[i] > ALPHA_VISIBILITY_THRESHOLD) count++;
+    sum += data[i];
   }
-  return count;
+  return sum;
 }
 
 export function snapshotCanvas(canvas, cleaningState) {
@@ -30,8 +29,8 @@ export function snapshotCanvas(canvas, cleaningState) {
   const ctx = canvas.getContext('2d');
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   cleaningState.snapshotData = imageData;
-  cleaningState.initialOpaqueCount = countOpaquePixels(imageData);
-  cleaningState.cleaningProgress = cleaningState.initialOpaqueCount === 0 ? 1 : 0;
+  cleaningState.initialAlphaSum = sumAlpha(imageData);
+  cleaningState.cleaningProgress = cleaningState.initialAlphaSum === 0 ? 1 : 0;
 }
 
 export function applyBrush(canvas, clientX, clientY, cleaningState) {
@@ -57,10 +56,10 @@ export function applyBrush(canvas, clientX, clientY, cleaningState) {
   ctx.fill();
   ctx.restore();
 
-  if (cleaningState.initialOpaqueCount > 0) {
+  if (cleaningState.initialAlphaSum > 0) {
     const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const remaining = countOpaquePixels(current);
-    cleaningState.cleaningProgress = Math.min(1, 1 - remaining / cleaningState.initialOpaqueCount);
+    const remaining = sumAlpha(current);
+    cleaningState.cleaningProgress = Math.min(1, 1 - remaining / cleaningState.initialAlphaSum);
   } else {
     cleaningState.cleaningProgress = 1;
   }

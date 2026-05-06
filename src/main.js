@@ -941,7 +941,7 @@ function bindCleaningEvents(root, aquarium, appState, render) {
     cleaningState.cleaned = false;
     cleaningState.cleaningProgress = 0;
     cleaningState.snapshotData = null;
-    cleaningState.initialOpaqueCount = 0;
+    cleaningState.initialAlphaSum = 0;
     render();
   });
 
@@ -1090,7 +1090,7 @@ function exitCleaningMode(cleaningState) {
   cleaningState.cleaned = false;
   cleaningState.cleaningProgress = 0;
   cleaningState.snapshotData = null;
-  cleaningState.initialOpaqueCount = 0;
+  cleaningState.initialAlphaSum = 0;
 }
 
 function initApp() {
