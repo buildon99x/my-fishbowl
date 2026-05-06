@@ -7,7 +7,7 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  filter: drop-shadow(0 28px 38px rgba(41, 89, 91, 0.12));
+  filter: drop-shadow(0 18px 28px rgba(10, 10, 10, 0.06));
 }
 
 .aquarium-bowl::before,
@@ -51,9 +51,9 @@
 
 .fish-sprite.is-selected {
   filter:
-    drop-shadow(0 0 0 #ffffff)
-    drop-shadow(0 0 10px rgba(255, 228, 84, 0.95))
-    drop-shadow(0 0 18px rgba(255, 176, 48, 0.8));
+    drop-shadow(0 0 0 var(--color-on-primary))
+    drop-shadow(0 0 10px color-mix(in srgb, var(--color-brand-ochre) 80%, transparent))
+    drop-shadow(0 0 18px color-mix(in srgb, var(--color-brand-peach) 70%, transparent));
 }
 
 .fish-sprite.is-editing {
@@ -142,37 +142,39 @@
   left: 50%;
   top: 57%;
   z-index: 5;
-  color: rgba(16, 79, 101, 0.58);
-  font-size: clamp(14px, 1.4vw, 18px);
-  font-weight: 700;
+  color: var(--color-muted-soft);
+  font-size: clamp(14px, 1.4vw, var(--text-title-md));
+  font-weight: 500;
   transform: translate(-50%, -50%);
 }
 
 .aquarium-status {
-  border: 1px solid rgba(48, 98, 96, 0.18);
-  border-radius: 8px;
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  background: color-mix(in srgb, var(--color-surface-card) 92%, transparent);
   backdrop-filter: blur(10px);
 }
 
 .aquarium-status h2 {
-  margin-bottom: 16px;
-  font-size: 18px;
+  margin-bottom: var(--space-md);
+  font-size: var(--text-title-md);
+  font-weight: 600;
+  color: var(--color-ink);
 }
 
 .status-list {
   display: grid;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .status-list div {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(48, 98, 96, 0.12);
+  gap: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-hairline);
 }
 
 .status-list div:last-child {
@@ -181,13 +183,15 @@
 }
 
 .status-list dt {
-  color: #416972;
-  font-size: 14px;
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
 }
 
 .status-list dd {
-  font-size: 18px;
-  font-weight: 800;
+  font-size: var(--text-title-md);
+  font-weight: 600;
+  color: var(--color-ink);
 }
 
 .fish-list {
@@ -200,35 +204,37 @@
 }
 
 .fish-list-empty {
-  margin-top: 14px;
-  color: #416972;
-  font-size: 13px;
-  font-weight: 700;
+  margin-top: var(--space-md);
+  color: var(--color-muted);
+  font-size: var(--text-caption);
+  font-weight: 500;
 }
 
 .fish-list-item {
   display: grid;
-  gap: 7px;
-  border: 1px solid rgba(48, 98, 96, 0.14);
-  border-radius: 8px;
-  padding: 7px;
-  background: rgba(255, 255, 255, 0.62);
+  gap: var(--space-xs);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  background: var(--color-canvas);
+  transition: border-color 0.15s ease;
 }
 
 .fish-list-item.is-selected {
-  border-color: rgba(219, 161, 38, 0.78);
-  box-shadow: 0 0 0 2px rgba(255, 214, 91, 0.36);
+  border-color: var(--color-ink);
+  border-width: 2px;
+  padding: calc(var(--space-sm) - 1px);
 }
 
 .fish-list-select {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-xs);
   width: 100%;
   border: 0;
   padding: 0;
-  color: #16323b;
+  color: var(--color-ink);
   text-align: left;
   background: transparent;
   cursor: pointer;
@@ -242,54 +248,64 @@
 
 .fish-list-name {
   overflow: hidden;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-ink);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .fish-list-time {
-  color: #416972;
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--color-muted);
+  font-size: var(--text-caption-uc);
+  font-weight: 500;
   white-space: nowrap;
 }
 
 .fish-list-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-xxs);
   justify-content: flex-end;
 }
 
 .fish-action-button {
-  min-height: 28px;
-  border: 1px solid rgba(48, 98, 96, 0.2);
-  border-radius: 8px;
-  padding: 4px 8px;
-  color: #245b64;
-  font-size: 12px;
-  font-weight: 800;
-  background: rgba(255, 255, 255, 0.72);
+  min-height: 32px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xxs) var(--space-sm);
+  color: var(--color-ink);
+  font-size: var(--text-caption-uc);
+  font-weight: 600;
+  background: var(--color-canvas);
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fish-action-button:hover {
+  background: var(--color-surface-card);
 }
 
 .fish-action-danger {
-  color: #9c2f2f;
-  border-color: rgba(156, 47, 47, 0.22);
+  color: var(--color-error);
+  border-color: var(--color-hairline);
+}
+
+.fish-action-danger:hover {
+  background: color-mix(in srgb, var(--color-error) 8%, var(--color-canvas));
 }
 
 .fish-editor {
   display: grid;
-  gap: 8px;
-  border-top: 1px solid rgba(48, 98, 96, 0.12);
-  padding-top: 8px;
+  gap: var(--space-xs);
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-sm);
 }
 
 .fish-editor-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-xxs);
   justify-content: flex-end;
 }
 
@@ -297,10 +313,10 @@
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
-  color: #416972;
-  font-size: 12px;
-  font-weight: 800;
+  gap: var(--space-xs);
+  color: var(--color-muted);
+  font-size: var(--text-caption-uc);
+  font-weight: 600;
 }
 
 .fish-editor input {
@@ -314,11 +330,10 @@
   z-index: 10;
   width: min(520px, calc(100vw - 32px));
   overflow: hidden;
-  border: 1px solid rgba(48, 98, 96, 0.18);
-  border-radius: 8px;
-  background: rgba(250, 255, 253, 0.96);
-  box-shadow: 0 18px 45px rgba(22, 50, 59, 0.2);
-  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-soft);
+  box-shadow: 0 12px 32px rgba(10, 10, 10, 0.06);
 }
 
 .fish-input-toggle {
@@ -326,10 +341,10 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  min-height: 62px;
+  min-height: 64px;
   border: 0;
-  padding: 12px 14px 12px 16px;
-  color: #16323b;
+  padding: var(--space-md) var(--space-lg);
+  color: var(--color-ink);
   text-align: left;
   background: transparent;
   cursor: pointer;
@@ -337,83 +352,94 @@
 
 .fish-input-toggle-copy {
   display: grid;
-  gap: 3px;
+  gap: var(--space-xxs);
   min-width: 0;
 }
 
 .fish-input-toggle-copy span:first-child {
-  font-size: 16px;
-  font-weight: 800;
+  font-size: var(--text-title-md);
+  font-weight: 600;
+  color: var(--color-ink);
 }
 
 .fish-input-toggle-copy span:last-child {
   overflow: hidden;
-  color: #416972;
-  font-size: 13px;
-  font-weight: 700;
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  font-weight: 400;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .fish-input-toggle-icon {
   flex: 0 0 auto;
-  margin-left: 14px;
-  border: 1px solid rgba(48, 98, 96, 0.18);
-  border-radius: 999px;
-  padding: 6px 10px;
-  color: #245b64;
-  font-size: 12px;
-  font-weight: 800;
-  background: rgba(255, 255, 255, 0.72);
+  margin-left: var(--space-md);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--color-ink);
+  font-size: var(--text-caption-uc);
+  font-weight: 600;
+  background: var(--color-canvas);
 }
 
 .fish-input-panel {
   max-height: min(620px, calc(100vh - 110px));
   overflow: auto;
-  border-top: 1px solid rgba(48, 98, 96, 0.14);
-  padding: 16px;
+  border-top: 1px solid var(--color-hairline);
+  padding: var(--space-lg);
 }
 
 .fish-input-header {
   display: grid;
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: var(--space-xxs);
+  margin-bottom: var(--space-md);
 }
 
 .fish-input-header p {
-  color: #416972;
-  font-size: 14px;
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
 }
 
 .fish-input-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 18px;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
 .input-group {
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .input-label,
 .preview-label,
 .draw-toolbar span {
-  color: #416972;
-  font-size: 14px;
-  font-weight: 700;
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
 }
 
 .text-input,
 .file-input {
   width: 100%;
   min-height: 44px;
-  border: 1px solid rgba(48, 98, 96, 0.26);
-  border-radius: 8px;
-  padding: 9px 11px;
-  color: #16323b;
-  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  font-size: var(--text-body-md);
+  transition: border-color 0.15s ease;
+}
+
+.text-input:focus,
+.file-input:focus {
+  outline: none;
+  border-color: var(--color-ink);
+  border-width: 2px;
+  padding: calc(var(--space-sm) - 1px) calc(var(--space-md) - 1px);
 }
 
 .file-input {
@@ -423,7 +449,7 @@
 .draw-area,
 .preview-area {
   display: grid;
-  gap: 10px;
+  gap: var(--space-xs);
   align-content: start;
 }
 
@@ -431,21 +457,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .fish-drawing-canvas,
 .preview-area {
   width: 100%;
   aspect-ratio: 3 / 2;
-  border: 1px solid rgba(48, 98, 96, 0.24);
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-canvas);
   background-image:
-    linear-gradient(45deg, rgba(65, 105, 114, 0.08) 25%, transparent 25%),
-    linear-gradient(-45deg, rgba(65, 105, 114, 0.08) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, rgba(65, 105, 114, 0.08) 75%),
-    linear-gradient(-45deg, transparent 75%, rgba(65, 105, 114, 0.08) 75%);
+    linear-gradient(45deg, var(--color-surface-card) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-surface-card) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-surface-card) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-surface-card) 75%);
   background-position: 0 0, 0 8px, 8px -8px, -8px 0;
   background-size: 16px 16px;
 }
@@ -459,12 +485,12 @@
 .preview-area {
   place-items: center;
   min-height: 160px;
-  padding: 14px;
+  padding: var(--space-md);
 }
 
 .preview-area[data-status='invalid'] {
-  border-color: rgba(167, 48, 48, 0.48);
-  background-color: rgba(255, 245, 245, 0.84);
+  border-color: var(--color-error);
+  background-color: color-mix(in srgb, var(--color-error) 6%, var(--color-canvas));
 }
 
 .fish-preview-image {
@@ -475,18 +501,20 @@
 }
 
 .preview-empty {
-  color: rgba(22, 50, 59, 0.48);
-  font-size: 14px;
-  font-weight: 700;
+  color: var(--color-muted-soft);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
 }
 
 .button {
-  min-height: 42px;
+  min-height: 44px;
   border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 9px 14px;
-  font-weight: 800;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--text-button);
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
 }
 
 .button:disabled {
@@ -495,20 +523,24 @@
 }
 
 .button-primary {
-  color: #ffffff;
-  background: #245b64;
+  color: var(--color-on-primary);
+  background: var(--color-primary);
 }
 
 .button-primary:not(:disabled):hover {
-  background: #1d4c54;
+  background: var(--color-body-strong);
 }
 
 .button-secondary {
-  min-height: 34px;
-  padding: 6px 10px;
-  color: #245b64;
-  border-color: rgba(48, 98, 96, 0.24);
-  background: rgba(255, 255, 255, 0.78);
+  min-height: 36px;
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--color-ink);
+  border-color: var(--color-hairline);
+  background: var(--color-canvas);
+}
+
+.button-secondary:not(:disabled):hover {
+  background: var(--color-surface-card);
 }
 
 @media (max-width: 760px) {
