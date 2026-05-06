@@ -97,11 +97,12 @@
 - Aquarium visual:
   - `renderDecoration`
   - `renderEmptyState`
-- Feature shell 연결:
-  - `renderFishInputPanel`
-  - `renderPropPanel`
-  - `bindFishInputEvents`
-  - `bindPropPanelEvents`
+- Feature shell 연결 (import된 call site — 정의 위치는 `src/features/` 하위):
+  - `renderFishInputPanel` → `src/features/fish-input/view.js`
+  - `renderPropPanel` → `src/features/prop-panel/view.js`
+  - `bindFishInputEvents` → `src/features/fish-input/index.js`
+  - `bindFeedingEvents` → `src/features/feeding/index.js`
+  - `bindPropPanelEvents` → `src/features/prop-panel/events.js`
 
 ### `src/main.js` 정리 순서
 
@@ -114,10 +115,13 @@
    - event binding
    - animation loops
    - app render/init
-2. 동작 변경 없이 `getFishSpriteStyleVars(fish)` 같은 pure helper를 먼저 추출한다.
-3. `renderFishes`는 helper가 만든 CSS 변수 문자열을 사용하도록 정리한다.
-4. helper에 대한 Vitest 테스트를 추가한다.
-5. 그 이후에도 파일이 크고 변경 충돌이 반복될 때만 feature 디렉터리 분리를 별도 스펙으로 진행한다.
+2. **[1순위 helper 추출]** 이미 여러 파일에 복붙된 `escapeHtml`, `clamp`를 `src/lib/utils.js`로 이동하고 각 feature 파일에서 import하도록 교체한다. 현재 중복 현황:
+   - `escapeHtml`: `src/main.js`, `src/features/fish-input/view.js`, `src/features/feeding/view.js`, `src/features/prop-panel/fish-props.js`, `src/features/prop-panel/view.js` (5곳)
+   - `clamp`: `src/main.js`, `src/features/fish-input/index.js`, `src/features/feeding/state.js`, `src/features/prop-panel/events.js`, `src/features/fish-movement/` 3개 파일 (7곳)
+3. 동작 변경 없이 `getFishSpriteStyleVars(fish)`, `shouldFlipFishForMovement` 같은 pure helper를 추출한다.
+4. `renderFishes`는 helper가 만든 CSS 변수 문자열을 사용하도록 정리한다.
+5. helper에 대한 Vitest 테스트를 추가한다 (`getFishSpriteStyleVars`, `shouldFlipFishForMovement` 포함).
+6. 그 이후에도 파일이 크고 변경 충돌이 반복될 때만 feature 디렉터리 분리를 별도 스펙으로 진행한다.
 
 ### `src/styles/components.css` 수정 위치 맵
 
@@ -181,6 +185,7 @@
    - `src/styles/components/aquarium.css`
    - `src/styles/components/fish.css`
    - `src/styles/components/panels.css`
+   - `src/styles/components/cleaning.css` — Cleaning 섹션은 `@keyframes`를 포함하고 독립성이 높아 1차 분리에 적합. aquarium/fish/panels와 함께 4개 중 3개 이하로 조합해 진행한다.
 4. `src/styles/index.css`의 import 순서를 cascade 기준으로 고정한다.
 5. 공통 `.button`과 form control 스타일은 중복 분리하지 않고, 실제 재사용 범위가 확인된 뒤 별도 파일로 분리한다.
 
