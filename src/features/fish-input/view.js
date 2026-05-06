@@ -62,6 +62,14 @@ export function renderFishInputPanel(state) {
             >
           </div>
 
+          <div class="input-group">
+            <label class="input-label" for="fish-movement">Movement</label>
+            <select id="fish-movement" class="select-input" data-fish-movement>
+              <option value="on" ${state.movementEnabled === false ? '' : 'selected'}>On</option>
+              <option value="off" ${state.movementEnabled === false ? 'selected' : ''}>Off</option>
+            </select>
+          </div>
+
           <div class="draw-area">
             <div class="draw-toolbar">
               <span>Draw</span>

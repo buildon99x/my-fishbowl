@@ -23,6 +23,7 @@ describe('createFishInputState', () => {
     expect(state.status).toBe('idle');
     expect(state.name).toBe('');
     expect(state.spriteDataUrl).toBe('');
+    expect(state.movementEnabled).toBe(true);
     expect(state.isExpanded).toBe(false);
   });
 
@@ -31,19 +32,22 @@ describe('createFishInputState', () => {
       name: 'Nemo',
       spriteDataUrl: 'data:image/png;base64,abc',
       source: 'upload',
+      movementEnabled: false,
     }));
     const state = createFishInputState();
     expect(state.status).toBe('preview');
     expect(state.name).toBe('Nemo');
+    expect(state.movementEnabled).toBe(false);
   });
 });
 
 describe('saveFishDraft', () => {
   it('saves draft to localStorage and returns it', () => {
-    const state = { name: '  Dory  ', spriteDataUrl: 'data:image/png;base64,xyz', source: 'draw' };
+    const state = { name: '  Dory  ', spriteDataUrl: 'data:image/png;base64,xyz', source: 'draw', movementEnabled: false };
     const draft = saveFishDraft(state);
     expect(draft.name).toBe('Dory');
     expect(draft.source).toBe('draw');
+    expect(draft.movementEnabled).toBe(false);
     expect(draft.createdAt).toBeDefined();
 
     const stored = JSON.parse(mockStorage.getItem(FISH_DRAFT_STORAGE_KEY));
