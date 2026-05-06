@@ -1,104 +1,144 @@
 # Architecture
 
-이 문서는 프로젝트의 디렉토리 구조, 소스 파일 역할, 기능 확장 시 배치 기준을 정의한다.
+이 문서는 My Fishbowl 프로젝트의 현재 디렉터리 구조, 파일 책임, 기능 분리 기준, 레이어 규칙을 정의한다.
 
-## 현재 디렉토리 구조
+## 현재 디렉터리 구조
 
 ```text
 .
 ├── README.md
+├── AGENTS.md
 ├── Claude.md
 ├── ARCHITECTURE.md
 ├── SPEC.md
+├── DESIGN.md
 ├── docs/
 │   └── spec/
 │       ├── _template.md
-│       └── S-001-initial-spec.md
+│       ├── S-001-initial-spec.md
+│       ├── S-002-aquarium-creation.md
+│       ├── S-003-fish-image-input.md
+│       ├── S-004-fish-creation.md
+│       ├── S-005-fish-movement.md
+│       ├── S-006-feeding.md
+│       ├── S-007-algae-system.md
+│       ├── S-008-aquarium-cleaning.md
+│       ├── S-009-fish-liveliness.md
+│       ├── S-010-food-types.md
+│       └── S-011-fish-list-scroll-preservation.md
 ├── index.html
 ├── package.json
 ├── package-lock.json
 └── src/
     ├── main.js
+    ├── features/
+    │   ├── algae/
+    │   │   ├── index.js
+    │   │   ├── state.js
+    │   │   ├── state.test.js
+    │   │   ├── view.js
+    │   │   └── view.test.js
+    │   ├── cleaning/
+    │   │   ├── index.js
+    │   │   └── index.test.js
+    │   ├── feeding/
+    │   ├── fish-input/
+    │   └── fish-movement/
     └── styles/
         ├── index.css
         ├── base.css
         ├── layout.css
         ├── components.css
+        ├── tokens.css
         └── utilities.css
 ```
 
-## 소스 파일 역할
+## 파일 책임
 
 - `index.html`: Vite 애플리케이션의 HTML 진입점이다. `#app` 마운트 노드만 유지하고 화면 로직은 `src/main.js`에서 관리한다.
-- `src/main.js`: 애플리케이션의 JavaScript 진입점이다. 앱 초기화, 초기 렌더링, 이벤트 연결, 간단한 상태 관리를 담당한다.
-- `src/styles/index.css`: 스타일 진입점이다. 역할별 CSS 파일을 import한다.
-- `src/styles/base.css`: reset, root 변수, body, 기본 typography를 담당한다.
-- `src/styles/layout.css`: page, container, grid, section 같은 큰 배치를 담당한다.
-- `src/styles/components.css`: button, card, form 등 재사용 UI 스타일을 담당한다.
-- `src/styles/utilities.css`: `.sr-only` 같은 작은 유틸리티 스타일을 담당한다.
-- `package.json`: 개발, 빌드, 프리뷰 스크립트와 프로젝트 의존성을 정의한다.
-- `package-lock.json`: 설치된 npm 의존성 버전을 고정한다.
-- `README.md`: 실행 명령어와 주요 문서 위치를 안내하는 사람용 진입 문서다.
-- `SPEC.md`: 스펙 조각 목록과 진행 상태를 관리하는 인덱스 문서다.
-- `docs/spec/`: 각 스펙 조각의 상세 정의 문서를 관리한다.
-- `docs/spec/_template.md`: 새 스펙 상세 문서를 만들 때 사용하는 기본 템플릿이다.
+- `src/main.js`: 애플리케이션 조립, 렌더링, 이벤트 바인딩, 로컬 저장소 저장 호출, feature 모듈 연결을 담당한다.
+- `src/features/algae/state.js`: 이끼 레벨, 청결도, 상태명, God Mode 저장용 시간 역산 같은 순수 상태 계산을 담당한다.
+- `src/features/algae/view.js`: Canvas 기반 이끼 패치 렌더링과 레벨별 렌더 강도 보간을 담당한다.
+- `src/features/cleaning/index.js`: 청소 모드 상태 생성, Canvas 스냅샷, 브러시 적용, 진행률 계산, 완료 시 Canvas 비우기를 담당한다.
+- `src/features/feeding/`: 먹이 생성, 먹이 이동, 물고기 먹이 반응을 담당한다.
+- `src/features/fish-input/`: 이미지 업로드, 직접 그리기, 물고기 초안 저장과 입력 UI를 담당한다.
+- `src/features/fish-movement/`: 물고기 이동 상태 정규화, 프레임 단위 이동, 방향 반전 계산을 담당한다.
+- `src/styles/index.css`: 스타일 진입점이다. 역할별 CSS 파일만 import한다.
+- `src/styles/components.css`: 어항, 물고기 목록, 청소 UI, God Mode 등 컴포넌트 스타일을 담당한다.
 
-## 확장 시 권장 구조
+## 기능 모듈 경계
 
-기능이 늘어나면 `src/` 아래에 책임별 디렉토리를 추가한다.
+- 시간 기반 이끼 계산은 `features/algae/state.js`에 둔다.
+- 이끼 Canvas 렌더링은 `features/algae/view.js`에 둔다.
+- 청소 입력과 진행률 계산은 `features/cleaning/index.js`에 둔다.
+- DOM 구조 생성, 화면 전체 리렌더링, 이벤트 바인딩은 `main.js`에 둔다.
+- feature 모듈은 DOM에 직접 의존하지 않는 순수 계산을 우선 제공하고, DOM 접근이 필요한 코드는 `main.js`에서 연결한다.
 
-```text
-src/
-├── main.js
-├── styles/
-│   ├── index.css
-│   ├── base.css
-│   ├── layout.css
-│   ├── components.css
-│   └── utilities.css
-├── components/
-│   └── <component>.js
-├── features/
-│   └── <feature>/
-│       ├── index.js
-│       ├── state.js
-│       └── view.js
-├── routes/
-│   └── <route>.js
-├── services/
-│   └── api.js
-└── assets/
-    └── <asset-file>
-```
+## 상태와 저장소
 
-## 배치 기준
+- 어항 데이터는 브라우저 로컬 저장소에 저장한다.
+- 주요 어항 상태:
+  - `fishes`
+  - `cleanliness`
+  - `algaeLevel`
+  - `lastCleanedAt`
+  - `bounds`
+- UI 전용 상태는 `appState`에 둔다.
+  - `selectedFishId`
+  - `editingFishId`
+  - `isFishListCollapsed`
+  - `fishListScrollTop`
+  - `cleaningState`
+  - `godModeState`
+- `fishListScrollTop`은 물고기 목록 리렌더링 중 스크롤 위치를 보존하기 위한 UI 상태이며 저장소에는 저장하지 않는다.
 
-- 화면에서 반복 사용되는 UI 조각은 `src/components/`로 분리한다.
-- 독립적인 사용자 기능은 `src/features/<feature>/`에 모은다.
-- 라우팅이 필요해지면 화면 진입점은 `src/routes/`에 둔다.
-- 외부 API, 저장소, 브라우저 저장소 연동은 `src/services/`에 둔다.
-- 이미지, 아이콘, 정적 데이터 같은 번들 대상 자산은 `src/assets/`에 둔다.
-- CSS는 `src/styles/` 아래에서 역할별 파일로 나누고, JavaScript에서는 `src/styles/index.css`만 import한다.
-- DOM selector 문자열은 `SELECTORS` 객체에 모아 관리한다.
+## 이끼와 청소 레이어 규칙
 
-## JavaScript 분할 기준
+어항 내부 레이어는 `z-index`로 명확하게 분리한다.
 
-- 현재 규모에서는 `src/main.js`를 유지하고, 함수 단위로 책임을 분리한다.
-- `src/main.js`가 100~150줄을 넘거나 서로 다른 기능이 2개 이상 섞이면 `src/features/<feature>/`로 분리한다.
-- 분리된 기능은 `index.js`, `state.js`, `view.js`처럼 역할이 드러나는 파일명을 사용한다.
-- `src/main.js`는 CSS import, 앱 마운트, 초기 실행 같은 조립 역할에 집중한다.
+- 장식, 물고기, 먹이, 빈 상태 메시지는 이끼보다 아래에 둔다.
+- `.algae-layer`는 물고기와 먹이보다 위에 둔다.
+- 청소 모드의 진행률, 브러시 오버레이, 완료 메시지는 이끼보다 위에 둘 수 있다.
+- `.algae-layer`는 `pointer-events: none`을 유지해 물고기 편집과 청소 오버레이 입력을 막지 않는다.
 
-## CSS 네이밍 기준
+현재 주요 레이어 순서:
 
-- 전역 레이아웃 클래스는 `.container`, `.page-*`처럼 명명한다.
-- 컴포넌트 클래스는 `.button`, `.card`, `.form-*`처럼 역할 중심으로 명명한다.
-- 스타일은 HTML 태그 선택자보다 클래스 선택자를 우선한다.
-- 유틸리티 클래스는 작고 재사용 가능한 목적에만 사용한다.
+| 레이어 | 목적 |
+| --- | --- |
+| 장식/수조 배경 | 어항 배경 표현 |
+| `.fish-layer` | 물고기와 먹이 표현 및 물고기 편집 입력 |
+| `.aquarium-empty` | 빈 어항 안내 |
+| `.algae-layer` | 이끼 오염 표현 |
+| `.cleaning-overlay` | 청소 모드 입력 |
+| `.cleaning-progress-bar`, `.cleaning-complete-message` | 청소 상태 표시 |
+
+## God Mode
+
+- God Mode는 개발 환경에서만 표시한다.
+- God Mode는 현재 `algaeLevel` 직접 설정을 제공한다.
+- 직접 설정 시 `algaeLevel`, `cleanliness`, `lastCleanedAt`, `updatedAt`을 함께 갱신한다.
+- `lastCleanedAt`은 새로고침 후에도 같은 이끼 레벨이 복원되도록 `calcLastCleanedAtForAlgaeLevel()`로 역산한다.
+
+## JavaScript 분리 기준
+
+- `main.js`는 화면 조립과 feature 연결에 집중한다.
+- 기능 로직이 순수 계산으로 분리 가능하면 `src/features/<feature>/state.js` 또는 `index.js`로 이동한다.
+- 렌더링 알고리즘이 독립적으로 커지면 `src/features/<feature>/view.js`로 이동한다.
+- 새 feature는 `index.js`를 통해 외부 공개 API를 명시한다.
+- 테스트 가능한 계산은 feature 디렉터리 안에 `*.test.js`로 함께 둔다.
+
+## CSS 분리 기준
+
+- 전역 토큰은 `tokens.css`에 둔다.
+- 기본 reset과 typography는 `base.css`에 둔다.
+- 페이지 배치는 `layout.css`에 둔다.
+- 컴포넌트 스타일은 `components.css`에 둔다.
+- 작은 재사용 유틸리티는 `utilities.css`에 둔다.
 
 ## 구현 원칙
 
 1. `index.html`에는 마운트 지점과 문서 메타 정보만 둔다.
-2. `main.js`는 애플리케이션 조립 역할에 집중하고, 기능 로직이 커지면 `features/`로 이동한다.
-3. 상태 변경 로직과 DOM 렌더링 로직은 함수 단위로 분리한다.
-4. CSS는 `base.css`, `layout.css`, `components.css`, `utilities.css` 순서로 역할을 분리한다.
-5. 새 파일을 추가할 때는 이 문서의 역할 기준과 분할 기준을 먼저 따른다.
+2. 상태 변경 로직과 DOM 렌더링 로직은 함수 단위로 분리한다.
+3. feature 모듈은 가능한 한 순수 함수 중심으로 작성한다.
+4. Canvas 기반 기능은 상태 계산과 렌더링을 분리한다.
+5. 문서의 요구사항이 바뀌면 `SPEC.md`, 관련 `docs/spec/*.md`, 이 문서를 함께 갱신한다.

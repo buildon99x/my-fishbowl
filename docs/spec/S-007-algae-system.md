@@ -3,65 +3,70 @@
 ## 상태
 
 - 상태: ready
-- 구현 여부: not-started
-- 검증 여부: not-tested
+- 구현 여부: done
+- 검증 여부: tested
 
 ## 목표
 
-- 사용자가 오래 접속하지 않거나 청소하지 않으면 어항에 이끼가 생긴다.
-- 시간 경과에 따라 오염 단계가 증가하고, 화면에 이끼 레이어가 표시된다.
+- 사용자가 일정 시간 동안 청소하지 않으면 어항에 이끼가 생긴다.
+- 이끼는 마지막 청소 시간을 기준으로 30분마다 1레벨씩 증가한다.
+- 48시간 이후에는 최대 이끼 레벨을 유지한다.
+- 이끼 레벨에 따라 청결도와 화면의 이끼 레이어가 함께 변한다.
 
 ## 범위
 
-- 포함할 것:
-  - 마지막 청소 시간 기준 오염도 증가
-  - 청결도와 이끼 단계 데이터 저장
-  - 이끼 단계별 화면 표현
-  - 재접속 시 경과 시간 기반 상태 복원
-- 제외할 것:
-  - 물고기 사망 또는 질병 시스템
-  - 복잡한 수질 시뮬레이션
+- 포함:
+  - 마지막 청소 시간 기준 이끼 레벨 계산
+  - `algaeLevel`, `cleanliness`, `lastCleanedAt` 저장 및 복원
+  - 0~96 단계 이끼 레벨 모델
+  - 이끼 레벨에 따른 Canvas 이끼 패치 렌더링
+  - God Mode의 직접 `algaeLevel` 설정
+  - 물고기와 먹이보다 위에 표시되는 이끼 레이어
+- 제외:
   - 서버 시간 동기화
+  - 물고기 질병 또는 사망 시스템
+  - 복잡한 물리 기반 이끼 확산
+  - 여러 종류의 오염원
 
-## 사용자 흐름
+## 사용 흐름
 
-1. 사용자가 어항을 사용한 뒤 일정 시간 동안 청소하지 않는다.
-2. 앱은 마지막 청소 시간을 기준으로 오염도를 계산한다.
-3. 시간이 지날수록 이끼 단계가 증가한다.
-4. 어항 화면에 단계별 이끼 레이어가 표시된다.
-5. 재접속 시 `initApp`에서 `lastCleanedAt`과 현재 시간의 차이를 계산해 `algaeLevel`과 `cleanliness`를 복원한 뒤 저장한다.
+1. 사용자가 어항을 청소한다.
+2. 앱은 `lastCleanedAt`을 현재 시간으로 저장하고 `algaeLevel`을 0으로 초기화한다.
+3. 재접속 또는 앱 초기화 시 `lastCleanedAt` 이후 경과 시간을 계산한다.
+4. 30분이 지날 때마다 `algaeLevel`이 1씩 증가한다.
+5. 48시간이 지나면 `algaeLevel`은 96으로 고정된다.
+6. 화면에는 현재 레벨에 맞는 이끼 레이어가 표시된다.
 
 ## UI/상태 요구사항
 
 - 필요한 화면 요소:
-  - 청결도 표시
-  - 이끼 레이어 (Canvas 엘리먼트 — S-008 청소 시스템과 공유)
-  - 오염 단계별 시각 표현
+  - 어항 위에 겹치는 `<canvas class="algae-layer">`
+  - 상태 패널의 이끼 단계 표시
+  - 개발 환경 전용 God Mode의 `algaeLevel` 직접 입력
 - 필요한 상태:
-  - `algaeLevel`: 0~96 숫자 단계. 마지막 청소 후 30분마다 1씩 증가하고 48시간 이후 96으로 유지한다.
-  - 상태명은 UI 표시용 밴드로 사용한다.
-    - `0` / `clean`: 이끼 없음
-    - `1~31` / `lightAlgae`: 약한 이끼
-    - `32~63` / `mediumAlgae`: 보통 이끼
-    - `64~96` / `heavyAlgae`: 심한 이끼
-- 오류 또는 빈 상태:
-  - 마지막 청소 시간이 없으면 현재 시간을 기준값으로 사용한다.
-  - 오염도 계산 실패 시 기본 깨끗한 상태로 표시한다.
+  - `algaeLevel`: number, 0~96
+  - `cleanliness`: number, 10~100
+  - `lastCleanedAt`: ISO 8601 string
+- 상태명 밴드:
+  - `0`: `clean`
+  - `1~31`: `lightAlgae`
+  - `32~63`: `mediumAlgae`
+  - `64~96`: `heavyAlgae`
 
-## 오염 단계
+## 이끼 단계
 
-`algaeLevel`은 `lastCleanedAt` 이후 경과 시간으로 결정한다. 30분마다 1단계씩 증가하며, 48시간에 최대 단계 96에 도달한다.
-
-| 단계 | 상태명 | 마지막 청소 후 경과 시간 | 표현 |
+| algaeLevel | 마지막 청소 후 경과 시간 | 상태명 | 표현 |
 | --- | --- | --- | --- |
-| 0 | `clean` | 0 ~ 30분 미만 | 투명 |
-| 1 | `lightAlgae` | 30분 | 연한 초록 이끼 시작 |
-| 2~31 | `lightAlgae` | 1시간 ~ 15시간 30분 | 약한 이끼가 점진적으로 증가 |
-| 32~63 | `mediumAlgae` | 16시간 ~ 31시간 30분 | 화면 가장자리 이끼 증가 |
-| 64~95 | `heavyAlgae` | 32시간 ~ 47시간 30분 | 어항 전반의 이끼 증가 |
-| 96 | `heavyAlgae` | 48시간 이상 | 최대 이끼 |
+| 0 | 0~30분 미만 | `clean` | 투명 |
+| 1 | 30분 | `lightAlgae` | 연한 초록 이끼 시작 |
+| 2~31 | 1시간~15시간 30분 | `lightAlgae` | 약한 이끼가 점진적으로 증가 |
+| 32~63 | 16시간~31시간 30분 | `mediumAlgae` | 가장자리 중심 이끼 증가 |
+| 64~95 | 32시간~47시간 30분 | `heavyAlgae` | 어항 전반의 이끼 증가 |
+| 96 | 48시간 이상 | `heavyAlgae` | 최대 이끼 |
 
-`cleanliness`는 `algaeLevel`과 연동하여 아래 값을 유지한다.
+## 청결도
+
+`cleanliness`는 `algaeLevel`에 따라 100에서 10까지 선형으로 감소한다.
 
 | algaeLevel | cleanliness |
 | --- | --- |
@@ -69,49 +74,42 @@
 | 48 | 55 |
 | 96 | 10 |
 
-S-008(청소) 완료 시 `algaeLevel`을 0으로, `cleanliness`를 100으로 리셋하고 `lastCleanedAt`을 현재 시간으로 갱신한다.
+## 렌더링 요구사항
 
-## 이끼 레이어 렌더링
+- 이끼 레이어는 `src/features/algae/view.js`에서 Canvas로 그린다.
+- `algaeLevel` 비율에 따라 이끼 패치 수, 크기, 투명도를 보간한다.
+- `algaeLevel=96`일 때 이끼 밀도와 진하기는 기존 최대 설정 대비 30% 증가한 값으로 표시한다.
+- 이끼 레이어는 물고기, 먹이, 빈 상태 메시지보다 위에 표시한다.
+- 청소 모드 입력 오버레이, 진행률, 완료 메시지는 이끼 레이어보다 위에 표시할 수 있다.
 
-- 이끼 레이어는 어항 위에 겹치는 `<canvas>` 엘리먼트로 구현한다.
-- S-008(청소)에서 `globalCompositeOperation = 'destination-out'` 방식으로 지우므로, 두 스펙이 같은 Canvas 엘리먼트를 공유한다.
-- 단계별 Canvas 초기 상태:
-  - `0`: 아무것도 그리지 않음 (투명)
-  - `1`: 전체에 낮은 불투명도의 초록 fill
-  - `2`: 가장자리에 집중된 초록 gradient fill
-  - `3`: 전체에 높은 불투명도의 초록 fill
+## God Mode
 
-## 데이터 요구사항
-
-| 항목 | 타입 | 설명 |
-| --- | --- | --- |
-| `cleanliness` | number (0~100) | 청결도 — `algaeLevel`과 연동 |
-| `algaeLevel` | number (0~96) | 이끼 단계 |
-| `lastCleanedAt` | ISO 8601 string | 마지막 청소 시간 |
+- 개발 환경에서 God Mode 버튼을 제공한다.
+- God Mode는 `algaeLevel`을 0~96 범위에서 직접 설정한다.
+- 직접 설정 시 `cleanliness`와 `lastCleanedAt`을 함께 갱신한다.
+- 새로고침 후에도 설정한 이끼 레벨이 복원되도록 `lastCleanedAt`을 역산해 저장한다.
 
 ## 구현 메모
 
 - 관련 파일:
+  - `src/features/algae/state.js`
+  - `src/features/algae/view.js`
+  - `src/features/algae/index.js`
   - `src/main.js`
   - `src/styles/components.css`
-- 오염 계산과 이끼 렌더링이 커지면 `src/features/algae/`로 분리한다.
-- MVP는 로컬 시간과 로컬 저장소를 기준으로 계산한다.
-- 오염 단계 계산 함수(`calcAlgaeLevel(lastCleanedAt, now)`)와 Canvas 초기화 함수는 순수 함수로 분리해 단위 테스트 가능하게 작성한다.
+- `calcAlgaeLevel(lastCleanedAt, nowMs)`는 30분 단위 레벨 계산을 담당한다.
+- `calcCleanliness(algaeLevel)`은 청결도 계산을 담당한다.
+- `getAlgaeStateName(algaeLevel)`은 UI용 상태명 밴드를 반환한다.
+- `calcLastCleanedAtForAlgaeLevel(algaeLevel, nowMs)`은 God Mode 직접 설정을 저장 가능한 시간 상태로 변환한다.
+- `getAlgaeRenderConfig(level)`은 렌더링 강도 보간값을 반환한다.
 
 ## 검증 기준
 
-- [ ] 마지막 청소 시간 기준으로 청결도가 계산된다.
-- [ ] 시간이 지날수록 이끼 단계가 증가한다.
-- [ ] 이끼 단계별 시각 표현이 다르게 표시된다.
-- [ ] 청결도와 이끼 단계가 로컬 저장소에 저장된다.
-- [ ] 재접속 시 경과 시간에 맞는 오염 상태가 복원된다.
-- [ ] `calcAlgaeLevel` 단위 테스트(`state.test.js`)가 통과한다.
-- [ ] 브라우저 콘솔 오류가 없다.
-- [ ] `npm run build`가 통과한다.
-
-## 추가 메모: 고정 수중 장식 애니메이션
-
-- 어항 바닥에는 저장 데이터와 무관한 고정 장식으로 해초와 정원장어를 표시한다.
-- 해초와 정원장어는 모래에 하단이 묻힌 상태로 보이며, CSS/SVG 애니메이션으로 부드럽게 흔들린다.
-- 이 장식은 사용자 추가/삭제/편집 대상이 아니며, 별도 저장 스키마를 만들지 않는다.
-- **구현 완료**: `main.js`의 `renderDecoration()` 내 `sway-plant`, `garden-eel` 클래스로 구현되어 있다.
+- [x] 마지막 청소 후 30분마다 `algaeLevel`이 1씩 증가한다.
+- [x] 48시간 이후 `algaeLevel`이 96을 초과하지 않는다.
+- [x] `cleanliness`가 `algaeLevel`과 연동된다.
+- [x] `algaeLevel=96`에서 최대 이끼 밀도와 진하기가 강화된다.
+- [x] God Mode에서 `algaeLevel`을 직접 설정할 수 있다.
+- [x] 이끼 레이어가 물고기보다 위에 표시된다.
+- [x] `npm test`가 통과한다.
+- [x] `npm run build`가 통과한다.
