@@ -696,7 +696,6 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       <header class="page-header">
         <p class="eyebrow">My Fishbowl</p>
         <h1>${aquarium.name}</h1>
-        ${renderFeedingControls(feedingState)}
         ${renderCleanButton(aquarium, cleaningState)}
       </header>
 

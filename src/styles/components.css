@@ -1444,6 +1444,69 @@
     height: 60px;
     font-size: 26px;
   }
+}
+
+/* ── God Mode (dev only) ─────────────────────────────────────── */
+
+.god-mode-button {
+  margin-top: var(--space-sm);
+  border-color: rgba(255, 221, 68, 0.5);
+  color: #9a7e00;
+  background: rgba(255, 221, 68, 0.08);
+}
+
+.god-mode-button:not(:disabled):hover {
+  border-color: rgba(255, 221, 68, 0.9);
+  background: rgba(255, 221, 68, 0.16);
+}
+
+.god-mode-panel {
+  position: fixed;
+  top: 80px;
+  left: 22px;
+  z-index: 500;
+  min-width: 300px;
+  border: 1px solid rgba(255, 221, 68, 0.45);
+  border-radius: var(--radius-lg);
+  background: rgba(8, 8, 24, 0.93);
+  backdrop-filter: blur(10px);
+  color: #d0d0d0;
+  font-size: 13px;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 221, 68, 0.15);
+}
+
+.god-mode-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid rgba(255, 221, 68, 0.2);
+}
+
+.god-mode-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffdd44;
+  letter-spacing: 0.06em;
+}
+
+.god-mode-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  background: transparent;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
 
   .prop-panel {
     top: 18px;
