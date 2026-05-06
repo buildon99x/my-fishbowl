@@ -69,10 +69,35 @@ function normalizeAquarium(aquarium) {
         vx: Number.isFinite(fish?.vx) ? fish.vx : 0,
         vy: Number.isFinite(fish?.vy) ? fish.vy : 0,
         speed: Number.isFinite(fish?.speed) ? fish.speed : 0,
-        movementStatus: fish?.movementStatus === 'turning' ? 'turning' : 'swimming',
+        movementStatus: ['cruising', 'idle', 'dart', 'wander', 'turning'].includes(fish?.movementStatus)
+          ? fish.movementStatus
+          : 'cruising',
+        behaviorStatus: ['cruising', 'idle', 'dart', 'wander', 'turning'].includes(fish?.behaviorStatus)
+          ? fish.behaviorStatus
+          : 'cruising',
         turnUntilMs: Number.isFinite(fish?.turnUntilMs) ? fish.turnUntilMs : 0,
+        turnStartedAtMs: Number.isFinite(fish?.turnStartedAtMs) ? fish.turnStartedAtMs : 0,
+        turnFromVx: Number.isFinite(fish?.turnFromVx) ? fish.turnFromVx : 0,
+        turnFromVy: Number.isFinite(fish?.turnFromVy) ? fish.turnFromVy : 0,
+        turnTargetVx: Number.isFinite(fish?.turnTargetVx) ? fish.turnTargetVx : 0,
+        turnTargetVy: Number.isFinite(fish?.turnTargetVy) ? fish.turnTargetVy : 0,
+        turnReturnStatus: fish?.turnReturnStatus ?? 'cruising',
+        wallPauseUntilMs: Number.isFinite(fish?.wallPauseUntilMs) ? fish.wallPauseUntilMs : 0,
+        wallResumeVx: Number.isFinite(fish?.wallResumeVx) ? fish.wallResumeVx : 0,
+        wallResumeVy: Number.isFinite(fish?.wallResumeVy) ? fish.wallResumeVy : 0,
         nextTargetAtMs: Number.isFinite(fish?.nextTargetAtMs) ? fish.nextTargetAtMs : 0,
         bobPhase: Number.isFinite(fish?.bobPhase) ? fish.bobPhase : 0,
+        waveOffset: Number.isFinite(fish?.waveOffset) ? fish.waveOffset : 0,
+        movementTilt: Number.isFinite(fish?.movementTilt) ? fish.movementTilt : 0,
+        speedMultiplier: Number.isFinite(fish?.speedMultiplier) && fish.speedMultiplier > 0 ? fish.speedMultiplier : null,
+        idleBias: Number.isFinite(fish?.idleBias) ? fish.idleBias : null,
+        preferredDepth: ['top', 'middle', 'bottom'].includes(fish?.preferredDepth) ? fish.preferredDepth : null,
+        wavingFrequency: Number.isFinite(fish?.wavingFrequency) && fish.wavingFrequency > 0 ? fish.wavingFrequency : null,
+        wavingAmplitude: Number.isFinite(fish?.wavingAmplitude) && fish.wavingAmplitude > 0 ? fish.wavingAmplitude : null,
+        behaviorStartedAtMs: Number.isFinite(fish?.behaviorStartedAtMs) ? fish.behaviorStartedAtMs : 0,
+        dartUntilMs: Number.isFinite(fish?.dartUntilMs) ? fish.dartUntilMs : 0,
+        wanderUntilMs: Number.isFinite(fish?.wanderUntilMs) ? fish.wanderUntilMs : 0,
+        nextBehaviorAtMs: Number.isFinite(fish?.nextBehaviorAtMs) ? fish.nextBehaviorAtMs : 0,
         headDirection: fish?.headDirection === 'left' ? 'left' : 'right',
         movementEnabled: fish?.movementEnabled !== false,
         size: Number.isFinite(fish?.size) ? fish.size : 120,
@@ -126,6 +151,7 @@ function saveAquarium(aquarium) {
 function createFishFromDraft(draft, index) {
   const now = new Date().toISOString();
   const lane = index % 5;
+  const preferredDepths = ['top', 'middle', 'bottom'];
 
   return {
     id: crypto.randomUUID(),
@@ -136,10 +162,31 @@ function createFishFromDraft(draft, index) {
     vx: 0,
     vy: 0,
     speed: 0,
-    movementStatus: 'swimming',
+    movementStatus: 'cruising',
+    behaviorStatus: 'cruising',
     turnUntilMs: 0,
+    turnStartedAtMs: 0,
+    turnFromVx: 0,
+    turnFromVy: 0,
+    turnTargetVx: 0,
+    turnTargetVy: 0,
+    turnReturnStatus: 'cruising',
+    wallPauseUntilMs: 0,
+    wallResumeVx: 0,
+    wallResumeVy: 0,
     nextTargetAtMs: 0,
     bobPhase: 0,
+    waveOffset: 0,
+    movementTilt: 0,
+    speedMultiplier: 0.7 + Math.random() * 0.6,
+    idleBias: Math.random() * 0.4,
+    preferredDepth: preferredDepths[Math.floor(Math.random() * preferredDepths.length)],
+    wavingFrequency: 2 + Math.random() * 2,
+    wavingAmplitude: 2 + Math.random() * 3,
+    behaviorStartedAtMs: 0,
+    dartUntilMs: 0,
+    wanderUntilMs: 0,
+    nextBehaviorAtMs: 0,
     headDirection: 'right',
     movementEnabled: draft.movementEnabled !== false,
     size: 120,
@@ -310,7 +357,7 @@ function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId) {
           data-fish-sprite="${fish.id}"
           src="${fish.imageUrl}"
           alt="${escapeHtml(fish.name)}"
-          style="--fish-x: ${fish.x}%; --fish-y: ${fish.y}%; --fish-size: ${fish.size}px; --fish-scale-x: ${fish.scaleX}; --fish-scale-y: ${fish.scaleY}; --fish-rotation: ${fish.rotation}deg; --fish-flip: ${shouldFlipFishForMovement(fish) ? -1 : 1}; --fish-flip-y: ${fish.flippedY ? -1 : 1};"
+          style="--fish-x: ${fish.x}%; --fish-y: ${fish.y}%; --fish-size: ${fish.size}px; --fish-scale-x: ${fish.scaleX}; --fish-scale-y: ${fish.scaleY}; --fish-rotation: ${fish.rotation}deg; --fish-tilt: ${fish.movementTilt ?? 0}deg; --fish-bob-y: ${fish.waveOffset ?? 0}px; --fish-flip: ${shouldFlipFishForMovement(fish) ? -1 : 1}; --fish-flip-y: ${fish.flippedY ? -1 : 1};"
         >
       `,
     )

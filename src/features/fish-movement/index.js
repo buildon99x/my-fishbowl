@@ -1,4 +1,5 @@
 import { normalizeFishMovement, shouldFlipFishForMovement, stepFishesMovement } from './state.js';
+import { trackAquariumMouse } from './mouseInteraction.js';
 
 const SAVE_INTERVAL_MS = 2000;
 
@@ -11,8 +12,10 @@ function applyFishMotion(root, fish) {
 
   sprite.style.setProperty('--fish-x', `${fish.x}%`);
   sprite.style.setProperty('--fish-y', `${fish.y}%`);
+  sprite.style.setProperty('--fish-bob-y', `${fish.waveOffset ?? 0}px`);
+  sprite.style.setProperty('--fish-tilt', `${fish.movementTilt ?? 0}deg`);
   sprite.style.setProperty('--fish-flip', shouldFlipFishForMovement(fish) ? '-1' : '1');
-  sprite.dataset.movementStatus = fish.movementStatus ?? 'swimming';
+  sprite.dataset.movementStatus = fish.movementStatus ?? 'cruising';
 }
 
 export function normalizeAquariumFishMovement(aquarium, nowMs = 0) {
@@ -20,6 +23,7 @@ export function normalizeAquariumFishMovement(aquarium, nowMs = 0) {
 }
 
 export function startFishMovement(root, aquarium, options = {}) {
+  const mouseTracker = trackAquariumMouse(root);
   let frameId = 0;
   let lastFrameMs = performance.now();
   let lastSavedMs = lastFrameMs;
@@ -28,6 +32,7 @@ export function startFishMovement(root, aquarium, options = {}) {
     const pausedFishIds = options.getPausedFishIds?.() ?? new Set();
 
     aquarium.fishes = stepFishesMovement(aquarium.fishes, nowMs - lastFrameMs, nowMs, {
+      mouseState: mouseTracker.getState(),
       pausedFishIds,
     });
     lastFrameMs = nowMs;
@@ -51,6 +56,7 @@ export function startFishMovement(root, aquarium, options = {}) {
   return {
     stop() {
       cancelAnimationFrame(frameId);
+      mouseTracker.stop();
     },
   };
 }
