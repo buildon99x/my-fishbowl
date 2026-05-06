@@ -74,7 +74,12 @@ export function renderFishInputPanel(state) {
           <div class="draw-area">
             <div class="draw-toolbar">
               <span>Draw</span>
-              <button class="button button-secondary" type="button" data-clear-drawing>Clear</button>
+              <div class="draw-toolbar-actions">
+                <button class="button button-primary fish-input-register-btn" type="button" data-register-fish-image ${canRegister ? '' : 'disabled'}>
+                  Register image
+                </button>
+                <button class="button button-secondary" type="button" data-clear-drawing>Clear</button>
+              </div>
             </div>
             <canvas
               class="fish-drawing-canvas"
@@ -92,12 +97,6 @@ export function renderFishInputPanel(state) {
                 ? `<img class="fish-preview-image" src="${state.spriteDataUrl}" alt="Fish image preview">`
                 : '<span class="preview-empty">No image yet</span>'
             }
-          </div>
-
-          <div class="fish-input-register-wrap">
-            <button class="button button-primary fish-input-register-btn" type="button" data-register-fish-image ${canRegister ? '' : 'disabled'}>
-              Register image
-            </button>
           </div>
         </div>
       </div>
