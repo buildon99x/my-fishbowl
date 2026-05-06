@@ -996,7 +996,7 @@ function bindCleaningEvents(root, aquarium, appState, render) {
     const rect = overlay.getBoundingClientRect();
     cursor.style.left = `${clientX - rect.left}px`;
     cursor.style.top = `${clientY - rect.top}px`;
-    cursor.style.display = '';
+    cursor.style.display = 'block';
   }
 
   overlay.addEventListener('mouseenter', (e) => moveCursor(e.clientX, e.clientY));
