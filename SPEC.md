@@ -44,6 +44,7 @@
 | S-011 | 어항 거품 효과 | done | done | not-tested | `docs/spec/S-011-aquarium-bubble-effects.md` |
 | S-011 | 물고기 목록 스크롤 위치 보존 | ready | done | tested | `docs/spec/S-011-fish-list-scroll-preservation.md` |
 | S-013 | 속성 패널(prop-panel) 분리 및 신설 | draft | not-started | not-tested | `docs/spec/S-013-prop-panel.md` |
+| S-016 | Dev harness improve | draft | not-started | not-tested | `docs/spec/S-016-dev-harness_improve.md` |
 
 ## 상태 값
 
