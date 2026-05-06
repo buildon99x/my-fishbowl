@@ -7,7 +7,6 @@ import {
 import {
   bindFeedingEvents,
   createFeedingState,
-  renderFeedingControls,
   renderFoods,
   tickFeeding,
 } from './features/feeding/index.js';
@@ -25,6 +24,11 @@ import {
   getAlgaeStateName,
   restoreAlgaeState,
 } from './features/algae/index.js';
+import {
+  bindPropPanelEvents,
+  createPropPanelState,
+  renderPropPanel,
+} from './features/prop-panel/index.js';
 
 const IS_DEV = import.meta.env.DEV;
 import {
@@ -931,6 +935,13 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       </section>
 
       ${renderFishInputPanel(fishInputState)}
+      ${renderPropPanel({
+        feedingState,
+        fishInputState,
+        propPanelState: appState.propPanel,
+        aquarium,
+        isDev: import.meta.env.DEV,
+      })}
       ${IS_DEV && appState.godModeState?.visible ? renderGodModePanel(appState.godModeState, aquarium) : ''}
     </main>
   `;
@@ -961,6 +972,15 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
   });
+  bindPropPanelEvents(
+    root,
+    { fishInputState, propPanelState: appState.propPanel },
+    {
+      render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+      onFeedingToggle: () => { feedingState.feedingMode = !feedingState.feedingMode; },
+      onFoodTypeChange: (type) => { feedingState.selectedType = type; },
+    },
+  );
   bindCleaningEvents(root, aquarium, appState, () =>
     renderApp(root, aquarium, fishInputState, feedingState, appState),
   );
@@ -1166,6 +1186,7 @@ function initApp() {
     isFishListCollapsed: false,
     fishListScrollTop: 0,
     movementController: null,
+    propPanel: createPropPanelState(),
     cleaningState: createCleaningState(),
     godModeState: IS_DEV ? { visible: false } : null,
   };
