@@ -1,8 +1,10 @@
-export { createPropPanelState } from './state.js';
-export { renderPropPanel } from './view.js';
+export { createPropPanelState, setEditingTarget } from './state.js';
+export { renderPropPanel, renderActionCluster } from './view.js';
 
-export function bindPropPanelEvents(root, { fishInputState, propPanelState }, callbacks) {
-  const { render, onFeedingToggle, onFoodTypeChange } = callbacks;
+import { bindCommonPanelEvents, bindFishPropsEvents, bindGodModePropsEvents } from './events.js';
+
+export function bindActionClusterEvents(root, { fishInputState, propPanelState }, callbacks) {
+  const { render, onFeedingToggle, onFoodTypeChange, onCleaningToggle } = callbacks;
 
   root.querySelector('[data-prop-feed]')?.addEventListener('click', () => {
     onFeedingToggle();
@@ -19,12 +21,31 @@ export function bindPropPanelEvents(root, { fishInputState, propPanelState }, ca
   });
 
   root.querySelector('[data-prop-cleaning]')?.addEventListener('click', () => {
-    propPanelState.cleaningMode = !propPanelState.cleaningMode;
+    onCleaningToggle?.();
     render();
   });
 
-  root.querySelector('[data-prop-godmode]')?.addEventListener('click', () => {
-    propPanelState.godModeOpen = !propPanelState.godModeOpen;
-    render();
-  });
+  if (import.meta.env.DEV) {
+    root.querySelector('[data-prop-godmode]')?.addEventListener('click', () => {
+      const current = propPanelState.editingTarget;
+      propPanelState.editingTarget = current?.type === 'godmode' ? null : { id: null, type: 'godmode' };
+      render();
+    });
+  }
+}
+
+export function bindPropPanelEvents(root, aquarium, appState, saveAquarium, render) {
+  bindCommonPanelEvents(root, appState, render);
+
+  const { editingTarget } = appState.propPanel;
+  if (!editingTarget) return;
+
+  if (editingTarget.type === 'fish') {
+    bindFishPropsEvents(root, aquarium, appState, saveAquarium, render);
+    return;
+  }
+
+  if (import.meta.env.DEV) {
+    bindGodModePropsEvents(root, aquarium, appState, saveAquarium, render);
+  }
 }

@@ -1,4 +1,50 @@
-import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.js';
+import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft, saveFishInputPosition } from './state.js';
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function bindFishInputDrag(panel, state) {
+  const header = panel.querySelector('[data-fish-input-drag-handle]');
+  if (!header) return;
+
+  header.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('[data-toggle-fish-input]')) return;
+    e.preventDefault();
+
+    const rect = panel.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+    panel.style.left = `${rect.left}px`;
+    panel.style.top = `${rect.top}px`;
+    header.style.cursor = 'grabbing';
+    header.setPointerCapture(e.pointerId);
+
+    function onMove(moveEvent) {
+      const x = clamp(moveEvent.clientX - offsetX, 0, window.innerWidth - panel.offsetWidth);
+      const y = clamp(moveEvent.clientY - offsetY, 0, window.innerHeight - panel.offsetHeight);
+      panel.style.left = `${x}px`;
+      panel.style.top = `${y}px`;
+    }
+
+    function onUp() {
+      header.releasePointerCapture(e.pointerId);
+      header.removeEventListener('pointermove', onMove);
+      header.removeEventListener('pointerup', onUp);
+      header.style.cursor = '';
+
+      const pos = { x: parseFloat(panel.style.left), y: parseFloat(panel.style.top) };
+      state.position = pos;
+      saveFishInputPosition(pos);
+    }
+
+    header.addEventListener('pointermove', onMove);
+    header.addEventListener('pointerup', onUp);
+  });
+}
 import { renderFishInputPanel } from './view.js';
 
 const SPRITE_WIDTH = 240;
@@ -263,4 +309,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
       render,
     );
   });
+
+  const panel = root.querySelector('.fish-input-widget');
+  if (panel) bindFishInputDrag(panel, state);
 }

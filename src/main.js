@@ -7,6 +7,7 @@ import {
 import {
   bindFeedingEvents,
   createFeedingState,
+  renderFeedingControls,
   renderFoods,
   tickFeeding,
 } from './features/feeding/index.js';
@@ -16,22 +17,20 @@ import {
   startFishMovement,
 } from './features/fish-movement/index.js';
 import {
-  ALGAE_INTERVAL_MINUTES,
   ALGAE_MAX_LEVEL,
-  calcCleanliness,
-  calcLastCleanedAtForAlgaeLevel,
   drawAlgaeLayer,
   getAlgaeStateName,
   restoreAlgaeState,
 } from './features/algae/index.js';
 import { createBubblesState, startBubbles } from './features/bubbles/index.js';
 import {
+  bindActionClusterEvents,
   bindPropPanelEvents,
   createPropPanelState,
+  renderActionCluster,
   renderPropPanel,
 } from './features/prop-panel/index.js';
 
-const IS_DEV = import.meta.env.DEV;
 import {
   COMPLETION_THRESHOLD,
   applyBrush,
@@ -269,33 +268,7 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function renderGodModePanel(godModeState, aquarium) {
-  const level = aquarium.algaeLevel;
-  const levelName = getAlgaeStateName(level);
 
-  return `
-    <div class="god-mode-panel" data-god-mode-panel>
-      <div class="god-mode-header">
-        <span class="god-mode-title">⚡ God Mode</span>
-        <button class="god-mode-close" type="button" data-close-god-mode>✕</button>
-      </div>
-      <div class="god-mode-section">
-        <p class="god-mode-section-label">이끼 레벨 직접 설정</p>
-        <label class="god-mode-field">
-          <span>algaeLevel</span>
-          <input class="god-mode-input" type="number" min="0" max="${ALGAE_MAX_LEVEL}" step="1"
-            value="${level}" data-algae-level-input>
-          <span class="god-mode-unit">/ ${ALGAE_MAX_LEVEL}</span>
-        </label>
-      </div>
-      <div class="god-mode-status">
-        algaeLevel: <strong>${level}</strong> / ${ALGAE_MAX_LEVEL} (${levelName})
-        &nbsp;·&nbsp;
-        cleanliness: <strong>${aquarium.cleanliness}</strong>
-      </div>
-    </div>
-  `;
-}
 
 function renderCleanButton(aquarium, cleaningState) {
   if (cleaningState.cleaningMode) {
@@ -449,6 +422,37 @@ function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId) {
     .join('');
 }
 
+function patchFoodLayer(root, foods) {
+  const foodLayer = root.querySelector('[data-food-layer]');
+  if (!foodLayer) return;
+
+  const existing = foodLayer.querySelectorAll('[data-food-id]');
+  const existingIds = new Set([...existing].map((el) => el.dataset.foodId));
+  const newIds = new Set(foods.map((f) => f.id));
+  const sameSet = existingIds.size === newIds.size && [...newIds].every((id) => existingIds.has(id));
+
+  if (!sameSet) {
+    foodLayer.innerHTML = renderFoods(foods);
+    return;
+  }
+
+  foods.forEach((food) => {
+    const el = foodLayer.querySelector(`[data-food-id="${food.id}"]`);
+    if (el) el.style.setProperty('--food-y', `${food.y}%`);
+  });
+}
+
+function patchFishPositions(root, fishes, fishEatingId) {
+  fishes.forEach((fish) => {
+    const sprite = root.querySelector(`[data-fish-sprite="${fish.id}"]`);
+    if (!sprite) return;
+    sprite.style.setProperty('--fish-x', `${fish.x}%`);
+    sprite.style.setProperty('--fish-y', `${fish.y}%`);
+    sprite.style.setProperty('--fish-flip', shouldFlipFishForMovement(fish) ? -1 : 1);
+    sprite.classList.toggle('is-eating', fish.id === fishEatingId);
+  });
+}
+
 function startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState) {
   if (appState.feedingAnimationId) {
     return;
@@ -465,9 +469,8 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
       saveAquarium(aquarium);
     }
 
-    if (result.didChange) {
-      renderApp(root, aquarium, fishInputState, feedingState, appState);
-    }
+    patchFoodLayer(root, feedingState.foods);
+    patchFishPositions(root, aquarium.fishes, feedingState.fishEating);
 
     if (feedingState.foods.length > 0) {
       appState.feedingAnimationId = window.requestAnimationFrame(runFrame);
@@ -479,7 +482,7 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
     if (feedingState.fishEating) {
       window.setTimeout(() => {
         feedingState.fishEating = null;
-        renderApp(root, aquarium, fishInputState, feedingState, appState);
+        root.querySelectorAll('[data-fish-sprite]').forEach((el) => el.classList.remove('is-eating'));
       }, 260);
     }
   };
@@ -487,95 +490,13 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
   appState.feedingAnimationId = window.requestAnimationFrame(runFrame);
 }
 
-function renderFishEditor(fish) {
-  return `
-    <div class="fish-editor">
-      <label class="fish-editor-name">
-        <span>이름</span>
-        <input
-          type="text"
-          maxlength="40"
-          value="${escapeHtml(fish.name)}"
-          data-edit-fish-name="${fish.id}"
-        >
-      </label>
-      <div class="fish-editor-toolbar">
-        <button class="fish-action-button" type="button" data-flip-fish="${fish.id}">
-          좌우반전
-        </button>
-        <button class="fish-action-button" type="button" data-flip-fish-y="${fish.id}">
-          상하 반전
-        </button>
-        <button class="fish-action-button" type="button" data-reset-fish-transform="${fish.id}">
-          초기화
-        </button>
-      </div>
-      <label>
-        <span>머리</span>
-        <select data-edit-fish-head-direction="${fish.id}">
-          <option value="right" ${fish.headDirection === 'left' ? '' : 'selected'}>오른쪽</option>
-          <option value="left" ${fish.headDirection === 'left' ? 'selected' : ''}>왼쪽</option>
-        </select>
-      </label>
-      <label>
-        <span>이동</span>
-        <select data-edit-fish-movement="${fish.id}">
-          <option value="on" ${fish.movementEnabled === false ? '' : 'selected'}>On</option>
-          <option value="off" ${fish.movementEnabled === false ? 'selected' : ''}>Off</option>
-        </select>
-      </label>
-      <label>
-        <span>크기</span>
-        <input
-          type="range"
-          min="60"
-          max="220"
-          step="5"
-          value="${fish.size}"
-          data-edit-fish-size="${fish.id}"
-        >
-      </label>
-      <label>
-        <span>회전</span>
-        <input
-          type="range"
-          min="-180"
-          max="180"
-          step="5"
-          value="${fish.rotation}"
-          data-edit-fish-rotation="${fish.id}"
-        >
-      </label>
-      <label>
-        <span>가로</span>
-        <input
-          type="range"
-          min="0.65"
-          max="1.45"
-          step="0.05"
-          value="${fish.scaleX}"
-          data-edit-fish-scale-x="${fish.id}"
-        >
-      </label>
-      <label>
-        <span>세로</span>
-        <input
-          type="range"
-          min="0.65"
-          max="1.45"
-          step="0.05"
-          value="${fish.scaleY}"
-          data-edit-fish-scale-y="${fish.id}"
-        >
-      </label>
-    </div>
-  `;
-}
 
-function renderFishList(fishes, selectedFishId, editingFishId) {
+function renderFishList(fishes, selectedFishId, editingTarget) {
   if (fishes.length === 0) {
     return '<p class="fish-list-empty">등록된 물고기가 없습니다.</p>';
   }
+
+  const editingFishId = editingTarget?.type === 'fish' ? editingTarget.id : null;
 
   return `
     <div class="fish-list" role="list" data-fish-list>
@@ -589,8 +510,8 @@ function renderFishList(fishes, selectedFishId, editingFishId) {
                 <time class="fish-list-time" datetime="${escapeHtml(fish.createdAt)}">${formatRegisteredTime(fish.createdAt)}</time>
               </button>
               <div class="fish-list-actions">
-                <button class="fish-action-button" type="button" data-edit-fish="${fish.id}">
-                  편집
+                <button class="fish-action-button ${fish.id === editingFishId ? 'is-active' : ''}" type="button" data-edit-fish="${fish.id}" title="편집">
+                  ✏️
                 </button>
                 <button class="fish-action-button" type="button" data-toggle-fish-hidden="${fish.id}">
                   ${fish.hidden ? '보이기' : '감추기'}
@@ -599,7 +520,6 @@ function renderFishList(fishes, selectedFishId, editingFishId) {
                   삭제
                 </button>
               </div>
-              ${fish.id === editingFishId ? renderFishEditor(fish) : ''}
             </div>
           `,
         )
@@ -659,7 +579,7 @@ function renderAquariumStatus(aquarium, appState) {
             <dd>${aquarium.algaeLevel} / ${ALGAE_MAX_LEVEL} · ${getAlgaeStateName(aquarium.algaeLevel)}</dd>
           </div>
         </dl>
-        ${renderFishList(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
+        ${renderFishList(aquarium.fishes, appState.selectedFishId, appState.propPanel.editingTarget)}
       </div>
     </aside>
   `;
@@ -687,134 +607,13 @@ function bindAquariumControls(root, aquarium, appState, render) {
 
   root.querySelectorAll('[data-edit-fish]').forEach((button) => {
     button.addEventListener('click', () => {
-      appState.selectedFishId = button.dataset.editFish;
-      appState.editingFishId = appState.editingFishId === button.dataset.editFish ? null : button.dataset.editFish;
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-edit-fish-name]').forEach((input) => {
-    input.addEventListener('input', () => {
-      const fishId = input.dataset.editFishName;
-
+      const fishId = button.dataset.editFish;
       appState.selectedFishId = fishId;
-      updateFishAppearance(aquarium, fishId, { name: input.value });
-    });
-
-    input.addEventListener('change', () => {
-      const fishId = input.dataset.editFishName;
-      const trimmed = input.value.trim();
-
-      if (!trimmed) {
-        updateFishAppearance(aquarium, fishId, { name: '이름 없는 물고기' });
-      }
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-edit-fish-size]').forEach((input) => {
-    input.addEventListener('input', () => {
-      appState.selectedFishId = input.dataset.editFishSize;
-      updateFishAppearance(aquarium, input.dataset.editFishSize, {
-        size: Number(input.value),
-      });
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-edit-fish-rotation]').forEach((input) => {
-    input.addEventListener('input', () => {
-      appState.selectedFishId = input.dataset.editFishRotation;
-      updateFishAppearance(aquarium, input.dataset.editFishRotation, {
-        rotation: Number(input.value),
-      });
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-edit-fish-scale-x]').forEach((input) => {
-    input.addEventListener('input', () => {
-      appState.selectedFishId = input.dataset.editFishScaleX;
-      updateFishAppearance(aquarium, input.dataset.editFishScaleX, {
-        scaleX: Number(input.value),
-      });
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-edit-fish-scale-y]').forEach((input) => {
-    input.addEventListener('input', () => {
-      appState.selectedFishId = input.dataset.editFishScaleY;
-      updateFishAppearance(aquarium, input.dataset.editFishScaleY, {
-        scaleY: Number(input.value),
-      });
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-edit-fish-head-direction]').forEach((select) => {
-    select.addEventListener('change', () => {
-      const fishId = select.dataset.editFishHeadDirection;
-
-      appState.selectedFishId = fishId;
-      updateFishAppearance(aquarium, fishId, {
-        headDirection: select.value === 'left' ? 'left' : 'right',
-      });
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-edit-fish-movement]').forEach((select) => {
-    select.addEventListener('change', () => {
-      const fishId = select.dataset.editFishMovement;
-
-      appState.selectedFishId = fishId;
-      updateFishAppearance(aquarium, fishId, {
-        movementEnabled: select.value !== 'off',
-      });
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-flip-fish]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const fishId = button.dataset.flipFish;
-      const fish = getFishById(aquarium, fishId);
-
-      appState.selectedFishId = fishId;
-      updateFishAppearance(aquarium, fishId, {
-        flipped: !fish?.flipped,
-      });
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-flip-fish-y]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const fishId = button.dataset.flipFishY;
-      const fish = getFishById(aquarium, fishId);
-
-      appState.selectedFishId = fishId;
-      updateFishAppearance(aquarium, fishId, {
-        flippedY: !fish?.flippedY,
-      });
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-reset-fish-transform]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const fishId = button.dataset.resetFishTransform;
-
-      appState.selectedFishId = fishId;
-      updateFishAppearance(aquarium, fishId, {
-        rotation: 0,
-        scaleX: 1,
-        scaleY: 1,
-        flipped: false,
-        flippedY: false,
-        size: 120,
-      });
+      const current = appState.propPanel.editingTarget;
+      appState.propPanel.editingTarget =
+        current?.type === 'fish' && current?.id === fishId
+          ? null
+          : { id: fishId, type: 'fish' };
       render();
     });
   });
@@ -822,8 +621,9 @@ function bindAquariumControls(root, aquarium, appState, render) {
   root.querySelectorAll('[data-fish-sprite]').forEach((sprite) => {
     sprite.addEventListener('pointerdown', (event) => {
       const fishId = sprite.dataset.fishSprite;
+      const { editingTarget } = appState.propPanel;
 
-      if (appState.editingFishId !== fishId) {
+      if (editingTarget?.type !== 'fish' || editingTarget?.id !== fishId) {
         return;
       }
 
@@ -876,8 +676,8 @@ function bindAquariumControls(root, aquarium, appState, render) {
       if (appState.selectedFishId === fishId) {
         appState.selectedFishId = null;
       }
-      if (appState.editingFishId === fishId) {
-        appState.editingFishId = null;
+      if (appState.propPanel.editingTarget?.type === 'fish' && appState.propPanel.editingTarget?.id === fishId) {
+        appState.propPanel.editingTarget = null;
       }
       render();
     });
@@ -897,7 +697,6 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         <p class="eyebrow">My Fishbowl</p>
         <h1>${aquarium.name}</h1>
         ${renderCleanButton(aquarium, cleaningState)}
-        ${IS_DEV ? '<button type="button" class="button button-secondary god-mode-button" data-toggle-god-mode>God Mode</button>' : ''}
       </header>
 
       <section class="aquarium-layout" aria-labelledby="aquarium-title">
@@ -914,10 +713,10 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
             <svg class="bubble-layer" data-bubble-svg viewBox="0 0 1152 780" aria-hidden="true"></svg>
             <canvas class="algae-layer" data-algae-canvas aria-hidden="true"></canvas>
             <div class="fish-layer" data-fish-layer>
-              <div class="food-layer" aria-hidden="true">
+              <div class="food-layer" data-food-layer aria-hidden="true">
                 ${renderFoods(feedingState.foods)}
               </div>
-              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.editingFishId, feedingState.fishEating)}
+              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.propPanel.editingTarget?.type === 'fish' ? appState.propPanel.editingTarget.id : null, feedingState.fishEating)}
             </div>
             ${renderEmptyState(aquarium.fishes.length)}
             ${cleaningState.cleaningMode ? renderCleaningOverlay(cleaningState) : ''}
@@ -928,14 +727,13 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       </section>
 
       ${renderFishInputPanel(fishInputState)}
-      ${renderPropPanel({
+      ${renderPropPanel(appState.propPanel.editingTarget, aquarium, appState.propPanel)}
+      ${renderActionCluster({
         feedingState,
         fishInputState,
         propPanelState: appState.propPanel,
-        aquarium,
-        isDev: import.meta.env.DEV,
+        cleaningState: appState.cleaningState,
       })}
-      ${IS_DEV && appState.godModeState?.visible ? renderGodModePanel(appState.godModeState, aquarium) : ''}
     </main>
   `;
   restoreFishListScroll(root, appState);
@@ -956,7 +754,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       onRegister: (draft) => {
         const fish = addFishToAquarium(aquarium, draft);
         appState.selectedFishId = fish.id;
-        appState.editingFishId = fish.id;
+        appState.propPanel.editingTarget = { id: fish.id, type: 'fish' };
       },
     },
   );
@@ -965,25 +763,49 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
   });
-  bindPropPanelEvents(
+  bindActionClusterEvents(
     root,
     { fishInputState, propPanelState: appState.propPanel },
     {
       render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
       onFeedingToggle: () => { feedingState.feedingMode = !feedingState.feedingMode; },
       onFoodTypeChange: (type) => { feedingState.selectedType = type; },
+      onCleaningToggle: () => {
+        const cs = appState.cleaningState;
+        if (cs.cleaningMode) {
+          exitCleaningMode(cs);
+        } else if (aquarium.algaeLevel > 0) {
+          cs.cleaningMode = true;
+          cs.cleaning = false;
+          cs.cleaned = false;
+          cs.cleaningProgress = 0;
+          cs.snapshotData = null;
+          cs.initialAlphaSum = 0;
+          cs.initialAlgaePixels = 0;
+        }
+      },
     },
+  );
+  bindPropPanelEvents(
+    root,
+    aquarium,
+    appState,
+    saveAquarium,
+    () => renderApp(root, aquarium, fishInputState, feedingState, appState),
   );
   bindCleaningEvents(root, aquarium, appState, () =>
     renderApp(root, aquarium, fishInputState, feedingState, appState),
   );
-  if (IS_DEV) {
-    bindGodModeEvents(root, aquarium, appState, () =>
-      renderApp(root, aquarium, fishInputState, feedingState, appState),
-    );
-  }
   appState.movementController = startFishMovement(root, aquarium, {
-    getPausedFishIds: () => new Set(appState.editingFishId ? [appState.editingFishId] : []),
+    getPausedFishIds: () => {
+      const paused = new Set();
+      const t = appState.propPanel.editingTarget;
+      if (t?.type === 'fish') paused.add(t.id);
+      if (feedingState.foods.length > 0) {
+        aquarium.fishes.forEach((fish) => paused.add(fish.id));
+      }
+      return paused;
+    },
     onSave: () => saveAquarium(aquarium),
   });
 
@@ -1128,34 +950,6 @@ function bindCleaningEvents(root, aquarium, appState, render) {
   });
 }
 
-function bindGodModeEvents(root, aquarium, appState, render) {
-  root.querySelector('[data-toggle-god-mode]')?.addEventListener('click', () => {
-    appState.godModeState.visible = !appState.godModeState.visible;
-    render();
-  });
-
-  const panel = root.querySelector('[data-god-mode-panel]');
-  if (!panel) return;
-
-  panel.querySelector('[data-close-god-mode]')?.addEventListener('click', () => {
-    appState.godModeState.visible = false;
-    render();
-  });
-
-  panel.querySelector('[data-algae-level-input]')?.addEventListener('change', (event) => {
-    const value = parseInt(event.target.value, 10);
-    if (!Number.isFinite(value)) return;
-
-    const level = clamp(value, 0, ALGAE_MAX_LEVEL);
-    const now = Date.now();
-    aquarium.algaeLevel = level;
-    aquarium.cleanliness = calcCleanliness(level);
-    aquarium.lastCleanedAt = calcLastCleanedAtForAlgaeLevel(level, now, ALGAE_INTERVAL_MINUTES);
-    aquarium.updatedAt = new Date(now).toISOString();
-    saveAquarium(aquarium);
-    render();
-  });
-}
 
 function exitCleaningMode(cleaningState) {
   if (cleaningState.completionTimer) {
@@ -1178,7 +972,6 @@ function initApp() {
   const feedingState = createFeedingState();
   const appState = {
     selectedFishId: null,
-    editingFishId: null,
     feedingAnimationId: null,
     isFishListCollapsed: false,
     fishListScrollTop: 0,
@@ -1187,7 +980,6 @@ function initApp() {
     bubblesState: createBubblesState(),
     propPanel: createPropPanelState(),
     cleaningState: createCleaningState(),
-    godModeState: IS_DEV ? { visible: false } : null,
   };
 
   normalizeAquariumFishMovement(aquarium, performance.now());

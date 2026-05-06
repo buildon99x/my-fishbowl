@@ -13,6 +13,11 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function positionStyle(pos) {
+  if (!pos) return '';
+  return ` style="left:${pos.x}px;top:${pos.y}px;right:auto;bottom:auto;"`;
+}
+
 export function renderFishInputPanel(state) {
   if (!state.isExpanded) {
     return '';
@@ -23,14 +28,19 @@ export function renderFishInputPanel(state) {
   const statusMessage = state.message || STATUS_TEXT[state.status] || STATUS_TEXT.idle;
 
   return `
-    <section class="fish-input-widget" aria-labelledby="fish-input-title">
-      <div class="fish-input-panel-header">
-        <span id="fish-input-title" class="fish-input-panel-title">Add fish image</span>
-        <button class="fish-input-close" type="button" data-toggle-fish-input aria-label="닫기">✕</button>
+    <section class="fish-input-widget" aria-labelledby="fish-input-title"${positionStyle(state.position)}>
+      <div class="prop-panel-header" data-fish-input-drag-handle>
+        <div class="prop-panel-identity">
+          <span class="prop-panel-thumb-icon" aria-hidden="true">🐠</span>
+          <div class="prop-panel-title-group">
+            <span id="fish-input-title" class="prop-panel-name">Add fish image</span>
+          </div>
+        </div>
+        <button class="prop-action-btn" type="button" data-toggle-fish-input aria-label="닫기" title="닫기">❌</button>
       </div>
 
       <div class="fish-input-panel">
-        <div class="fish-input-header">
+        <div class="fish-input-status">
           <p>${escapeHtml(statusMessage)}</p>
         </div>
 
@@ -64,9 +74,20 @@ export function renderFishInputPanel(state) {
           <div class="draw-area">
             <div class="draw-toolbar">
               <span>Draw</span>
-              <button class="button button-secondary" type="button" data-clear-drawing>Clear</button>
+              <div class="draw-toolbar-actions">
+                <button class="button button-primary fish-input-register-btn" type="button" data-register-fish-image ${canRegister ? '' : 'disabled'}>
+                  Register image
+                </button>
+                <button class="button button-secondary" type="button" data-clear-drawing>Clear</button>
+              </div>
             </div>
-            <canvas class="fish-drawing-canvas" width="240" height="160" data-fish-canvas aria-label="Draw fish image"></canvas>
+            <canvas
+              class="fish-drawing-canvas"
+              width="480"
+              height="320"
+              data-fish-canvas
+              aria-label="Draw fish image"
+            ></canvas>
           </div>
 
           <div class="preview-area" data-status="${state.status}">
@@ -78,10 +99,6 @@ export function renderFishInputPanel(state) {
             }
           </div>
         </div>
-
-        <button class="button button-primary" type="button" data-register-fish-image ${canRegister ? '' : 'disabled'}>
-          Register image
-        </button>
       </div>
     </section>
   `;

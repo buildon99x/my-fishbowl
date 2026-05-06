@@ -1,52 +1,131 @@
-export function renderPropPanel({ feedingState, fishInputState, propPanelState, aquarium, isDev }) {
+import { renderFishProps } from './fish-props.js';
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+const PROP_RENDERERS = {
+  fish: renderFishProps,
+};
+
+if (import.meta.env.DEV) {
+  import('./godmode-props.dev.js').then(({ renderGodModeProps }) => {
+    PROP_RENDERERS['god' + 'mode'] = renderGodModeProps;
+  });
+}
+
+function findEntityByTarget(aquarium, target, propPanelState) {
+  if (import.meta.env.DEV) {
+    if (target.type === 'godmode') return propPanelState?.godModeState ?? null;
+  }
+  return aquarium.fishes.find((f) => f.id === target.id) ?? null;
+}
+
+function positionStyle(pos) {
+  if (!pos) return '';
+  return ` style="left:${pos.x}px;top:${pos.y}px;right:auto;"`;
+}
+
+function renderPanelShell(entity, target, typeBadge, contentHtml, pos) {
+  const isGodMode = import.meta.env.DEV && target.type === 'godmode';
+  const thumbHtml = isGodMode
+    ? '<span class="prop-panel-thumb-icon" aria-hidden="true">🛠️</span>'
+    : `<img class="prop-panel-thumb" src="${escapeHtml(entity.imageUrl)}" alt="" width="48" height="36">`;
+  const name = isGodMode ? 'God Mode' : escapeHtml(entity.name);
+  const badgeClass = isGodMode ? 'prop-panel-badge is-dev' : 'prop-panel-badge';
+
+  return `
+    <div class="prop-panel" role="complementary" aria-label="속성 패널"${positionStyle(pos)}>
+      <div class="prop-panel-header">
+        <div class="prop-panel-identity">
+          ${thumbHtml}
+          <div class="prop-panel-title-group">
+            <span class="prop-panel-name">${name}</span>
+            <span class="${badgeClass}">${typeBadge}</span>
+          </div>
+        </div>
+        <button
+          class="prop-panel-close prop-action-btn"
+          type="button"
+          data-close-prop-panel
+          title="닫기"
+          aria-label="닫기"
+        >❌</button>
+      </div>
+      <div class="prop-panel-body">
+        ${contentHtml}
+      </div>
+    </div>
+  `;
+}
+
+function renderUnsupportedProp(target, pos) {
+  return `
+    <div class="prop-panel" role="complementary" aria-label="속성 패널"${positionStyle(pos)}>
+      <div class="prop-panel-header">
+        <span class="prop-panel-name">알 수 없는 타입</span>
+        <button
+          class="prop-panel-close prop-action-btn"
+          type="button"
+          data-close-prop-panel
+          title="닫기"
+          aria-label="닫기"
+        >❌</button>
+      </div>
+      <div class="prop-panel-body">
+        <p class="prop-unsupported">지원되지 않는 타입입니다: ${escapeHtml(target.type)}</p>
+      </div>
+    </div>
+  `;
+}
+
+export function renderPropPanel(target, aquarium, propPanelState) {
+  if (!target) return '';
+
+  const pos = propPanelState?.position ?? null;
+  const renderer = PROP_RENDERERS[target.type];
+  if (!renderer) return renderUnsupportedProp(target, pos);
+
+  const entity = findEntityByTarget(aquarium, target, propPanelState);
+  if (!entity) return '';
+
+  const typeBadge = import.meta.env.DEV && target.type === 'godmode' ? 'dev' : target.type;
+  const contentHtml = import.meta.env.DEV && target.type === 'godmode'
+    ? renderer(aquarium, entity)
+    : renderer(entity);
+
+  return renderPanelShell(entity, target, typeBadge, contentHtml, pos);
+}
+
+export function renderActionCluster({ feedingState, fishInputState, propPanelState, cleaningState }) {
   const feedActive = feedingState.feedingMode;
   const addFishActive = fishInputState.isExpanded;
-  const cleanActive = propPanelState.cleaningMode;
-  const godOpen = propPanelState.godModeOpen;
+  const cleanActive = cleaningState?.cleaningMode ?? false;
 
-  const godModeButton = isDev
-    ? `
-      <div class="prop-btn-wrap" data-tooltip="GodMode">
-        <button
-          class="prop-btn ${godOpen ? 'is-active' : ''}"
-          type="button"
-          data-prop-godmode
-          aria-pressed="${godOpen}"
-          aria-label="GodMode"
-        >⚙️</button>
-      </div>
-    `
-    : '';
-
-  const godModePanel = isDev && godOpen
-    ? `
-      <div class="prop-godmode-panel" role="region" aria-label="GodMode">
-        <p class="prop-godmode-title">GodMode</p>
-        <dl class="prop-godmode-list">
-          <div>
-            <dt>물고기</dt>
-            <dd>${aquarium.fishes.length}마리</dd>
+  const godModeButton = import.meta.env.DEV
+    ? (() => {
+        const godModeActive = propPanelState.editingTarget?.type === 'godmode';
+        return `
+          <div class="prop-btn-wrap" data-tooltip="GodMode">
+            <button
+              class="prop-btn ${godModeActive ? 'is-active' : ''}"
+              type="button"
+              data-prop-godmode
+              aria-pressed="${godModeActive}"
+              aria-label="GodMode"
+            >🛠️</button>
           </div>
-          <div>
-            <dt>청결도</dt>
-            <dd>${aquarium.cleanliness}%</dd>
-          </div>
-          <div>
-            <dt>이끼</dt>
-            <dd>Lv.${aquarium.algaeLevel}</dd>
-          </div>
-          <div>
-            <dt>청소 모드</dt>
-            <dd>${cleanActive ? 'ON' : 'OFF'}</dd>
-          </div>
-        </dl>
-      </div>
-    `
+        `;
+      })()
     : '';
 
   return `
-    <div class="prop-panel" aria-label="액션 버튼">
-      ${godModePanel}
+    <div class="prop-action-panel" aria-label="액션 버튼">
       <div class="prop-btn-cluster">
         <div class="prop-btn-wrap" data-tooltip="먹이 주기">
           <div class="prop-feed-submenu ${feedActive ? 'is-visible' : ''}">
