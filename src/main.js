@@ -422,6 +422,37 @@ function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId) {
     .join('');
 }
 
+function patchFoodLayer(root, foods) {
+  const foodLayer = root.querySelector('[data-food-layer]');
+  if (!foodLayer) return;
+
+  const existing = foodLayer.querySelectorAll('[data-food-id]');
+  const existingIds = new Set([...existing].map((el) => el.dataset.foodId));
+  const newIds = new Set(foods.map((f) => f.id));
+  const sameSet = existingIds.size === newIds.size && [...newIds].every((id) => existingIds.has(id));
+
+  if (!sameSet) {
+    foodLayer.innerHTML = renderFoods(foods);
+    return;
+  }
+
+  foods.forEach((food) => {
+    const el = foodLayer.querySelector(`[data-food-id="${food.id}"]`);
+    if (el) el.style.setProperty('--food-y', `${food.y}%`);
+  });
+}
+
+function patchFishPositions(root, fishes, fishEatingId) {
+  fishes.forEach((fish) => {
+    const sprite = root.querySelector(`[data-fish-sprite="${fish.id}"]`);
+    if (!sprite) return;
+    sprite.style.setProperty('--fish-x', `${fish.x}%`);
+    sprite.style.setProperty('--fish-y', `${fish.y}%`);
+    sprite.style.setProperty('--fish-flip', shouldFlipFishForMovement(fish) ? -1 : 1);
+    sprite.classList.toggle('is-eating', fish.id === fishEatingId);
+  });
+}
+
 function startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState) {
   if (appState.feedingAnimationId) {
     return;
@@ -438,9 +469,8 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
       saveAquarium(aquarium);
     }
 
-    if (result.didChange) {
-      renderApp(root, aquarium, fishInputState, feedingState, appState);
-    }
+    patchFoodLayer(root, feedingState.foods);
+    patchFishPositions(root, aquarium.fishes, feedingState.fishEating);
 
     if (feedingState.foods.length > 0) {
       appState.feedingAnimationId = window.requestAnimationFrame(runFrame);
@@ -452,7 +482,7 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
     if (feedingState.fishEating) {
       window.setTimeout(() => {
         feedingState.fishEating = null;
-        renderApp(root, aquarium, fishInputState, feedingState, appState);
+        root.querySelectorAll('[data-fish-sprite]').forEach((el) => el.classList.remove('is-eating'));
       }, 260);
     }
   };
