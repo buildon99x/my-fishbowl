@@ -884,7 +884,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
   const algaeCanvas = root.querySelector('[data-algae-canvas]');
   if (algaeCanvas) {
-    drawAlgaeLayer(algaeCanvas, aquarium.algaeLevel);
+    drawAlgaeLayer(algaeCanvas, aquarium.algaeLevel, aquarium.lastCleanedAt);
     if (cleaningState.cleaningMode) {
       snapshotCanvas(algaeCanvas, cleaningState);
     }
