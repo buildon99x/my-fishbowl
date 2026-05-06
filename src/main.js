@@ -213,6 +213,32 @@ function renderDecoration() {
           <path d="M205 210 C258 112 257 583 544 691 C695 748 409 790 238 641 C105 526 128 299 205 210 Z" fill="#49aeca" opacity="0.42" />
         </g>
 
+        <g class="aquarium-ground" aria-hidden="true">
+          <path class="sand-bed" d="M169 650 C301 602 418 646 566 621 C745 590 887 609 999 662 C920 736 758 769 582 768 C398 767 250 731 169 650 Z" />
+          <g class="sway-plant sway-plant-left">
+            <path d="M306 654 C289 606 303 562 277 520 C253 480 269 431 249 392" />
+            <path d="M321 654 C324 602 357 573 354 523 C351 473 391 441 390 398" />
+            <path d="M336 655 C360 618 383 590 395 546 C407 500 456 492 464 449" />
+          </g>
+          <g class="sway-plant sway-plant-right">
+            <path d="M818 657 C798 616 817 578 790 535 C765 496 775 459 746 421" />
+            <path d="M838 657 C850 606 879 579 869 530 C860 486 895 451 888 409" />
+          </g>
+          <g class="garden-eel garden-eel-one">
+            <path d="M514 650 C495 603 501 562 527 523 C548 491 541 458 520 428" />
+            <circle cx="512" cy="424" r="4" />
+            <circle cx="529" cy="425" r="4" />
+          </g>
+          <g class="garden-eel garden-eel-two">
+            <path d="M642 651 C666 612 674 572 653 532 C635 498 653 469 681 444" />
+            <circle cx="676" cy="438" r="4" />
+            <circle cx="690" cy="447" r="4" />
+          </g>
+          <path class="sand-cover" d="M151 665 C286 618 418 655 564 631 C753 600 902 622 1020 675 C934 740 763 771 582 769 C394 767 238 733 151 665 Z" />
+          <ellipse class="sand-glint" cx="418" cy="665" rx="118" ry="18" />
+          <ellipse class="sand-glint sand-glint-right" cx="782" cy="663" rx="154" ry="22" />
+        </g>
+
         <g class="reference-bubbles">
           <circle cx="876" cy="372" r="22" fill="#86cfee" stroke="#d4f0ff" stroke-width="4" />
           <circle cx="923" cy="448" r="18" fill="#86cfee" stroke="#d4f0ff" stroke-width="4" />

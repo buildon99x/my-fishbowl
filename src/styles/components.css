@@ -21,6 +21,103 @@
   height: 100%;
 }
 
+.aquarium-ground {
+  pointer-events: none;
+}
+
+.sand-bed,
+.sand-cover {
+  fill: #d8c46f;
+}
+
+.sand-bed {
+  opacity: 0.88;
+}
+
+.sand-cover {
+  opacity: 0.95;
+}
+
+.sand-glint {
+  fill: rgba(250, 232, 144, 0.42);
+}
+
+.sand-glint-right {
+  opacity: 0.72;
+}
+
+.sway-plant,
+.garden-eel {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+
+.sway-plant {
+  animation: aquatic-sway 4.8s ease-in-out infinite alternate;
+}
+
+.sway-plant path {
+  fill: none;
+  stroke: #2e7c62;
+  stroke-linecap: round;
+  stroke-width: 18;
+}
+
+.sway-plant path:nth-child(2) {
+  stroke: #4e9c63;
+  stroke-width: 15;
+}
+
+.sway-plant path:nth-child(3) {
+  stroke: #7aac5b;
+  stroke-width: 13;
+}
+
+.sway-plant-right {
+  animation-duration: 5.6s;
+  animation-delay: -1.4s;
+}
+
+.garden-eel {
+  animation: eel-sway 3.8s ease-in-out infinite alternate;
+}
+
+.garden-eel path {
+  fill: none;
+  stroke: #b58b5b;
+  stroke-linecap: round;
+  stroke-width: 20;
+}
+
+.garden-eel circle {
+  fill: #30261d;
+}
+
+.garden-eel-two {
+  animation-duration: 4.4s;
+  animation-delay: -1s;
+}
+
+@keyframes aquatic-sway {
+  from {
+    transform: rotate(-2.8deg);
+  }
+
+  to {
+    transform: rotate(3.2deg);
+  }
+}
+
+@keyframes eel-sway {
+  from {
+    transform: rotate(-4deg) translateX(-2px);
+  }
+
+  to {
+    transform: rotate(4deg) translateX(2px);
+  }
+}
+
 .fish-layer {
   position: absolute;
   left: 13%;
