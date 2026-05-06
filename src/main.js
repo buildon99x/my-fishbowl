@@ -13,7 +13,6 @@ import {
 } from './features/feeding/index.js';
 import {
   normalizeAquariumFishMovement,
-  shouldFlipFishForMovement,
   startFishMovement,
 } from './features/fish-movement/index.js';
 import {
@@ -39,6 +38,7 @@ import {
   snapshotCanvas,
 } from './features/cleaning/index.js';
 import { clamp, escapeHtml } from './lib/utils.js';
+import { cssVarsToInlineStyle, getFishSpriteStyleVars } from './lib/fishSpriteStyle.js';
 
 const SELECTORS = {
   app: '#app',
@@ -401,7 +401,7 @@ function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId) {
           data-fish-sprite="${fish.id}"
           src="${fish.imageUrl}"
           alt="${escapeHtml(fish.name)}"
-          style="--fish-x: ${fish.x}%; --fish-y: ${fish.y}%; --fish-size: ${fish.size}px; --fish-scale-x: ${fish.scaleX}; --fish-scale-y: ${fish.scaleY}; --fish-rotation: ${fish.rotation}deg; --fish-tilt: ${fish.movementTilt ?? 0}deg; --fish-bob-y: ${fish.waveOffset ?? 0}px; --fish-flip: ${shouldFlipFishForMovement(fish) ? -1 : 1}; --fish-flip-y: ${fish.flippedY ? -1 : 1};"
+          style="${cssVarsToInlineStyle(getFishSpriteStyleVars(fish))}"
         >
       `,
     )
@@ -432,9 +432,10 @@ function patchFishPositions(root, fishes, fishEatingId) {
   fishes.forEach((fish) => {
     const sprite = root.querySelector(`[data-fish-sprite="${fish.id}"]`);
     if (!sprite) return;
-    sprite.style.setProperty('--fish-x', `${fish.x}%`);
-    sprite.style.setProperty('--fish-y', `${fish.y}%`);
-    sprite.style.setProperty('--fish-flip', shouldFlipFishForMovement(fish) ? -1 : 1);
+    const vars = getFishSpriteStyleVars(fish);
+    sprite.style.setProperty('--fish-x', vars['--fish-x']);
+    sprite.style.setProperty('--fish-y', vars['--fish-y']);
+    sprite.style.setProperty('--fish-flip', vars['--fish-flip']);
     sprite.classList.toggle('is-eating', fish.id === fishEatingId);
   });
 }
