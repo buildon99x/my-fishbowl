@@ -875,17 +875,26 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 2.5px solid rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.08);
+  width: 88px;
+  height: 64px;
+  border-radius: 24px 28px 22px 26px / 28px 22px 26px 24px;
+  border: 1.5px solid rgba(160, 110, 0, 0.45);
+  background:
+    radial-gradient(circle at 22% 28%, rgba(170, 110, 0, 0.45) 0 3.2px, transparent 4.2px),
+    radial-gradient(circle at 64% 22%, rgba(170, 110, 0, 0.4) 0 2.6px, transparent 3.6px),
+    radial-gradient(circle at 80% 50%, rgba(170, 110, 0, 0.45) 0 3.4px, transparent 4.4px),
+    radial-gradient(circle at 38% 55%, rgba(170, 110, 0, 0.5) 0 4px, transparent 5px),
+    radial-gradient(circle at 18% 75%, rgba(170, 110, 0, 0.4) 0 2.8px, transparent 3.8px),
+    radial-gradient(circle at 60% 78%, rgba(170, 110, 0, 0.45) 0 3.2px, transparent 4.2px),
+    radial-gradient(circle at 88% 80%, rgba(170, 110, 0, 0.4) 0 2.4px, transparent 3.4px),
+    linear-gradient(135deg, #ffe066 0%, #ffd23a 55%, #f5b300 100%);
   box-shadow:
-    0 0 0 1.5px rgba(34, 200, 100, 0.5),
-    inset 0 0 12px rgba(255, 255, 255, 0.1);
+    0 6px 12px rgba(0, 0, 0, 0.22),
+    inset 0 -4px 0 rgba(160, 100, 0, 0.18),
+    inset 0 2px 0 rgba(255, 255, 255, 0.35);
   pointer-events: none;
   display: none;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) rotate(-7deg);
 }
 
 .cleaning-touch-ripple {

@@ -1,5 +1,5 @@
-const BOWL_PATH_NORMALIZED =
-  'M0.122 0.049 C0.145 0 0.836 0.003 0.865 0.049 C0.876 0.069 0.872 0.166 0.843 0.197 C0.952 0.335 1 0.505 0.977 0.666 C0.945 0.886 0.777 1 0.5 1 C0.222 1 0.059 0.869 0.025 0.655 C0 0.497 0.043 0.334 0.153 0.197 C0.123 0.157 0.112 0.076 0.122 0.049 Z';
+const WATER_PATH_NORMALIZED =
+  'M0.1024 0.1821 C0.2066 0.1513 0.2960 0.2103 0.3950 0.1821 C0.4957 0.1526 0.5694 0.2128 0.6719 0.1821 C0.7431 0.1615 0.7951 0.1808 0.8438 0.2026 C0.9253 0.3333 0.9688 0.5167 0.9471 0.6705 C0.9175 0.8782 0.7622 0.9859 0.5061 0.9859 C0.2491 0.9859 0.0981 0.8615 0.0668 0.6603 C0.0434 0.5090 0.0616 0.3128 0.1024 0.1821 Z';
 
 const LEVEL_CONFIG = {
   1: {
@@ -34,6 +34,9 @@ const LEVEL_CONFIG = {
   },
 };
 
+const PATCH_EFFECTIVE_RADIUS_FACTOR = 1.15;
+const MAX_PLACEMENT_ATTEMPTS = 30;
+
 function mulberry32(seed) {
   let s = seed >>> 0;
   return function next() {
@@ -56,6 +59,34 @@ function hashSeed(input) {
   return h >>> 0;
 }
 
+function tryPlacePatch(rng, cfg, w, h, meanDim, existing) {
+  const baseRadius = meanDim * (cfg.radiusBase + rng() * cfg.radiusJitter);
+  const effectiveRadius = baseRadius * PATCH_EFFECTIVE_RADIUS_FACTOR;
+
+  for (let attempt = 0; attempt < MAX_PLACEMENT_ATTEMPTS; attempt++) {
+    const angle = rng() * Math.PI * 2;
+    const edgeBias = cfg.edgeBiasMin + rng() * (cfg.edgeBiasMax - cfg.edgeBiasMin);
+    const cx = w * 0.5 + Math.cos(angle) * w * 0.42 * edgeBias;
+    const cy = h * 0.585 + Math.sin(angle) * h * 0.40 * edgeBias;
+
+    let collides = false;
+    for (const other of existing) {
+      const dx = cx - other.cx;
+      const dy = cy - other.cy;
+      const minDist = effectiveRadius + other.effectiveRadius;
+      if (dx * dx + dy * dy < minDist * minDist) {
+        collides = true;
+        break;
+      }
+    }
+    if (!collides) {
+      const opacity = cfg.opacityMin + rng() * (cfg.opacityMax - cfg.opacityMin);
+      return { cx, cy, baseRadius, effectiveRadius, opacity };
+    }
+  }
+  return null;
+}
+
 function generatePatches(rng, level, w, h) {
   const cfg = LEVEL_CONFIG[level];
   if (!cfg) return [];
@@ -65,14 +96,8 @@ function generatePatches(rng, level, w, h) {
   const patches = [];
 
   for (let i = 0; i < count; i++) {
-    const angle = rng() * Math.PI * 2;
-    const edgeBias = cfg.edgeBiasMin + rng() * (cfg.edgeBiasMax - cfg.edgeBiasMin);
-    const cx = w * 0.5 + Math.cos(angle) * w * 0.42 * edgeBias;
-    const cy = h * 0.55 + Math.sin(angle) * h * 0.45 * edgeBias;
-    const baseRadius = meanDim * (cfg.radiusBase + rng() * cfg.radiusJitter);
-    const opacity = cfg.opacityMin + rng() * (cfg.opacityMax - cfg.opacityMin);
-
-    patches.push({ cx, cy, baseRadius, opacity });
+    const patch = tryPlacePatch(rng, cfg, w, h, meanDim, patches);
+    if (patch) patches.push(patch);
   }
 
   return patches;
@@ -84,7 +109,7 @@ function drawPatch(ctx, patch, rng) {
 
   for (let i = 0; i < subCount; i++) {
     const offsetAngle = rng() * Math.PI * 2;
-    const offsetDist = i === 0 ? 0 : rng() * baseRadius * 0.35;
+    const offsetDist = i === 0 ? 0 : rng() * baseRadius * 0.3;
     const ox = cx + Math.cos(offsetAngle) * offsetDist;
     const oy = cy + Math.sin(offsetAngle) * offsetDist;
 
@@ -128,10 +153,10 @@ export function drawAlgaeLayer(canvas, algaeLevel, seed) {
   const level = Math.min(3, Math.max(1, Math.floor(algaeLevel)));
 
   ctx.save();
-  const bowlNorm = new Path2D(BOWL_PATH_NORMALIZED);
-  const bowlPath = new Path2D();
-  bowlPath.addPath(bowlNorm, new DOMMatrix([w, 0, 0, h, 0, 0]));
-  ctx.clip(bowlPath);
+  const waterNorm = new Path2D(WATER_PATH_NORMALIZED);
+  const waterPath = new Path2D();
+  waterPath.addPath(waterNorm, new DOMMatrix([w, 0, 0, h, 0, 0]));
+  ctx.clip(waterPath);
 
   const rng = mulberry32(hashSeed(seed));
   const patches = generatePatches(rng, level, w, h);
