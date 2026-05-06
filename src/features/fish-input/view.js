@@ -1,5 +1,3 @@
-import { DEFAULT_FISH_NAME } from './state.js';
-
 const STATUS_TEXT = {
   idle: 'Choose an image or draw a fish.',
   preview: 'Fish image preview is ready.',
@@ -16,29 +14,22 @@ function escapeHtml(value) {
 }
 
 export function renderFishInputPanel(state) {
+  if (!state.isExpanded) {
+    return '';
+  }
+
   const hasSprite = Boolean(state.spriteDataUrl);
   const canRegister = hasSprite && state.status !== 'invalid';
   const statusMessage = state.message || STATUS_TEXT[state.status] || STATUS_TEXT.idle;
-  const summary = state.name.trim() || (hasSprite ? DEFAULT_FISH_NAME : 'No fish image selected');
-  const bodyId = 'fish-input-widget-body';
 
   return `
-    <section class="fish-input-widget" aria-labelledby="fish-input-title" data-expanded="${state.isExpanded}">
-      <button
-        class="fish-input-toggle"
-        type="button"
-        aria-expanded="${state.isExpanded}"
-        aria-controls="${bodyId}"
-        data-toggle-fish-input
-      >
-        <span class="fish-input-toggle-copy">
-          <span id="fish-input-title">Add fish image</span>
-          <span>${escapeHtml(summary)}</span>
-        </span>
-        <span class="fish-input-toggle-icon" aria-hidden="true">${state.isExpanded ? 'Close' : 'Open'}</span>
-      </button>
+    <section class="fish-input-widget" aria-labelledby="fish-input-title">
+      <div class="fish-input-panel-header">
+        <span id="fish-input-title" class="fish-input-panel-title">Add fish image</span>
+        <button class="fish-input-close" type="button" data-toggle-fish-input aria-label="닫기">✕</button>
+      </div>
 
-      <div class="fish-input-panel" id="${bodyId}" ${state.isExpanded ? '' : 'hidden'}>
+      <div class="fish-input-panel">
         <div class="fish-input-header">
           <p>${escapeHtml(statusMessage)}</p>
         </div>
