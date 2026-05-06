@@ -574,7 +574,7 @@
   right: max(18px, calc((100vw - 1120px) / 2 + 18px));
   bottom: 18px;
   z-index: 10;
-  width: min(520px, calc(100vw - 32px));
+  width: min(676px, calc(100vw - 32px));
   overflow: hidden;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-xl);
@@ -618,27 +618,24 @@
 }
 
 .fish-input-panel {
-  max-height: min(580px, calc(100vh - 18px - 72px - 32px));
+  max-height: min(680px, calc(100vh - 18px - 72px - 32px));
   overflow: auto;
   padding: var(--space-lg);
 }
 
-.fish-input-header {
-  display: grid;
-  gap: var(--space-xxs);
+.fish-input-status {
   margin-bottom: var(--space-md);
 }
 
-.fish-input-header p {
+.fish-input-status p {
   color: var(--color-muted);
   font-size: var(--text-body-sm);
 }
 
 .fish-input-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-md);
-  margin-bottom: var(--space-lg);
 }
 
 .input-group {
@@ -686,6 +683,24 @@
   display: grid;
   gap: var(--space-xs);
   align-content: start;
+}
+
+.draw-area {
+  grid-column: 1 / -1;
+}
+
+.preview-area {
+  grid-column: span 2;
+}
+
+.fish-input-register-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.fish-input-register-btn {
+  width: 100%;
 }
 
 .draw-toolbar {
@@ -920,11 +935,19 @@
   }
 
   .fish-input-panel {
-    max-height: min(660px, calc(100vh - 92px));
+    max-height: min(760px, calc(100vh - 92px));
   }
 
   .fish-input-grid {
     grid-template-columns: 1fr;
+  }
+
+  .preview-area {
+    grid-column: 1;
+  }
+
+  .fish-input-register-wrap {
+    grid-column: 1;
   }
 }
 

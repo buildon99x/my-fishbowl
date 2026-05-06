@@ -40,7 +40,7 @@ export function renderFishInputPanel(state) {
       </div>
 
       <div class="fish-input-panel">
-        <div class="fish-input-header">
+        <div class="fish-input-status">
           <p>${escapeHtml(statusMessage)}</p>
         </div>
 
@@ -76,7 +76,13 @@ export function renderFishInputPanel(state) {
               <span>Draw</span>
               <button class="button button-secondary" type="button" data-clear-drawing>Clear</button>
             </div>
-            <canvas class="fish-drawing-canvas" width="240" height="160" data-fish-canvas aria-label="Draw fish image"></canvas>
+            <canvas
+              class="fish-drawing-canvas"
+              width="480"
+              height="320"
+              data-fish-canvas
+              aria-label="Draw fish image"
+            ></canvas>
           </div>
 
           <div class="preview-area" data-status="${state.status}">
@@ -87,11 +93,13 @@ export function renderFishInputPanel(state) {
                 : '<span class="preview-empty">No image yet</span>'
             }
           </div>
-        </div>
 
-        <button class="button button-primary" type="button" data-register-fish-image ${canRegister ? '' : 'disabled'}>
-          Register image
-        </button>
+          <div class="fish-input-register-wrap">
+            <button class="button button-primary fish-input-register-btn" type="button" data-register-fish-image ${canRegister ? '' : 'disabled'}>
+              Register image
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   `;
