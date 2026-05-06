@@ -1,4 +1,5 @@
 import { renderFishProps } from './fish-props.js';
+import { FOOD_CONFIGS, FOOD_TYPES } from '../feeding/foodConfig.js';
 
 function escapeHtml(value) {
   return String(value)
@@ -131,7 +132,11 @@ export function renderActionCluster({ feedingState, fishInputState, propPanelSta
           <div class="prop-feed-submenu ${feedActive ? 'is-visible' : ''}">
             <label class="prop-food-type-label" for="prop-food-type">Food</label>
             <select id="prop-food-type" class="prop-food-type-select" data-prop-food-type>
-              <option value="basic" ${feedingState.selectedType === 'basic' ? 'selected' : ''}>Basic</option>
+              ${FOOD_TYPES.map((type) => {
+                const config = FOOD_CONFIGS[type];
+                const selected = feedingState.selectedType === type ? 'selected' : '';
+                return `<option value="${escapeHtml(type)}" ${selected}>${escapeHtml(config.label)}</option>`;
+              }).join('')}
             </select>
           </div>
           <button

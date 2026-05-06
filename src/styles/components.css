@@ -162,15 +162,38 @@
   position: absolute;
   left: var(--food-x);
   top: var(--food-y);
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%) rotate(var(--food-rotation, 0deg));
+  pointer-events: none;
+}
+
+.food-pellet img,
+.food-pellet::after {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.food-pellet--flake {
+  width: 14px;
+  height: 14px;
+  background: url('../../assets/food/flake-1.svg') center / contain no-repeat;
+  filter: drop-shadow(0 2px 3px rgba(180, 140, 0, 0.35));
+}
+
+.food-pellet--pellet {
   width: 12px;
   height: 12px;
-  border: 2px solid rgba(104, 71, 20, 0.42);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 35% 30%, #fff1a6 0 20%, transparent 22%),
-    #d68a24;
-  box-shadow: 0 5px 10px rgba(56, 34, 10, 0.18);
-  transform: translate(-50%, -50%);
+  background: url('../../assets/food/pellet.svg') center / contain no-repeat;
+  filter: drop-shadow(0 3px 5px rgba(104, 50, 10, 0.3));
+}
+
+.food-pellet--bloodworm {
+  width: 11px;
+  height: 21px;
+  background: url('../../assets/food/bloodworm.svg') center / contain no-repeat;
+  filter: drop-shadow(0 2px 4px rgba(120, 20, 10, 0.35));
 }
 
 .fish-sprite {
@@ -583,35 +606,52 @@
 }
 
 .feeding-controls {
-  display: grid;
-  grid-template-columns: auto minmax(94px, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-xs);
   margin-top: var(--space-sm);
 }
 
-.feeding-type {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-  color: var(--color-muted);
-  font-size: var(--text-caption-uc);
-  font-weight: 600;
+.food-palette {
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
-.feeding-type select {
-  width: 100%;
-  min-height: 36px;
-  border: 1px solid var(--color-hairline);
+.food-palette-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 4px;
+  border: 2px solid transparent;
   border-radius: var(--radius-sm);
-  padding: 0 var(--space-xs);
-  color: var(--color-ink);
   background: var(--color-canvas);
-  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.food-palette-item:hover {
+  border-color: var(--color-hairline);
+  background: color-mix(in srgb, var(--color-canvas) 80%, var(--color-brand-ochre));
+}
+
+.food-palette-item--selected {
+  border-color: var(--color-brand-ochre, #d68a24);
+  background: color-mix(in srgb, var(--color-canvas) 70%, var(--color-brand-ochre));
+}
+
+.food-palette-item img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 .feeding-mode-hint {
-  grid-column: 1 / -1;
+  width: 100%;
   color: var(--color-muted);
   font-size: var(--text-caption);
   font-weight: 500;

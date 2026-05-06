@@ -1,35 +1,54 @@
-export const FOOD_TYPE = 'basic';
-export const MAX_FOOD_AGE_MS = 14000;
+import { FOOD_CONFIGS, DEFAULT_FOOD_TYPE } from './foodConfig.js';
+import { tickFoodPhysics, isFoodExpired } from './foodPhysics.js';
+import { applyFoodEffect, getFoodDetectRadius } from './foodEffects.js';
+
 export const FOOD_EAT_DISTANCE = 6;
-export const FOOD_ATTRACT_DISTANCE = 26;
-export const FISH_FEED_STEP = 18;
 
 export function createFeedingState() {
   return {
     feedingMode: false,
-    selectedType: FOOD_TYPE,
+    selectedType: DEFAULT_FOOD_TYPE,
     foods: [],
     fishEating: null,
     lastTickAt: 0,
   };
 }
 
-export function createFoodAt(x, y, type = FOOD_TYPE) {
-  const now = new Date().toISOString();
+export function createFoodAt(x, y, type = DEFAULT_FOOD_TYPE) {
+  const config = FOOD_CONFIGS[type] ?? FOOD_CONFIGS.pellet;
+  const [minSpeed, maxSpeed] = config.fallSpeedRange;
+  const asset = config.assets[Math.floor(Math.random() * config.assets.length)];
 
   return {
     id: crypto.randomUUID(),
     type,
+    asset,
     x,
     y,
-    fallSpeed: 10 + Math.random() * 4,
-    createdAt: now,
+    baseX: x,
+    fallSpeed: minSpeed + Math.random() * (maxSpeed - minSpeed),
+    rotation: Math.random() * 360,
+    rotationSpeed: config.rotates ? 60 + Math.random() * 240 : 0,
+    elapsedMs: 0,
+    createdAt: Date.now(),
+    landedAt: null,
   };
 }
 
-export function addFood(state, food) {
-  state.foods = [...state.foods, food];
-  return food;
+export function createFoodsAt(x, y, type = DEFAULT_FOOD_TYPE) {
+  const config = FOOD_CONFIGS[type] ?? FOOD_CONFIGS.pellet;
+  const [minCount, maxCount] = config.countPerClick;
+  const count = minCount + Math.floor(Math.random() * (maxCount - minCount + 1));
+
+  return Array.from({ length: count }, () => {
+    const spawnX = type === 'flake' ? x + (Math.random() * 40 - 20) : x;
+    return createFoodAt(Math.min(Math.max(spawnX, 2), 98), y, type);
+  });
+}
+
+export function addFoods(state, foods) {
+  state.foods = [...state.foods, ...foods];
+  return foods;
 }
 
 export function clamp(value, min, max) {
@@ -40,12 +59,12 @@ function getDistance(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function moveFishTowardFood(fish, food, deltaSeconds) {
+function moveFishTowardFood(fish, food, deltaSeconds, attractDistance) {
   const dx = food.x - fish.x;
   const dy = food.y - fish.y;
   const distance = Math.hypot(dx, dy);
 
-  if (distance === 0 || distance > FOOD_ATTRACT_DISTANCE) {
+  if (distance === 0 || distance > attractDistance) {
     return fish;
   }
 
@@ -61,48 +80,54 @@ function moveFishTowardFood(fish, food, deltaSeconds) {
   };
 }
 
-function feedFish(fish) {
-  return {
+function feedFish(fish, foodType, nowMs) {
+  const config = FOOD_CONFIGS[foodType] ?? FOOD_CONFIGS.pellet;
+  const fed = {
     ...fish,
-    hunger: clamp((Number(fish.hunger) || 0) - FISH_FEED_STEP, 0, 100),
+    hunger: clamp((Number(fish.hunger) || 0) - config.hungerReduction, 0, 100),
   };
+  return applyFoodEffect(fed, foodType, nowMs);
 }
 
 export function tickFeeding(state, fishes, nowMs) {
   const previousTickAt = state.lastTickAt || nowMs;
   const deltaSeconds = Math.min((nowMs - previousTickAt) / 1000, 0.05);
-  const createdAtMs = (food) => Date.parse(food.createdAt) || nowMs;
+
   const updatedFoods = state.foods
-    .map((food) => ({
-      ...food,
-      y: food.y + food.fallSpeed * deltaSeconds,
-    }))
-    .filter((food) => food.y <= 96 && nowMs - createdAtMs(food) < MAX_FOOD_AGE_MS);
+    .map((food) => tickFoodPhysics(food, deltaSeconds))
+    .filter((food) => food.y <= 96 && !isFoodExpired(food, nowMs));
+
   let updatedFishes = fishes;
   let eatenFoodId = null;
   let fishEating = null;
 
   updatedFoods.forEach((food) => {
-    const nearestFish = updatedFishes
+    const nearest = updatedFishes
       .filter((fish) => !fish.hidden)
-      .map((fish) => ({ fish, distance: getDistance(fish, food) }))
+      .map((fish) => ({
+        fish,
+        distance: getDistance(fish, food),
+        attractDistance: getFoodDetectRadius(fish, nowMs),
+      }))
       .sort((a, b) => a.distance - b.distance)[0];
 
-    if (!nearestFish || nearestFish.distance > FOOD_ATTRACT_DISTANCE) {
+    if (!nearest || nearest.distance > nearest.attractDistance) {
       return;
     }
 
     updatedFishes = updatedFishes.map((fish) =>
-      fish.id === nearestFish.fish.id ? moveFishTowardFood(fish, food, deltaSeconds) : fish,
+      fish.id === nearest.fish.id
+        ? moveFishTowardFood(fish, food, deltaSeconds, nearest.attractDistance)
+        : fish,
     );
 
-    const movedFish = updatedFishes.find((fish) => fish.id === nearestFish.fish.id);
+    const movedFish = updatedFishes.find((fish) => fish.id === nearest.fish.id);
 
     if (movedFish && getDistance(movedFish, food) <= FOOD_EAT_DISTANCE && !eatenFoodId) {
       eatenFoodId = food.id;
       fishEating = movedFish.id;
       updatedFishes = updatedFishes.map((fish) =>
-        fish.id === movedFish.id ? feedFish(fish) : fish,
+        fish.id === movedFish.id ? feedFish(fish, food.type, nowMs) : fish,
       );
     }
   });

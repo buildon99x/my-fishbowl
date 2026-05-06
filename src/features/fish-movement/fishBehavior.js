@@ -48,10 +48,11 @@ export function createFishLiveliness(fish = {}, nowMs = 0, random = Math.random)
 
 export function chooseNextBehavior(fish, nowMs, random = Math.random) {
   const idleWeight = 0.2 + clamp(fish.idleBias ?? 0, 0, 0.4);
+  const dartWeight = fish.dartBoostUntilMs && nowMs < fish.dartBoostUntilMs ? 0.25 : 0.1;
   const weights = [
     ['cruising', 0.6],
     ['idle', idleWeight],
-    ['dart', 0.1],
+    ['dart', dartWeight],
     ['wander', 0.1],
   ];
   const total = weights.reduce((sum, [, weight]) => sum + weight, 0);
