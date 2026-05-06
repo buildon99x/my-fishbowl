@@ -17,9 +17,12 @@ import {
   startFishMovement,
 } from './features/fish-movement/index.js';
 import {
-  ALGAE_STATE_NAMES,
-  DEFAULT_ALGAE_THRESHOLDS,
+  ALGAE_INTERVAL_MINUTES,
+  ALGAE_MAX_LEVEL,
+  calcCleanliness,
+  calcLastCleanedAtForAlgaeLevel,
   drawAlgaeLayer,
+  getAlgaeStateName,
   restoreAlgaeState,
 } from './features/algae/index.js';
 
@@ -27,6 +30,7 @@ const IS_DEV = import.meta.env.DEV;
 import {
   COMPLETION_THRESHOLD,
   applyBrush,
+  clearAlgaeCanvas,
   createCleaningState,
   snapshotCanvas,
 } from './features/cleaning/index.js';
@@ -78,10 +82,35 @@ function normalizeAquarium(aquarium) {
         vx: Number.isFinite(fish?.vx) ? fish.vx : 0,
         vy: Number.isFinite(fish?.vy) ? fish.vy : 0,
         speed: Number.isFinite(fish?.speed) ? fish.speed : 0,
-        movementStatus: fish?.movementStatus === 'turning' ? 'turning' : 'swimming',
+        movementStatus: ['cruising', 'idle', 'dart', 'wander', 'turning'].includes(fish?.movementStatus)
+          ? fish.movementStatus
+          : 'cruising',
+        behaviorStatus: ['cruising', 'idle', 'dart', 'wander', 'turning'].includes(fish?.behaviorStatus)
+          ? fish.behaviorStatus
+          : 'cruising',
         turnUntilMs: Number.isFinite(fish?.turnUntilMs) ? fish.turnUntilMs : 0,
+        turnStartedAtMs: Number.isFinite(fish?.turnStartedAtMs) ? fish.turnStartedAtMs : 0,
+        turnFromVx: Number.isFinite(fish?.turnFromVx) ? fish.turnFromVx : 0,
+        turnFromVy: Number.isFinite(fish?.turnFromVy) ? fish.turnFromVy : 0,
+        turnTargetVx: Number.isFinite(fish?.turnTargetVx) ? fish.turnTargetVx : 0,
+        turnTargetVy: Number.isFinite(fish?.turnTargetVy) ? fish.turnTargetVy : 0,
+        turnReturnStatus: fish?.turnReturnStatus ?? 'cruising',
+        wallPauseUntilMs: Number.isFinite(fish?.wallPauseUntilMs) ? fish.wallPauseUntilMs : 0,
+        wallResumeVx: Number.isFinite(fish?.wallResumeVx) ? fish.wallResumeVx : 0,
+        wallResumeVy: Number.isFinite(fish?.wallResumeVy) ? fish.wallResumeVy : 0,
         nextTargetAtMs: Number.isFinite(fish?.nextTargetAtMs) ? fish.nextTargetAtMs : 0,
         bobPhase: Number.isFinite(fish?.bobPhase) ? fish.bobPhase : 0,
+        waveOffset: Number.isFinite(fish?.waveOffset) ? fish.waveOffset : 0,
+        movementTilt: Number.isFinite(fish?.movementTilt) ? fish.movementTilt : 0,
+        speedMultiplier: Number.isFinite(fish?.speedMultiplier) && fish.speedMultiplier > 0 ? fish.speedMultiplier : null,
+        idleBias: Number.isFinite(fish?.idleBias) ? fish.idleBias : null,
+        preferredDepth: ['top', 'middle', 'bottom'].includes(fish?.preferredDepth) ? fish.preferredDepth : null,
+        wavingFrequency: Number.isFinite(fish?.wavingFrequency) && fish.wavingFrequency > 0 ? fish.wavingFrequency : null,
+        wavingAmplitude: Number.isFinite(fish?.wavingAmplitude) && fish.wavingAmplitude > 0 ? fish.wavingAmplitude : null,
+        behaviorStartedAtMs: Number.isFinite(fish?.behaviorStartedAtMs) ? fish.behaviorStartedAtMs : 0,
+        dartUntilMs: Number.isFinite(fish?.dartUntilMs) ? fish.dartUntilMs : 0,
+        wanderUntilMs: Number.isFinite(fish?.wanderUntilMs) ? fish.wanderUntilMs : 0,
+        nextBehaviorAtMs: Number.isFinite(fish?.nextBehaviorAtMs) ? fish.nextBehaviorAtMs : 0,
         headDirection: fish?.headDirection === 'left' ? 'left' : 'right',
         movementEnabled: fish?.movementEnabled !== false,
         size: Number.isFinite(fish?.size) ? fish.size : 120,
@@ -135,6 +164,7 @@ function saveAquarium(aquarium) {
 function createFishFromDraft(draft, index) {
   const now = new Date().toISOString();
   const lane = index % 5;
+  const preferredDepths = ['top', 'middle', 'bottom'];
 
   return {
     id: crypto.randomUUID(),
@@ -145,10 +175,31 @@ function createFishFromDraft(draft, index) {
     vx: 0,
     vy: 0,
     speed: 0,
-    movementStatus: 'swimming',
+    movementStatus: 'cruising',
+    behaviorStatus: 'cruising',
     turnUntilMs: 0,
+    turnStartedAtMs: 0,
+    turnFromVx: 0,
+    turnFromVy: 0,
+    turnTargetVx: 0,
+    turnTargetVy: 0,
+    turnReturnStatus: 'cruising',
+    wallPauseUntilMs: 0,
+    wallResumeVx: 0,
+    wallResumeVy: 0,
     nextTargetAtMs: 0,
     bobPhase: 0,
+    waveOffset: 0,
+    movementTilt: 0,
+    speedMultiplier: 0.7 + Math.random() * 0.6,
+    idleBias: Math.random() * 0.4,
+    preferredDepth: preferredDepths[Math.floor(Math.random() * preferredDepths.length)],
+    wavingFrequency: 2 + Math.random() * 2,
+    wavingAmplitude: 2 + Math.random() * 3,
+    behaviorStartedAtMs: 0,
+    dartUntilMs: 0,
+    wanderUntilMs: 0,
+    nextBehaviorAtMs: 0,
     headDirection: 'right',
     movementEnabled: draft.movementEnabled !== false,
     size: 120,
@@ -214,9 +265,8 @@ function clamp(value, min, max) {
 }
 
 function renderGodModePanel(godModeState, aquarium) {
-  const { thresholds } = godModeState;
   const level = aquarium.algaeLevel;
-  const levelName = ALGAE_STATE_NAMES[level] ?? 'clean';
+  const levelName = getAlgaeStateName(level);
 
   return `
     <div class="god-mode-panel" data-god-mode-panel>
@@ -225,28 +275,16 @@ function renderGodModePanel(godModeState, aquarium) {
         <button class="god-mode-close" type="button" data-close-god-mode>✕</button>
       </div>
       <div class="god-mode-section">
-        <p class="god-mode-section-label">이끼 발생 임계값 (단위: 시간)</p>
+        <p class="god-mode-section-label">이끼 레벨 직접 설정</p>
         <label class="god-mode-field">
-          <span>Level 1 — lightAlgae</span>
-          <input class="god-mode-input" type="number" min="0.1" step="0.5"
-            value="${thresholds.light}" data-threshold="light">
-          <span class="god-mode-unit">h</span>
-        </label>
-        <label class="god-mode-field">
-          <span>Level 2 — mediumAlgae</span>
-          <input class="god-mode-input" type="number" min="0.1" step="0.5"
-            value="${thresholds.medium}" data-threshold="medium">
-          <span class="god-mode-unit">h</span>
-        </label>
-        <label class="god-mode-field">
-          <span>Level 3 — heavyAlgae</span>
-          <input class="god-mode-input" type="number" min="0.1" step="0.5"
-            value="${thresholds.heavy}" data-threshold="heavy">
-          <span class="god-mode-unit">h</span>
+          <span>algaeLevel</span>
+          <input class="god-mode-input" type="number" min="0" max="${ALGAE_MAX_LEVEL}" step="1"
+            value="${level}" data-algae-level-input>
+          <span class="god-mode-unit">/ ${ALGAE_MAX_LEVEL}</span>
         </label>
       </div>
       <div class="god-mode-status">
-        algaeLevel: <strong>${level}</strong> (${levelName})
+        algaeLevel: <strong>${level}</strong> / ${ALGAE_MAX_LEVEL} (${levelName})
         &nbsp;·&nbsp;
         cleanliness: <strong>${aquarium.cleanliness}</strong>
       </div>
@@ -408,7 +446,7 @@ function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId) {
           data-fish-sprite="${fish.id}"
           src="${fish.imageUrl}"
           alt="${escapeHtml(fish.name)}"
-          style="--fish-x: ${fish.x}%; --fish-y: ${fish.y}%; --fish-size: ${fish.size}px; --fish-scale-x: ${fish.scaleX}; --fish-scale-y: ${fish.scaleY}; --fish-rotation: ${fish.rotation}deg; --fish-flip: ${shouldFlipFishForMovement(fish) ? -1 : 1}; --fish-flip-y: ${fish.flippedY ? -1 : 1};"
+          style="--fish-x: ${fish.x}%; --fish-y: ${fish.y}%; --fish-size: ${fish.size}px; --fish-scale-x: ${fish.scaleX}; --fish-scale-y: ${fish.scaleY}; --fish-rotation: ${fish.rotation}deg; --fish-tilt: ${fish.movementTilt ?? 0}deg; --fish-bob-y: ${fish.waveOffset ?? 0}px; --fish-flip: ${shouldFlipFishForMovement(fish) ? -1 : 1}; --fish-flip-y: ${fish.flippedY ? -1 : 1};"
         >
       `,
     )
@@ -544,7 +582,7 @@ function renderFishList(fishes, selectedFishId, editingFishId) {
   }
 
   return `
-    <div class="fish-list" role="list">
+    <div class="fish-list" role="list" data-fish-list>
       ${fishes
         .map(
           (fish) => `
@@ -572,6 +610,20 @@ function renderFishList(fishes, selectedFishId, editingFishId) {
         .join('')}
     </div>
   `;
+}
+
+function captureFishListScroll(root, appState) {
+  const fishList = root.querySelector('[data-fish-list]');
+  if (!fishList) return;
+
+  appState.fishListScrollTop = fishList.scrollTop;
+}
+
+function restoreFishListScroll(root, appState) {
+  const fishList = root.querySelector('[data-fish-list]');
+  if (!fishList) return;
+
+  fishList.scrollTop = appState.fishListScrollTop ?? 0;
 }
 
 function renderAquariumStatus(aquarium, appState) {
@@ -608,7 +660,7 @@ function renderAquariumStatus(aquarium, appState) {
           </div>
           <div>
             <dt>이끼 단계</dt>
-            <dd>${aquarium.algaeLevel} · ${ALGAE_STATE_NAMES[aquarium.algaeLevel] ?? 'clean'}</dd>
+            <dd>${aquarium.algaeLevel} / ${ALGAE_MAX_LEVEL} · ${getAlgaeStateName(aquarium.algaeLevel)}</dd>
           </div>
         </dl>
         ${renderFishList(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
@@ -837,6 +889,7 @@ function bindAquariumControls(root, aquarium, appState, render) {
 }
 
 function renderApp(root, aquarium, fishInputState, feedingState, appState) {
+  captureFishListScroll(root, appState);
   appState.movementController?.stop();
 
   const { cleaningState } = appState;
@@ -881,6 +934,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       ${IS_DEV && appState.godModeState?.visible ? renderGodModePanel(appState.godModeState, aquarium) : ''}
     </main>
   `;
+  restoreFishListScroll(root, appState);
 
   const algaeCanvas = root.querySelector('[data-algae-canvas]');
   if (algaeCanvas) {
@@ -942,6 +996,7 @@ function bindCleaningEvents(root, aquarium, appState, render) {
     cleaningState.cleaningProgress = 0;
     cleaningState.snapshotData = null;
     cleaningState.initialAlphaSum = 0;
+    cleaningState.initialAlgaePixels = 0;
     render();
   });
 
@@ -972,6 +1027,9 @@ function bindCleaningEvents(root, aquarium, appState, render) {
 
     if (progress >= COMPLETION_THRESHOLD && !cleaningState.cleaned) {
       cleaningState.cleaned = true;
+      cleaningState.cleaningProgress = 1;
+      clearAlgaeCanvas(algaeCanvas);
+      updateProgressUI();
       aquarium.cleanliness = 100;
       aquarium.algaeLevel = 0;
       aquarium.lastCleanedAt = new Date().toISOString();
@@ -1067,16 +1125,18 @@ function bindGodModeEvents(root, aquarium, appState, render) {
     render();
   });
 
-  panel.querySelectorAll('[data-threshold]').forEach((input) => {
-    input.addEventListener('change', () => {
-      const key = input.dataset.threshold;
-      const value = parseFloat(input.value);
-      if (!Number.isFinite(value) || value <= 0) return;
-      appState.godModeState.thresholds[key] = value;
-      restoreAlgaeState(aquarium, appState.godModeState.thresholds);
-      saveAquarium(aquarium);
-      render();
-    });
+  panel.querySelector('[data-algae-level-input]')?.addEventListener('change', (event) => {
+    const value = parseInt(event.target.value, 10);
+    if (!Number.isFinite(value)) return;
+
+    const level = clamp(value, 0, ALGAE_MAX_LEVEL);
+    const now = Date.now();
+    aquarium.algaeLevel = level;
+    aquarium.cleanliness = calcCleanliness(level);
+    aquarium.lastCleanedAt = calcLastCleanedAtForAlgaeLevel(level, now, ALGAE_INTERVAL_MINUTES);
+    aquarium.updatedAt = new Date(now).toISOString();
+    saveAquarium(aquarium);
+    render();
   });
 }
 
@@ -1091,6 +1151,7 @@ function exitCleaningMode(cleaningState) {
   cleaningState.cleaningProgress = 0;
   cleaningState.snapshotData = null;
   cleaningState.initialAlphaSum = 0;
+  cleaningState.initialAlgaePixels = 0;
 }
 
 function initApp() {
@@ -1103,13 +1164,14 @@ function initApp() {
     editingFishId: null,
     feedingAnimationId: null,
     isFishListCollapsed: false,
+    fishListScrollTop: 0,
     movementController: null,
     cleaningState: createCleaningState(),
-    godModeState: IS_DEV ? { visible: false, thresholds: { ...DEFAULT_ALGAE_THRESHOLDS } } : null,
+    godModeState: IS_DEV ? { visible: false } : null,
   };
 
   normalizeAquariumFishMovement(aquarium, performance.now());
-  restoreAlgaeState(aquarium, appState.godModeState?.thresholds);
+  restoreAlgaeState(aquarium);
   saveAquarium(aquarium);
   renderApp(app, aquarium, fishInputState, feedingState, appState);
 

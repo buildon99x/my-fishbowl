@@ -1,37 +1,28 @@
+import { ALGAE_MAX_LEVEL } from './state.js';
+
 const WATER_PATH_NORMALIZED =
   'M0.1024 0.1821 C0.2066 0.1513 0.2960 0.2103 0.3950 0.1821 C0.4957 0.1526 0.5694 0.2128 0.6719 0.1821 C0.7431 0.1615 0.7951 0.1808 0.8438 0.2026 C0.9253 0.3333 0.9688 0.5167 0.9471 0.6705 C0.9175 0.8782 0.7622 0.9859 0.5061 0.9859 C0.2491 0.9859 0.0981 0.8615 0.0668 0.6603 C0.0434 0.5090 0.0616 0.3128 0.1024 0.1821 Z';
 
-const LEVEL_CONFIG = {
-  1: {
-    count: 5,
-    countJitter: 2,
-    radiusBase: 0.038,
-    radiusJitter: 0.022,
-    opacityMin: 0.30,
-    opacityMax: 0.45,
-    edgeBiasMin: 0.75,
-    edgeBiasMax: 0.95,
-  },
-  2: {
-    count: 12,
-    countJitter: 3,
-    radiusBase: 0.048,
-    radiusJitter: 0.026,
-    opacityMin: 0.40,
-    opacityMax: 0.55,
-    edgeBiasMin: 0.65,
-    edgeBiasMax: 0.95,
-  },
-  3: {
-    count: 22,
-    countJitter: 4,
-    radiusBase: 0.060,
-    radiusJitter: 0.034,
-    opacityMin: 0.50,
-    opacityMax: 0.70,
-    edgeBiasMin: 0.55,
-    edgeBiasMax: 0.95,
-  },
+const ALGAE_CONFIG_MIN = {
+  count: 3,
+  countJitter: 1,
+  radiusBase: 0.026,
+  radiusJitter: 0.014,
+  opacityMin: 0.18,
+  opacityMax: 0.28,
+  edgeBiasMin: 0.82,
+  edgeBiasMax: 0.96,
+};
+
+const ALGAE_CONFIG_MAX = {
+  count: 36.4,
+  countJitter: 6.5,
+  radiusBase: 0.064,
+  radiusJitter: 0.036,
+  opacityMin: 0.676,
+  opacityMax: 0.936,
+  edgeBiasMin: 0.50,
+  edgeBiasMax: 0.96,
 };
 
 const PATCH_EFFECTIVE_RADIUS_FACTOR = 1.15;
@@ -57,6 +48,24 @@ function hashSeed(input) {
     h = Math.imul(h, 16777619);
   }
   return h >>> 0;
+}
+
+function lerp(min, max, t) {
+  return min + (max - min) * t;
+}
+
+export function getAlgaeRenderConfig(level) {
+  const t = Math.min(1, Math.max(0, level / ALGAE_MAX_LEVEL));
+  return {
+    count: lerp(ALGAE_CONFIG_MIN.count, ALGAE_CONFIG_MAX.count, t),
+    countJitter: lerp(ALGAE_CONFIG_MIN.countJitter, ALGAE_CONFIG_MAX.countJitter, t),
+    radiusBase: lerp(ALGAE_CONFIG_MIN.radiusBase, ALGAE_CONFIG_MAX.radiusBase, t),
+    radiusJitter: lerp(ALGAE_CONFIG_MIN.radiusJitter, ALGAE_CONFIG_MAX.radiusJitter, t),
+    opacityMin: lerp(ALGAE_CONFIG_MIN.opacityMin, ALGAE_CONFIG_MAX.opacityMin, t),
+    opacityMax: lerp(ALGAE_CONFIG_MIN.opacityMax, ALGAE_CONFIG_MAX.opacityMax, t),
+    edgeBiasMin: lerp(ALGAE_CONFIG_MIN.edgeBiasMin, ALGAE_CONFIG_MAX.edgeBiasMin, t),
+    edgeBiasMax: lerp(ALGAE_CONFIG_MIN.edgeBiasMax, ALGAE_CONFIG_MAX.edgeBiasMax, t),
+  };
 }
 
 function tryPlacePatch(rng, cfg, w, h, meanDim, existing) {
@@ -88,8 +97,7 @@ function tryPlacePatch(rng, cfg, w, h, meanDim, existing) {
 }
 
 function generatePatches(rng, level, w, h) {
-  const cfg = LEVEL_CONFIG[level];
-  if (!cfg) return [];
+  const cfg = getAlgaeRenderConfig(level);
 
   const count = Math.max(1, Math.round(cfg.count + (rng() * 2 - 1) * cfg.countJitter));
   const meanDim = (w + h) / 2;
@@ -148,9 +156,9 @@ export function drawAlgaeLayer(canvas, algaeLevel, seed) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, w, h);
 
-  if (algaeLevel === 0) return;
+  if (algaeLevel <= 0) return;
 
-  const level = Math.min(3, Math.max(1, Math.floor(algaeLevel)));
+  const level = Math.min(ALGAE_MAX_LEVEL, Math.max(1, Math.floor(algaeLevel)));
 
   ctx.save();
   const waterNorm = new Path2D(WATER_PATH_NORMALIZED);

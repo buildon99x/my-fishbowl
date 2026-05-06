@@ -36,37 +36,38 @@
 - 필요한 화면 요소:
   - 청결도 표시
   - 이끼 레이어 (Canvas 엘리먼트 — S-008 청소 시스템과 공유)
-  - 오염 단계별 시각 표현 (패치 수/크기/불투명도)
-- 필요한 상태 (`algaeLevel` 숫자와 대응하는 상태명):
-  - `0` / `clean`: 이끼 없음
-  - `1` / `lightAlgae`: 약간 오염
-  - `2` / `mediumAlgae`: 보통 오염
-  - `3` / `heavyAlgae`: 심한 오염
+  - 오염 단계별 시각 표현
+- 필요한 상태:
+  - `algaeLevel`: 0~96 숫자 단계. 마지막 청소 후 30분마다 1씩 증가하고 48시간 이후 96으로 유지한다.
+  - 상태명은 UI 표시용 밴드로 사용한다.
+    - `0` / `clean`: 이끼 없음
+    - `1~31` / `lightAlgae`: 약한 이끼
+    - `32~63` / `mediumAlgae`: 보통 이끼
+    - `64~96` / `heavyAlgae`: 심한 이끼
 - 오류 또는 빈 상태:
   - 마지막 청소 시간이 없으면 현재 시간을 기준값으로 사용한다.
   - 오염도 계산 실패 시 기본 깨끗한 상태로 표시한다.
 
 ## 오염 단계
 
-`algaeLevel`은 `lastCleanedAt` 이후 경과 시간으로 결정한다. 기본 임계값은 `DEFAULT_ALGAE_THRESHOLDS`로 정의하며, DEV 환경의 God Mode에서 런타임 오버라이드가 가능하다.
+`algaeLevel`은 `lastCleanedAt` 이후 경과 시간으로 결정한다. 30분마다 1단계씩 증가하며, 48시간에 최대 단계 96에 도달한다.
 
 | 단계 | 상태명 | 마지막 청소 후 경과 시간 | 표현 |
 | --- | --- | --- | --- |
-| 0 | `clean` | 0 ~ 12시간 | 투명 (패치 없음) |
-| 1 | `lightAlgae` | 12 ~ 24시간 | 벽 근처 소수 패치 |
-| 2 | `mediumAlgae` | 24 ~ 48시간 | 더 많고 큰 패치 |
-| 3 | `heavyAlgae` | 48시간 초과 | 안쪽까지 분포한 다수 패치 |
-
-기본 임계값: `DEFAULT_ALGAE_THRESHOLDS = { light: 12, medium: 24, heavy: 48 }` (시간 단위)
+| 0 | `clean` | 0 ~ 30분 미만 | 투명 |
+| 1 | `lightAlgae` | 30분 | 연한 초록 이끼 시작 |
+| 2~31 | `lightAlgae` | 1시간 ~ 15시간 30분 | 약한 이끼가 점진적으로 증가 |
+| 32~63 | `mediumAlgae` | 16시간 ~ 31시간 30분 | 화면 가장자리 이끼 증가 |
+| 64~95 | `heavyAlgae` | 32시간 ~ 47시간 30분 | 어항 전반의 이끼 증가 |
+| 96 | `heavyAlgae` | 48시간 이상 | 최대 이끼 |
 
 `cleanliness`는 `algaeLevel`과 연동하여 아래 값을 유지한다.
 
 | algaeLevel | cleanliness |
 | --- | --- |
 | 0 | 100 |
-| 1 | 70 |
-| 2 | 40 |
-| 3 | 10 |
+| 48 | 55 |
+| 96 | 10 |
 
 S-008(청소) 완료 시 `algaeLevel`을 0으로, `cleanliness`를 100으로 리셋하고 `lastCleanedAt`을 현재 시간으로 갱신한다.
 
@@ -119,7 +120,7 @@ drawAlgaeLayer(canvas, algaeLevel, seed)
 | 항목 | 타입 | 설명 |
 | --- | --- | --- |
 | `cleanliness` | number (0~100) | 청결도 — `algaeLevel`과 연동 |
-| `algaeLevel` | number (0~3) | 이끼 단계 |
+| `algaeLevel` | number (0~96) | 이끼 단계 |
 | `lastCleanedAt` | ISO 8601 string | 마지막 청소 시간 |
 
 ## 구현 메모
