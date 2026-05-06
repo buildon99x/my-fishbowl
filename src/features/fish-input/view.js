@@ -13,6 +13,11 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function positionStyle(pos) {
+  if (!pos) return '';
+  return ` style="left:${pos.x}px;top:${pos.y}px;right:auto;bottom:auto;"`;
+}
+
 export function renderFishInputPanel(state) {
   if (!state.isExpanded) {
     return '';
@@ -23,10 +28,15 @@ export function renderFishInputPanel(state) {
   const statusMessage = state.message || STATUS_TEXT[state.status] || STATUS_TEXT.idle;
 
   return `
-    <section class="fish-input-widget" aria-labelledby="fish-input-title">
-      <div class="fish-input-panel-header">
-        <span id="fish-input-title" class="fish-input-panel-title">Add fish image</span>
-        <button class="fish-input-close" type="button" data-toggle-fish-input aria-label="닫기">✕</button>
+    <section class="fish-input-widget" aria-labelledby="fish-input-title"${positionStyle(state.position)}>
+      <div class="prop-panel-header" data-fish-input-drag-handle>
+        <div class="prop-panel-identity">
+          <span class="prop-panel-thumb-icon" aria-hidden="true">🐠</span>
+          <div class="prop-panel-title-group">
+            <span id="fish-input-title" class="prop-panel-name">Add fish image</span>
+          </div>
+        </div>
+        <button class="prop-action-btn" type="button" data-toggle-fish-input aria-label="닫기" title="닫기">❌</button>
       </div>
 
       <div class="fish-input-panel">

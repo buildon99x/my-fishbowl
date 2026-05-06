@@ -1,6 +1,33 @@
 export const FISH_DRAFT_STORAGE_KEY = 'my-fishbowl:fish-draft';
 export const DEFAULT_FISH_NAME = 'Unnamed fish';
 
+const POSITION_KEY = 'my-fishbowl:fish-input-pos';
+
+function loadSavedPosition() {
+  try {
+    const raw = localStorage.getItem(POSITION_KEY);
+    if (!raw) return null;
+    const pos = JSON.parse(raw);
+    if (typeof pos.x === 'number' && typeof pos.y === 'number') {
+      return {
+        x: Math.max(0, Math.min(pos.x, window.innerWidth - 200)),
+        y: Math.max(0, Math.min(pos.y, window.innerHeight - 80)),
+      };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function saveFishInputPosition(pos) {
+  try {
+    localStorage.setItem(POSITION_KEY, JSON.stringify(pos));
+  } catch {
+    // storage unavailable
+  }
+}
+
 export function createFishInputState() {
   const draft = loadFishDraft();
 
@@ -12,6 +39,7 @@ export function createFishInputState() {
     source: draft?.source ?? '',
     movementEnabled: draft?.movementEnabled !== false,
     isExpanded: false,
+    position: loadSavedPosition(),
   };
 }
 
