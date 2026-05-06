@@ -18,9 +18,12 @@ import {
 } from './features/fish-movement/index.js';
 import {
   ALGAE_STATE_NAMES,
+  DEFAULT_ALGAE_THRESHOLDS,
   drawAlgaeLayer,
   restoreAlgaeState,
 } from './features/algae/index.js';
+
+const IS_DEV = import.meta.env.DEV;
 import {
   COMPLETION_THRESHOLD,
   applyBrush,
@@ -208,6 +211,47 @@ function getFishById(aquarium, fishId) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function renderGodModePanel(godModeState, aquarium) {
+  const { thresholds } = godModeState;
+  const level = aquarium.algaeLevel;
+  const levelName = ALGAE_STATE_NAMES[level] ?? 'clean';
+
+  return `
+    <div class="god-mode-panel" data-god-mode-panel>
+      <div class="god-mode-header">
+        <span class="god-mode-title">⚡ God Mode</span>
+        <button class="god-mode-close" type="button" data-close-god-mode>✕</button>
+      </div>
+      <div class="god-mode-section">
+        <p class="god-mode-section-label">이끼 발생 임계값 (단위: 시간)</p>
+        <label class="god-mode-field">
+          <span>Level 1 — lightAlgae</span>
+          <input class="god-mode-input" type="number" min="0.1" step="0.5"
+            value="${thresholds.light}" data-threshold="light">
+          <span class="god-mode-unit">h</span>
+        </label>
+        <label class="god-mode-field">
+          <span>Level 2 — mediumAlgae</span>
+          <input class="god-mode-input" type="number" min="0.1" step="0.5"
+            value="${thresholds.medium}" data-threshold="medium">
+          <span class="god-mode-unit">h</span>
+        </label>
+        <label class="god-mode-field">
+          <span>Level 3 — heavyAlgae</span>
+          <input class="god-mode-input" type="number" min="0.1" step="0.5"
+            value="${thresholds.heavy}" data-threshold="heavy">
+          <span class="god-mode-unit">h</span>
+        </label>
+      </div>
+      <div class="god-mode-status">
+        algaeLevel: <strong>${level}</strong> (${levelName})
+        &nbsp;·&nbsp;
+        cleanliness: <strong>${aquarium.cleanliness}</strong>
+      </div>
+    </div>
+  `;
 }
 
 function renderCleanButton(aquarium, cleaningState) {
@@ -833,6 +877,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       </section>
 
       ${renderFishInputPanel(fishInputState)}
+      ${IS_DEV && appState.godModeState?.visible ? renderGodModePanel(appState.godModeState, aquarium) : ''}
     </main>
   `;
 
@@ -864,6 +909,11 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   bindCleaningEvents(root, aquarium, appState, () =>
     renderApp(root, aquarium, fishInputState, feedingState, appState),
   );
+  if (IS_DEV) {
+    bindGodModeEvents(root, aquarium, appState, () =>
+      renderApp(root, aquarium, fishInputState, feedingState, appState),
+    );
+  }
   appState.movementController = startFishMovement(root, aquarium, {
     getPausedFishIds: () => new Set(appState.editingFishId ? [appState.editingFishId] : []),
     onSave: () => saveAquarium(aquarium),
@@ -1002,6 +1052,28 @@ function bindCleaningEvents(root, aquarium, appState, render) {
   });
 }
 
+function bindGodModeEvents(root, aquarium, appState, render) {
+  const panel = root.querySelector('[data-god-mode-panel]');
+  if (!panel) return;
+
+  panel.querySelector('[data-close-god-mode]')?.addEventListener('click', () => {
+    appState.godModeState.visible = false;
+    render();
+  });
+
+  panel.querySelectorAll('[data-threshold]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const key = input.dataset.threshold;
+      const value = parseFloat(input.value);
+      if (!Number.isFinite(value) || value <= 0) return;
+      appState.godModeState.thresholds[key] = value;
+      restoreAlgaeState(aquarium, appState.godModeState.thresholds);
+      saveAquarium(aquarium);
+      render();
+    });
+  });
+}
+
 function exitCleaningMode(cleaningState) {
   if (cleaningState.completionTimer) {
     window.clearTimeout(cleaningState.completionTimer);
@@ -1027,16 +1099,23 @@ function initApp() {
     isFishListCollapsed: false,
     movementController: null,
     cleaningState: createCleaningState(),
+    godModeState: IS_DEV ? { visible: false, thresholds: { ...DEFAULT_ALGAE_THRESHOLDS } } : null,
   };
 
   normalizeAquariumFishMovement(aquarium, performance.now());
-  restoreAlgaeState(aquarium);
+  restoreAlgaeState(aquarium, appState.godModeState?.thresholds);
   saveAquarium(aquarium);
   renderApp(app, aquarium, fishInputState, feedingState, appState);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && appState.cleaningState.cleaningMode) {
       exitCleaningMode(appState.cleaningState);
+      renderApp(app, aquarium, fishInputState, feedingState, appState);
+    }
+
+    if (IS_DEV && e.key === 'G' && e.shiftKey && e.ctrlKey) {
+      e.preventDefault();
+      appState.godModeState.visible = !appState.godModeState.visible;
       renderApp(app, aquarium, fishInputState, feedingState, appState);
     }
   });

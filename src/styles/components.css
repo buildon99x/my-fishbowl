@@ -956,3 +956,121 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── God Mode (dev only) ─────────────────────────────────────── */
+
+.god-mode-panel {
+  position: fixed;
+  top: 80px;
+  left: 22px;
+  z-index: 500;
+  min-width: 300px;
+  border: 1px solid rgba(255, 221, 68, 0.45);
+  border-radius: var(--radius-lg);
+  background: rgba(8, 8, 24, 0.93);
+  backdrop-filter: blur(10px);
+  color: #d0d0d0;
+  font-size: 13px;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 221, 68, 0.15);
+}
+
+.god-mode-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid rgba(255, 221, 68, 0.2);
+}
+
+.god-mode-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffdd44;
+  letter-spacing: 0.06em;
+}
+
+.god-mode-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  background: transparent;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.god-mode-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.god-mode-section {
+  padding: var(--space-sm) var(--space-md);
+}
+
+.god-mode-section-label {
+  margin-bottom: var(--space-xs);
+  color: #888;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.god-mode-field {
+  display: grid;
+  grid-template-columns: 1fr 68px 20px;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: 6px;
+  color: #bbb;
+  font-size: 12px;
+  cursor: default;
+}
+
+.god-mode-field:last-child {
+  margin-bottom: 0;
+}
+
+.god-mode-input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-xs);
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 12px;
+  text-align: right;
+  transition: border-color 0.12s ease;
+}
+
+.god-mode-input:focus {
+  outline: none;
+  border-color: rgba(255, 221, 68, 0.6);
+}
+
+.god-mode-unit {
+  color: #666;
+  font-size: 11px;
+}
+
+.god-mode-status {
+  padding: var(--space-xs) var(--space-md) var(--space-sm);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #888;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+}
+
+.god-mode-status strong {
+  color: #ffdd44;
+  font-weight: 700;
+}
