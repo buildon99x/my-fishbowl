@@ -41,6 +41,7 @@
 | S-008 | 어항 청소 | ready | done | tested | `docs/spec/S-008-aquarium-cleaning.md` |
 | S-009 | 물고기 생동감 | ready | done | tested | `docs/spec/S-009-fish-liveliness.md` |
 | S-010 | 먹이 종류 | ready | not-started | not-tested | `docs/spec/S-010-food-types.md` |
+| S-011 | 어항 거품 효과 | done | done | not-tested | `docs/spec/S-011-aquarium-bubble-effects.md` |
 | S-011 | 물고기 목록 스크롤 위치 보존 | ready | done | tested | `docs/spec/S-011-fish-list-scroll-preservation.md` |
 | S-013 | 속성 패널(prop-panel) 분리 및 신설 | draft | not-started | not-tested | `docs/spec/S-013-prop-panel.md` |
 
