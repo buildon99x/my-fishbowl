@@ -48,6 +48,11 @@ function normalizeAquarium(aquarium) {
   const fishes = Array.isArray(aquarium?.fishes)
     ? aquarium.fishes.map((fish) => ({
         hidden: false,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        flipped: false,
+        flippedY: false,
         ...fish,
         size: Number.isFinite(fish?.size) ? fish.size : 120,
         rotation: Number.isFinite(fish?.rotation) ? fish.rotation : 0,
@@ -58,6 +63,7 @@ function normalizeAquarium(aquarium) {
             : 1,
         scaleY: Number.isFinite(fish?.scaleY) ? fish.scaleY : 1,
         flipped: Boolean(fish?.flipped),
+        flippedY: Boolean(fish?.flippedY),
       }))
     : [];
 
@@ -113,6 +119,7 @@ function createFishFromDraft(draft, index) {
     scaleX: 1,
     scaleY: 1,
     flipped: false,
+    flippedY: false,
     hunger: 0,
     hidden: false,
     createdAt: now,
@@ -243,7 +250,7 @@ function renderFishes(fishes, selectedFishId, editingFishId) {
           data-fish-sprite="${fish.id}"
           src="${fish.imageUrl}"
           alt="${escapeHtml(fish.name)}"
-          style="--fish-x: ${fish.x}%; --fish-y: ${fish.y}%; --fish-size: ${fish.size}px; --fish-scale-x: ${fish.scaleX}; --fish-scale-y: ${fish.scaleY}; --fish-rotation: ${fish.rotation}deg; --fish-flip: ${fish.flipped ? -1 : 1};"
+          style="--fish-x: ${fish.x}%; --fish-y: ${fish.y}%; --fish-size: ${fish.size}px; --fish-scale-x: ${fish.scaleX}; --fish-scale-y: ${fish.scaleY}; --fish-rotation: ${fish.rotation}deg; --fish-flip: ${fish.flipped ? -1 : 1}; --fish-flip-y: ${fish.flippedY ? -1 : 1};"
         >
       `,
     )
@@ -256,6 +263,9 @@ function renderFishEditor(fish) {
       <div class="fish-editor-toolbar">
         <button class="fish-action-button" type="button" data-flip-fish="${fish.id}">
           좌우반전
+        </button>
+        <button class="fish-action-button" type="button" data-flip-fish-y="${fish.id}">
+          상하 반전
         </button>
         <button class="fish-action-button" type="button" data-reset-fish-transform="${fish.id}">
           초기화
@@ -421,6 +431,19 @@ function bindAquariumControls(root, aquarium, appState, render) {
     });
   });
 
+  root.querySelectorAll('[data-flip-fish-y]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const fishId = button.dataset.flipFishY;
+      const fish = getFishById(aquarium, fishId);
+
+      appState.selectedFishId = fishId;
+      updateFishAppearance(aquarium, fishId, {
+        flippedY: !fish?.flippedY,
+      });
+      render();
+    });
+  });
+
   root.querySelectorAll('[data-reset-fish-transform]').forEach((button) => {
     button.addEventListener('click', () => {
       const fishId = button.dataset.resetFishTransform;
@@ -431,6 +454,7 @@ function bindAquariumControls(root, aquarium, appState, render) {
         scaleX: 1,
         scaleY: 1,
         flipped: false,
+        flippedY: false,
         size: 120,
       });
       render();
@@ -521,7 +545,7 @@ function renderApp(root, aquarium, fishInputState, appState) {
             <div class="swim-boundary" aria-hidden="true"></div>
             ${renderDecoration()}
             <div class="fish-layer" data-fish-layer>
-              ${renderFishes(aquarium.fishes, appState.selectedFishId)}
+              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
             </div>
             ${renderEmptyState(aquarium.fishes.length)}
           </div>

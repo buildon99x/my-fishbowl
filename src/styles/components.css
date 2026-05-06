@@ -45,7 +45,7 @@
     translate(-50%, -50%)
     rotate(var(--fish-rotation, 0deg))
     scaleX(calc(var(--fish-scale-x, 1) * var(--fish-flip, 1)))
-    scaleY(var(--fish-scale-y, 1));
+    scaleY(calc(var(--fish-scale-y, 1) * var(--fish-flip-y, 1)));
   transform-origin: center;
 }
 

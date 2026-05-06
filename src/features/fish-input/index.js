@@ -1,4 +1,4 @@
-import { createFishInputState, saveFishDraft } from './state.js';
+import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.js';
 import { renderFishInputPanel } from './view.js';
 
 const SPRITE_WIDTH = 240;
@@ -179,7 +179,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   nameInput?.addEventListener('input', (event) => {
     state.name = event.target.value;
     if (registerButton) {
-      registerButton.disabled = !state.spriteDataUrl || state.status === 'invalid' || !state.name.trim();
+      registerButton.disabled = !state.spriteDataUrl || state.status === 'invalid';
     }
   });
 
@@ -234,12 +234,12 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   });
 
   registerButton?.addEventListener('click', () => {
-    if (!state.spriteDataUrl || state.status === 'invalid' || !state.name.trim()) {
+    if (!state.spriteDataUrl || state.status === 'invalid') {
       updateState(
         state,
         {
           status: state.status === 'invalid' ? 'invalid' : 'idle',
-          message: 'Add an image and fish name before registering.',
+          message: 'Add an image before registering.',
         },
         render,
       );
@@ -253,7 +253,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
       state,
       {
         status: 'preview',
-        message: `${state.name.trim()} is ready as a fish sprite.`,
+        message: `${draft.name || DEFAULT_FISH_NAME} is ready as a fish sprite.`,
       },
       render,
     );
