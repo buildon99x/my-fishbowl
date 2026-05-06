@@ -714,7 +714,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
             <svg class="bubble-layer" data-bubble-svg viewBox="0 0 1152 780" aria-hidden="true"></svg>
             <canvas class="algae-layer" data-algae-canvas aria-hidden="true"></canvas>
             <div class="fish-layer" data-fish-layer>
-              <div class="food-layer" aria-hidden="true">
+              <div class="food-layer" data-food-layer aria-hidden="true">
                 ${renderFoods(feedingState.foods)}
               </div>
               ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.propPanel.editingTarget?.type === 'fish' ? appState.propPanel.editingTarget.id : null, feedingState.fishEating)}
