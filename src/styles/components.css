@@ -959,6 +959,18 @@
 
 /* ── God Mode (dev only) ─────────────────────────────────────── */
 
+.god-mode-button {
+  margin-top: var(--space-sm);
+  border-color: rgba(255, 221, 68, 0.5);
+  color: #9a7e00;
+  background: rgba(255, 221, 68, 0.08);
+}
+
+.god-mode-button:not(:disabled):hover {
+  border-color: rgba(255, 221, 68, 0.9);
+  background: rgba(255, 221, 68, 0.16);
+}
+
 .god-mode-panel {
   position: fixed;
   top: 80px;

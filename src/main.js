@@ -848,6 +848,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         <h1>${aquarium.name}</h1>
         ${renderFeedingControls(feedingState)}
         ${renderCleanButton(aquarium, cleaningState)}
+        ${IS_DEV ? '<button type="button" class="button button-secondary god-mode-button" data-toggle-god-mode>God Mode</button>' : ''}
       </header>
 
       <section class="aquarium-layout" aria-labelledby="aquarium-title">
@@ -1053,6 +1054,11 @@ function bindCleaningEvents(root, aquarium, appState, render) {
 }
 
 function bindGodModeEvents(root, aquarium, appState, render) {
+  root.querySelector('[data-toggle-god-mode]')?.addEventListener('click', () => {
+    appState.godModeState.visible = !appState.godModeState.visible;
+    render();
+  });
+
   const panel = root.querySelector('[data-god-mode-panel]');
   if (!panel) return;
 
@@ -1113,11 +1119,6 @@ function initApp() {
       renderApp(app, aquarium, fishInputState, feedingState, appState);
     }
 
-    if (IS_DEV && e.key === 'G' && e.shiftKey && e.ctrlKey) {
-      e.preventDefault();
-      appState.godModeState.visible = !appState.godModeState.visible;
-      renderApp(app, aquarium, fishInputState, feedingState, appState);
-    }
   });
 }
 
