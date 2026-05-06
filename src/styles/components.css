@@ -1508,9 +1508,8 @@
   transition: background 0.12s ease, color 0.12s ease;
 }
 
-  .prop-panel {
+.prop-panel {
     top: 18px;
     right: calc(12px + min(220px, calc(100vw - 24px)) + 10px);
     width: min(260px, calc(100vw - 32px));
-  }
 }
