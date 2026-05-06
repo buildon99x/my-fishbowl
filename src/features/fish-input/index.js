@@ -1,8 +1,5 @@
 import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft, saveFishInputPosition } from './state.js';
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
+import { clamp } from '../../lib/utils.js';
 
 function bindFishInputDrag(panel, state) {
   const header = panel.querySelector('[data-fish-input-drag-handle]');

@@ -1,7 +1,8 @@
-import { addFoods, clamp, createFeedingState, createFoodsAt, tickFeeding } from './state.js';
-import { renderFeedingControls, renderFoods } from './view.js';
+import { addFoods, createFeedingState, createFoodsAt, tickFeeding } from './state.js';
+import { clamp } from '../../lib/utils.js';
+import { renderFoods } from './view.js';
 
-export { createFeedingState, renderFeedingControls, renderFoods, tickFeeding };
+export { createFeedingState, renderFoods, tickFeeding };
 
 function getLayerPoint(layer, event) {
   const rect = layer.getBoundingClientRect();
@@ -13,22 +14,8 @@ function getLayerPoint(layer, event) {
 }
 
 export function bindFeedingEvents(root, state, options = {}) {
-  const toggleButton = root.querySelector('[data-toggle-feeding]');
   const layer = root.querySelector('[data-fish-layer]');
   let lastDropAt = 0;
-
-  toggleButton?.addEventListener('click', () => {
-    state.feedingMode = !state.feedingMode;
-    options.render?.();
-  });
-
-  root.addEventListener('click', (event) => {
-    const paletteBtn = event.target.closest('[data-food-palette]');
-    if (paletteBtn) {
-      state.selectedType = paletteBtn.dataset.foodPalette;
-      options.render?.();
-    }
-  });
 
   function dropFood(event) {
     const now = window.performance.now();

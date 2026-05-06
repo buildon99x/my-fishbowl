@@ -1,3 +1,5 @@
+import { clamp } from '../../lib/utils.js';
+
 export const BEHAVIOR_STATUSES = ['cruising', 'idle', 'dart', 'wander', 'turning'];
 
 export const BEHAVIOR_INTERVAL_MS = 3000;
@@ -6,10 +8,6 @@ export const WANDER_DURATION_MS = 2000;
 export const MOUSE_AVOID_DISTANCE = 80;
 
 const PREFERRED_DEPTHS = ['top', 'middle', 'bottom'];
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
 
 function randomInRange(random, min, max) {
   return min + random() * (max - min);

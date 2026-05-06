@@ -7,6 +7,7 @@ import {
   getMovementTiltDegrees,
   shouldStartTurn,
 } from './fishPhysics.js';
+import { clamp } from '../../lib/utils.js';
 
 export const MOVEMENT_BOUNDS = {
   minX: 4,
@@ -26,10 +27,6 @@ const MAX_WALL_PAUSE_MS = 5000;
 
 export function normalizeHeadDirection(value) {
   return value === 'left' ? 'left' : 'right';
-}
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
 }
 
 function getRandomInRange(random, min, max) {
