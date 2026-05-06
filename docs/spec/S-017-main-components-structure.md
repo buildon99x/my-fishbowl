@@ -88,6 +88,7 @@
   - `startFeedingAnimation`
   - `patchFoodLayer`
   - `bindFeedingEvents`
+  - feeding feature 모듈 구성(S-010 반영): `src/features/feeding/state.js`, `view.js`, `index.js`, `foodConfig.js`, `foodPhysics.js`, `foodEffects.js`. 종류별 설정/물리/효과는 `foodConfig.js`/`foodPhysics.js`/`foodEffects.js`에 위치한다.
 - Cleaning 연결:
   - `renderCleanButton`
   - `renderCleaningProgressBar`
@@ -147,6 +148,15 @@
   - `.fish-layer`
   - `.food-layer`
   - `.aquarium-empty`
+- Feeding UI(S-010 반영):
+  - `.feeding-controls`
+  - `.food-palette`
+  - `.food-palette-item`
+  - `.food-pellet`
+  - `.food-pellet--flake`
+  - `.food-pellet--pellet`
+  - `.food-pellet--bloodworm`
+  - 종류별 modifier(`--flake`/`--pellet`/`--bloodworm`)는 base `.food-pellet`을 확장하는 형태를 유지한다. asset 경로(`assets/food/*.svg`)는 CSS 분할 시에도 그대로 유지한다.
 - Fish rendering:
   - `.fish-sprite`
   - `.fish-sprite.is-selected`
@@ -194,7 +204,8 @@
    1. `src/styles/components/cleaning.css` — `@keyframes cleaning-ripple`, `cleaning-complete-in`을 포함하고 selector가 `.clean-*`/`.cleaning-*`로 닫혀 있어 외부 의존이 가장 적다. 가장 먼저 분리.
    2. `src/styles/components/fish.css` — `.fish-sprite`, `@keyframes fish-eat`, fish list/editor 일부. transform CSS 변수 의미 유지가 핵심이라 분리 후 즉시 검증 가능.
    3. `src/styles/components/aquarium.css` — `.aquarium-bowl`, layers, decoration. shell/art와 layer가 상호 cascade 의존이 있어 fish 분리 이후로 미룬다.
-   4. `src/styles/components/panels.css` — prop panel/God Mode. 가장 많은 selector를 가지고 fish-list/editor와 경계가 모호하므로 마지막.
+   4. `src/styles/components/panels.css` — prop panel/God Mode, feeding 컨트롤(`.feeding-controls`, `.food-palette*`)과 food modifier(`.food-pellet--*`)를 함께 포함한다. 가장 많은 selector를 가지고 fish-list/editor와 경계가 모호하므로 마지막.
+   - food palette/feeding 컨트롤은 prop-panel feed submenu와 함께 동작하므로 별도 `feeding.css`로 분리하지 않고 `panels.css`에 둔다. 단, `.food-pellet`(base)는 `.food-layer`와 함께 aquarium 레이어 영역으로 두어 layer cascade를 깨지 않는다.
    - 1차 PR에서는 위 1·2번(2개)을 우선 처리하고, 회귀가 없으면 후속 PR에서 3·4번을 진행한다. 한 번에 3개를 묶을 경우에도 4번은 단독 PR로 분리한다.
 4. `src/styles/index.css`의 import 순서를 cascade 기준으로 고정한다.
 5. 공통 `.button`과 form control 스타일은 중복 분리하지 않고, 실제 재사용 범위가 확인된 뒤 별도 파일로 분리한다.
