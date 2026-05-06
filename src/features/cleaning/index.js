@@ -2,6 +2,7 @@ export const COMPLETION_THRESHOLD = 0.8;
 
 const BRUSH_RADIUS = 40;
 const SAMPLE_STEP = 4;
+const ALPHA_VISIBILITY_THRESHOLD = 32;
 
 export function createCleaningState() {
   return {
@@ -19,7 +20,7 @@ function countOpaquePixels(imageData) {
   const { data } = imageData;
   let count = 0;
   for (let i = 3; i < data.length; i += 4 * SAMPLE_STEP) {
-    if (data[i] > 0) count++;
+    if (data[i] > ALPHA_VISIBILITY_THRESHOLD) count++;
   }
   return count;
 }
