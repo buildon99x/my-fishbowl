@@ -34,7 +34,7 @@
 | --- | --- | --- | --- | --- | --- |
 | S-001 | Fishbowl MVP 초기 화면 및 기본 상호작용 | ready | not-started | not-tested | `docs/spec/S-001-initial-spec.md` |
 | S-002 | 어항 생성 | done | done | tested | `docs/spec/S-002-aquarium-creation.md` |
-| S-003 | 이미지 업로드 및 직접 그리기 | ready | not-started | not-tested | `docs/spec/S-003-fish-image-input.md` |
+| S-003 | 이미지 업로드 및 직접 그리기 | done | done | tested | `docs/spec/S-003-fish-image-input.md` |
 | S-004 | 물고기 생성 | ready | not-started | not-tested | `docs/spec/S-004-fish-creation.md` |
 | S-005 | 물고기 움직임 | ready | not-started | not-tested | `docs/spec/S-005-fish-movement.md` |
 | S-006 | 먹이 주기 | ready | not-started | not-tested | `docs/spec/S-006-feeding.md` |
@@ -63,3 +63,4 @@
 | ID | 완료 내용 | 검증 결과 |
 | --- | --- | --- |
 | S-002 | 기본 어항 생성, 둥근 수조 렌더링, 로컬 저장소 저장/복원 구조 구현 | `npm run build` 통과 |
+| S-003 | 이미지 업로드, 직접 그리기 캔버스, 미리보기, 물고기 이름 입력, 스프라이트 초안 저장 구현 | `npm run build` 통과 |
