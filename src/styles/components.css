@@ -47,6 +47,7 @@
     scaleX(calc(var(--fish-scale-x, 1) * var(--fish-flip, 1)))
     scaleY(calc(var(--fish-scale-y, 1) * var(--fish-flip-y, 1)));
   transform-origin: center;
+  transition: filter 0.15s ease;
 }
 
 .fish-sprite.is-selected {

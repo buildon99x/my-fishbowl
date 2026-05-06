@@ -4,6 +4,10 @@ import {
   createFishInputState,
   renderFishInputPanel,
 } from './features/fish-input/index.js';
+import {
+  normalizeAquariumFishMovement,
+  startFishMovement,
+} from './features/fish-movement/index.js';
 
 const SELECTORS = {
   app: '#app',
@@ -48,12 +52,14 @@ function normalizeAquarium(aquarium) {
   const fishes = Array.isArray(aquarium?.fishes)
     ? aquarium.fishes.map((fish) => ({
         hidden: false,
-        rotation: 0,
-        scaleX: 1,
-        scaleY: 1,
-        flipped: false,
-        flippedY: false,
         ...fish,
+        vx: Number.isFinite(fish?.vx) ? fish.vx : 0,
+        vy: Number.isFinite(fish?.vy) ? fish.vy : 0,
+        speed: Number.isFinite(fish?.speed) ? fish.speed : 0,
+        movementStatus: fish?.movementStatus === 'turning' ? 'turning' : 'swimming',
+        turnUntilMs: Number.isFinite(fish?.turnUntilMs) ? fish.turnUntilMs : 0,
+        nextTargetAtMs: Number.isFinite(fish?.nextTargetAtMs) ? fish.nextTargetAtMs : 0,
+        bobPhase: Number.isFinite(fish?.bobPhase) ? fish.bobPhase : 0,
         size: Number.isFinite(fish?.size) ? fish.size : 120,
         rotation: Number.isFinite(fish?.rotation) ? fish.rotation : 0,
         scaleX: Number.isFinite(fish?.scaleX)
@@ -114,6 +120,10 @@ function createFishFromDraft(draft, index) {
     vx: 0,
     vy: 0,
     speed: 0,
+    movementStatus: 'swimming',
+    turnUntilMs: 0,
+    nextTargetAtMs: 0,
+    bobPhase: 0,
     size: 120,
     rotation: 0,
     scaleX: 1,
@@ -555,6 +565,8 @@ function bindAquariumControls(root, aquarium, appState, render) {
 }
 
 function renderApp(root, aquarium, fishInputState, appState) {
+  appState.movementController?.stop();
+
   root.innerHTML = `
     <main class="fishbowl-page">
       <header class="page-header">
@@ -616,6 +628,10 @@ function renderApp(root, aquarium, fishInputState, appState) {
     },
   );
   bindAquariumControls(root, aquarium, appState, () => renderApp(root, aquarium, fishInputState, appState));
+  appState.movementController = startFishMovement(root, aquarium, {
+    getPausedFishIds: () => new Set(appState.editingFishId ? [appState.editingFishId] : []),
+    onSave: () => saveAquarium(aquarium),
+  });
 }
 
 function initApp() {
@@ -625,8 +641,10 @@ function initApp() {
   const appState = {
     selectedFishId: null,
     editingFishId: null,
+    movementController: null,
   };
 
+  normalizeAquariumFishMovement(aquarium, performance.now());
   saveAquarium(aquarium);
   renderApp(app, aquarium, fishInputState, appState);
 }
