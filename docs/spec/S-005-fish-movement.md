@@ -38,10 +38,10 @@
   - 움직이는 물고기 오브젝트
 - 필요한 상태:
   - `swimming`: 자동 이동 중
-  - `turning`: 방향 전환 중
+  - `turning`: 방향 전환 중 (회전 트윈 애니메이션이 없으면 별도 상태 불필요 — `swimming` 내 방향 벡터만으로 관리)
 - 오류 또는 빈 상태:
   - 물고기가 없으면 이동 루프가 오류 없이 유지된다.
-  - 브라우저 탭 전환 후에도 물고기 위치가 비정상적으로 튀지 않는다.
+  - 브라우저 탭 전환 후에도 물고기 위치가 비정상적으로 튀지 않는다. (`document.visibilitychange` 이벤트로 루프를 중단하거나, delta time을 최대 100ms로 clamp하여 처리한다.)
 
 ## 이동 요구사항
 
@@ -55,15 +55,25 @@
 ```
 
 - `requestAnimationFrame`을 사용한다.
-- Canvas API 또는 PixiJS를 사용할 수 있다.
+- 렌더러는 DOM(CSS transform) 기반으로 시작한다. 물고기 10마리 기준 60fps 유지가 어려울 경우 PixiJS로 전환한다.
 - 간단한 boids-like 이동은 추후 확장으로 남긴다.
+
+### 속도 및 방향 변화 규칙
+
+- 속도 범위: 최소 30px/s ~ 최대 100px/s (물고기마다 랜덤 초기화)
+- 방향 변화 주기: 2~5초마다 랜덤 발생
+- 방향 변화 각도: 현재 방향 기준 ±30° 이내로 제한 (급격한 전환 방지)
+- 경계 충돌 시에는 즉시 방향 반전 (주기와 무관)
 
 ## 구현 메모
 
-- 관련 파일:
+- 관련 파일 (초기):
   - `src/main.js`
   - `src/styles/layout.css`
-- 애니메이션 로직이 커지면 `src/features/fish-movement/`로 분리한다.
+- 애니메이션 로직은 처음부터 `src/features/fish-movement/`로 분리하는 것을 권장한다:
+  - `src/features/fish-movement/movementLoop.js` — `requestAnimationFrame` 루프 및 delta time 관리
+  - `src/features/fish-movement/fishPhysics.js` — 위치/방향/속도 계산
+  - `src/features/fish-movement/fishRenderer.js` — DOM 또는 Canvas 렌더링
 - 이동 계산과 DOM 또는 Canvas 렌더링은 함수 단위로 분리한다.
 
 ## 검증 기준
@@ -76,3 +86,4 @@
 - [ ] 속도 또는 방향이 일정 시간마다 자연스럽게 변한다.
 - [ ] 브라우저 콘솔 오류가 없다.
 - [ ] `npm run build`가 통과한다.
+- [ ] 물고기 10마리 기준 60fps를 유지한다.
