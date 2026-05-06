@@ -31,20 +31,21 @@
 
 | ID | 제목 | 상태 | 구현 여부 | 검증 여부 | 상세 문서 |
 | --- | --- | --- | --- | --- | --- |
-| S-001 | Fishbowl MVP 초기 화면 및 기본 상호작용 | ready | not-started | not-tested | `docs/spec/S-001-initial-spec.md` |
+| S-001 | Fishbowl MVP 초기 화면 및 기본 상호작용 | done | done | tested | `docs/spec/S-001-initial-spec.md` |
 | S-002 | 어항 생성 | done | done | tested | `docs/spec/S-002-aquarium-creation.md` |
 | S-003 | 이미지 업로드 및 직접 그리기 | done | done | tested | `docs/spec/S-003-fish-image-input.md` |
-| S-004 | 물고기 생성 | ready | not-started | not-tested | `docs/spec/S-004-fish-creation.md` |
-| S-005 | 물고기 움직임 | ready | not-started | not-tested | `docs/spec/S-005-fish-movement.md` |
+| S-004 | 물고기 생성 | done | done | tested | `docs/spec/S-004-fish-creation.md` |
+| S-005 | 물고기 움직임 | done | done | tested | `docs/spec/S-005-fish-movement.md` |
 | S-006 | 먹이 주기 | done | done | tested | `docs/spec/S-006-feeding.md` |
 | S-007 | 어항 오염 및 이끼 시스템 | ready | done | tested | `docs/spec/S-007-algae-system.md` |
-| S-008 | 어항 청소 | ready | done | tested | `docs/spec/S-008-aquarium-cleaning.md` |
-| S-009 | 물고기 생동감 | ready | done | tested | `docs/spec/S-009-fish-liveliness.md` |
+| S-008 | 어항 청소 | done | done | tested | `docs/spec/S-008-aquarium-cleaning.md` |
+| S-009 | 물고기 생동감 | done | done | tested | `docs/spec/S-009-fish-liveliness.md` |
 | S-010 | 먹이 종류 | ready | not-started | not-tested | `docs/spec/S-010-food-types.md` |
-| S-011 | 어항 거품 효과 | done | done | not-tested | `docs/spec/S-011-aquarium-bubble-effects.md` |
-| S-011 | 물고기 목록 스크롤 위치 보존 | ready | done | tested | `docs/spec/S-011-fish-list-scroll-preservation.md` |
-| S-013 | 속성 패널(prop-panel) 분리 및 신설 | draft | not-started | not-tested | `docs/spec/S-013-prop-panel.md` |
-| S-016 | Dev harness improve | done | done | tested | `docs/spec/S-016-dev-harness_improve.md` |
+| S-011 | 어항 거품 효과 | done | done | tested | `docs/spec/S-011-aquarium-bubble-effects.md` |
+| S-011 | 물고기 목록 스크롤 위치 보존 | done | done | tested | `docs/spec/S-011-fish-list-scroll-preservation.md` |
+| S-013 | 속성 패널(prop-panel) 분리 및 신설 | done | done | tested | `docs/spec/S-013-prop-panel.md` |
+| S-016 | Dev harness improve | draft | not-started | not-tested | `docs/spec/S-016-dev-harness_improve.md` |
+| S-017 | Main and components structure | draft | not-started | not-tested | `docs/spec/S-017-main-components-structure.md` |
 
 ## 상태 값
 
