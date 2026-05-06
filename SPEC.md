@@ -40,6 +40,7 @@
 | S-006 | 먹이 주기 | done | done | tested | `docs/spec/S-006-feeding.md` |
 | S-007 | 어항 오염 및 이끼 시스템 | ready | not-started | not-tested | `docs/spec/S-007-algae-system.md` |
 | S-008 | 어항 청소 | ready | not-started | not-tested | `docs/spec/S-008-aquarium-cleaning.md` |
+| S-011 | 어항 거품 효과 | done | done | not-tested | `docs/spec/S-011-aquarium-bubble-effects.md` |
 
 상태 값:
 - `draft`: 설계 중
