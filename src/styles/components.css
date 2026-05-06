@@ -982,8 +982,8 @@
 
 .prop-panel {
   position: fixed;
-  bottom: 18px;
-  left: max(18px, calc((100vw - 1120px) / 2 + 18px));
+  top: 18px;
+  right: calc(22px + min(280px, 100vw) + 12px);
   z-index: 10;
   width: min(320px, calc(100vw - 32px));
   border: 1px solid var(--color-hairline);
@@ -1068,7 +1068,7 @@
 .prop-panel-body {
   padding: var(--space-md);
   overflow-y: auto;
-  max-height: calc(100vh - 180px);
+  max-height: calc(100vh - 18px - 72px - 32px);
 }
 
 /* ── Prop Panel Controls ─────────────────────────────────────── */
@@ -1462,8 +1462,8 @@
   }
 
   .prop-panel {
-    left: 12px;
-    bottom: 12px;
-    width: calc(100vw - 24px);
+    top: 18px;
+    right: calc(12px + min(220px, calc(100vw - 24px)) + 10px);
+    width: min(260px, calc(100vw - 32px));
   }
 }
