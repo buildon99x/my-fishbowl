@@ -48,10 +48,6 @@ function normalizeAquarium(aquarium) {
   const fishes = Array.isArray(aquarium?.fishes)
     ? aquarium.fishes.map((fish) => ({
         hidden: false,
-        rotation: 0,
-        scaleX: 1,
-        scaleY: 1,
-        flipped: false,
         ...fish,
         size: Number.isFinite(fish?.size) ? fish.size : 120,
         rotation: Number.isFinite(fish?.rotation) ? fish.rotation : 0,
