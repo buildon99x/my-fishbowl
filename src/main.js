@@ -1,4 +1,4 @@
-import './styles/index.css';
+﻿import './styles/index.css';
 import {
   bindFishInputEvents,
   createFishInputState,
@@ -223,7 +223,7 @@ function renderEmptyState(fishCount) {
     return '';
   }
 
-  return '<p class="aquarium-empty">아직 물고기가 없습니다.</p>';
+  return '<p class="aquarium-empty">?꾩쭅 臾쇨퀬湲곌? ?놁뒿?덈떎.</p>';
 }
 
 function formatRegisteredTime(value) {
@@ -405,7 +405,55 @@ function renderFishList(fishes, selectedFishId, editingFishId) {
   `;
 }
 
+function renderAquariumStatus(aquarium, appState) {
+  const bodyId = 'fish-list-panel-body';
+
+  return `
+    <aside class="aquarium-status ${appState.isFishListCollapsed ? 'is-collapsed' : ''}" aria-labelledby="aquarium-title">
+      <button
+        class="aquarium-status-toggle"
+        type="button"
+        data-toggle-fish-list
+        aria-expanded="${!appState.isFishListCollapsed}"
+        aria-controls="${bodyId}"
+      >
+        <span class="aquarium-status-toggle-copy">
+          <span id="aquarium-title">물고기 목록</span>
+          <span>${aquarium.fishes.length}마리</span>
+        </span>
+        <span class="aquarium-status-toggle-icon" aria-hidden="true">
+          <span>${appState.isFishListCollapsed ? '+' : '-'}</span>
+          <span>${appState.isFishListCollapsed ? '펼치기' : '접기'}</span>
+        </span>
+      </button>
+
+      <div class="aquarium-status-body" id="${bodyId}" ${appState.isFishListCollapsed ? 'hidden' : ''}>
+        <dl class="status-list">
+          <div>
+            <dt>청결도</dt>
+            <dd>${aquarium.cleanliness}%</dd>
+          </div>
+          <div>
+            <dt>물고기 수</dt>
+            <dd>${aquarium.fishes.length}</dd>
+          </div>
+          <div>
+            <dt>이끼 단계</dt>
+            <dd>${aquarium.algaeLevel}</dd>
+          </div>
+        </dl>
+        ${renderFishList(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
+      </div>
+    </aside>
+  `;
+}
+
 function bindAquariumControls(root, aquarium, appState, render) {
+  root.querySelector('[data-toggle-fish-list]')?.addEventListener('click', () => {
+    appState.isFishListCollapsed = !appState.isFishListCollapsed;
+    render();
+  });
+
   root.querySelectorAll('[data-select-fish]').forEach((button) => {
     button.addEventListener('click', () => {
       appState.selectedFishId = button.dataset.selectFish;
@@ -624,24 +672,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
           </div>
         </div>
 
-        <aside class="aquarium-status" aria-labelledby="aquarium-title">
-          <h2 id="aquarium-title">물고기 목록</h2>
-          <dl class="status-list">
-            <div>
-              <dt>청결도</dt>
-              <dd>${aquarium.cleanliness}%</dd>
-            </div>
-            <div>
-              <dt>물고기 수</dt>
-              <dd>${aquarium.fishes.length}</dd>
-            </div>
-            <div>
-              <dt>이끼 단계</dt>
-              <dd>${aquarium.algaeLevel}</dd>
-            </div>
-          </dl>
-          ${renderFishList(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
-        </aside>
+        ${renderAquariumStatus(aquarium, appState)}
       </section>
 
       ${renderFishInputPanel(fishInputState)}
@@ -676,6 +707,7 @@ function initApp() {
     selectedFishId: null,
     editingFishId: null,
     feedingAnimationId: null,
+    isFishListCollapsed: false,
   };
 
   saveAquarium(aquarium);
@@ -683,3 +715,4 @@ function initApp() {
 }
 
 initApp();
+
