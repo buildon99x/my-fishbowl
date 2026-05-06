@@ -37,7 +37,7 @@
 | S-003 | 이미지 업로드 및 직접 그리기 | done | done | tested | `docs/spec/S-003-fish-image-input.md` |
 | S-004 | 물고기 생성 | ready | not-started | not-tested | `docs/spec/S-004-fish-creation.md` |
 | S-005 | 물고기 움직임 | ready | not-started | not-tested | `docs/spec/S-005-fish-movement.md` |
-| S-006 | 먹이 주기 | ready | not-started | not-tested | `docs/spec/S-006-feeding.md` |
+| S-006 | 먹이 주기 | done | done | tested | `docs/spec/S-006-feeding.md` |
 | S-007 | 어항 오염 및 이끼 시스템 | ready | not-started | not-tested | `docs/spec/S-007-algae-system.md` |
 | S-008 | 어항 청소 | ready | not-started | not-tested | `docs/spec/S-008-aquarium-cleaning.md` |
 

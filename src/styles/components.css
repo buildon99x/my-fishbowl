@@ -29,11 +29,36 @@
   width: 74%;
   height: 58%;
   border-radius: 48% 48% 49% 49% / 36% 36% 51% 51%;
+  cursor: default;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.food-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
   pointer-events: none;
+}
+
+.food-pellet {
+  position: absolute;
+  left: var(--food-x);
+  top: var(--food-y);
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(104, 71, 20, 0.42);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #fff1a6 0 20%, transparent 22%),
+    #d68a24;
+  box-shadow: 0 5px 10px rgba(56, 34, 10, 0.18);
+  transform: translate(-50%, -50%);
 }
 
 .fish-sprite {
   position: absolute;
+  z-index: 8;
   left: var(--fish-x);
   top: var(--fish-y);
   width: var(--fish-size);
@@ -58,6 +83,28 @@
 
 .fish-sprite.is-editing {
   cursor: move;
+}
+
+.fish-sprite.is-eating {
+  animation: fish-eat 0.28s ease both;
+}
+
+@keyframes fish-eat {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  45% {
+    filter:
+      drop-shadow(0 0 8px rgba(255, 176, 132, 0.9))
+      drop-shadow(0 0 16px rgba(232, 185, 74, 0.55));
+    transform:
+      translate(-50%, -50%)
+      rotate(var(--fish-rotation, 0deg))
+      scaleX(calc(var(--fish-scale-x, 1) * var(--fish-flip, 1) * 1.08))
+      scaleY(calc(var(--fish-scale-y, 1) * var(--fish-flip-y, 1) * 1.08));
+  }
 }
 
 .water-surface,
@@ -334,6 +381,41 @@
   border-radius: var(--radius-xl);
   background: var(--color-surface-soft);
   box-shadow: 0 12px 32px rgba(10, 10, 10, 0.06);
+}
+
+.feeding-controls {
+  display: grid;
+  grid-template-columns: auto minmax(94px, 1fr);
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+.feeding-type {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: var(--color-muted);
+  font-size: var(--text-caption-uc);
+  font-weight: 600;
+}
+
+.feeding-type select {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-xs);
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  font: inherit;
+}
+
+.feeding-mode-hint {
+  grid-column: 1 / -1;
+  color: var(--color-muted);
+  font-size: var(--text-caption);
+  font-weight: 500;
 }
 
 .fish-input-toggle {

@@ -4,6 +4,13 @@ import {
   createFishInputState,
   renderFishInputPanel,
 } from './features/fish-input/index.js';
+import {
+  bindFeedingEvents,
+  createFeedingState,
+  renderFeedingControls,
+  renderFoods,
+  tickFeeding,
+} from './features/feeding/index.js';
 
 const SELECTORS = {
   app: '#app',
@@ -47,13 +54,8 @@ function normalizeAquarium(aquarium) {
   const fallback = createAquarium();
   const fishes = Array.isArray(aquarium?.fishes)
     ? aquarium.fishes.map((fish) => ({
-        hidden: false,
-        rotation: 0,
-        scaleX: 1,
-        scaleY: 1,
-        flipped: false,
-        flippedY: false,
         ...fish,
+        hidden: Boolean(fish?.hidden),
         size: Number.isFinite(fish?.size) ? fish.size : 120,
         rotation: Number.isFinite(fish?.rotation) ? fish.rotation : 0,
         scaleX: Number.isFinite(fish?.scaleX)
@@ -64,6 +66,7 @@ function normalizeAquarium(aquarium) {
         scaleY: Number.isFinite(fish?.scaleY) ? fish.scaleY : 1,
         flipped: Boolean(fish?.flipped),
         flippedY: Boolean(fish?.flippedY),
+        hunger: Number.isFinite(fish?.hunger) ? fish.hunger : 0,
       }))
     : [];
 
@@ -240,13 +243,13 @@ function formatRegisteredTime(value) {
   }
 }
 
-function renderFishes(fishes, selectedFishId, editingFishId) {
+function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId) {
   return fishes
     .filter((fish) => !fish.hidden)
     .map(
       (fish) => `
         <img
-          class="fish-sprite ${fish.id === selectedFishId ? 'is-selected' : ''} ${fish.id === editingFishId ? 'is-editing' : ''}"
+          class="fish-sprite ${fish.id === selectedFishId ? 'is-selected' : ''} ${fish.id === editingFishId ? 'is-editing' : ''} ${fish.id === fishEatingId ? 'is-eating' : ''}"
           data-fish-sprite="${fish.id}"
           src="${fish.imageUrl}"
           alt="${escapeHtml(fish.name)}"
@@ -255,6 +258,44 @@ function renderFishes(fishes, selectedFishId, editingFishId) {
       `,
     )
     .join('');
+}
+
+function startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState) {
+  if (appState.feedingAnimationId) {
+    return;
+  }
+
+  const runFrame = (now) => {
+    const result = tickFeeding(feedingState, aquarium.fishes, now);
+    const fishChanged = result.fishes !== aquarium.fishes;
+
+    aquarium.fishes = result.fishes;
+
+    if (fishChanged || result.didEat) {
+      aquarium.updatedAt = new Date().toISOString();
+      saveAquarium(aquarium);
+    }
+
+    if (result.didChange) {
+      renderApp(root, aquarium, fishInputState, feedingState, appState);
+    }
+
+    if (feedingState.foods.length > 0) {
+      appState.feedingAnimationId = window.requestAnimationFrame(runFrame);
+      return;
+    }
+
+    appState.feedingAnimationId = null;
+
+    if (feedingState.fishEating) {
+      window.setTimeout(() => {
+        feedingState.fishEating = null;
+        renderApp(root, aquarium, fishInputState, feedingState, appState);
+      }, 260);
+    }
+  };
+
+  appState.feedingAnimationId = window.requestAnimationFrame(runFrame);
 }
 
 function renderFishEditor(fish) {
@@ -554,12 +595,13 @@ function bindAquariumControls(root, aquarium, appState, render) {
   });
 }
 
-function renderApp(root, aquarium, fishInputState, appState) {
+function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   root.innerHTML = `
     <main class="fishbowl-page">
       <header class="page-header">
         <p class="eyebrow">My Fishbowl</p>
         <h1>${aquarium.name}</h1>
+        ${renderFeedingControls(feedingState)}
       </header>
 
       <section class="aquarium-layout" aria-labelledby="aquarium-title">
@@ -573,7 +615,10 @@ function renderApp(root, aquarium, fishInputState, appState) {
             <div class="swim-boundary" aria-hidden="true"></div>
             ${renderDecoration()}
             <div class="fish-layer" data-fish-layer>
-              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
+              <div class="food-layer" aria-hidden="true">
+                ${renderFoods(feedingState.foods)}
+              </div>
+              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.editingFishId, feedingState.fishEating)}
             </div>
             ${renderEmptyState(aquarium.fishes.length)}
           </div>
@@ -606,7 +651,7 @@ function renderApp(root, aquarium, fishInputState, appState) {
   bindFishInputEvents(
     root,
     fishInputState,
-    () => renderApp(root, aquarium, fishInputState, appState),
+    () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     {
       onRegister: (draft) => {
         const fish = addFishToAquarium(aquarium, draft);
@@ -615,20 +660,26 @@ function renderApp(root, aquarium, fishInputState, appState) {
       },
     },
   );
-  bindAquariumControls(root, aquarium, appState, () => renderApp(root, aquarium, fishInputState, appState));
+  bindAquariumControls(root, aquarium, appState, () => renderApp(root, aquarium, fishInputState, feedingState, appState));
+  bindFeedingEvents(root, feedingState, {
+    render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+    startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
+  });
 }
 
 function initApp() {
   const app = document.querySelector(SELECTORS.app);
   const aquarium = loadAquarium();
   const fishInputState = createFishInputState();
+  const feedingState = createFeedingState();
   const appState = {
     selectedFishId: null,
     editingFishId: null,
+    feedingAnimationId: null,
   };
 
   saveAquarium(aquarium);
-  renderApp(app, aquarium, fishInputState, appState);
+  renderApp(app, aquarium, fishInputState, feedingState, appState);
 }
 
 initApp();
