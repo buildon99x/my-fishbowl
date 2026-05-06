@@ -12,6 +12,7 @@
 - 향후 산호, 돌 등 배경 오브젝트(prop)도 동일 패널로 편집할 수 있도록 **타입 확장 가능한 구조**를 갖춘다.
 - 저령층 사용자도 직관적으로 조작할 수 있는 **대형 터치 타겟 + 아이콘 중심 UI** 를 적용한다.
 - 이슈 #14의 **둥근 이모지 버튼 + 툴팁** 디자인 언어와 일관성을 유지한다.
+- PR #13 의 **God Mode** 패널을 prop-panel 의 `type: 'godmode'` 타깃으로 흡수하여, 패널 인프라를 일원화한다 (DEV 전용, 프로덕션 트리쉐이킹).
 
 ## 범위
 
@@ -23,6 +24,9 @@
   - 저령층 친화 UI: 대형 슬라이더 핸들, 토글 버튼, 이모지 레이블, 실시간 미리보기
   - 액션 버튼(반전 X/Y, 초기화, 닫기) 둥근 이모지 버튼 + 툴팁 적용
   - 고급 설정(회전, 스케일 X/Y) 아코디언 접기 처리
+  - **God Mode 통합 (DEV 전용)**: prop-panel 의 `type: 'godmode'` 타깃으로 PR #13 의 S-DEV 기능을 흡수
+    - 이끼 임계값(light / medium / heavy 시간) 실시간 조정
+    - `IS_DEV = import.meta.env.DEV` 기반 조건부 등록 → 프로덕션 빌드 트리쉐이킹
 - 제외할 것:
   - 산호/돌 등 신규 prop 타입 자체의 신설 (구조만 준비, 실제 prop은 별도 스펙)
   - 이슈 #14의 우측 하단 버튼 위젯 클러스터 구현 (별도 스펙에서 다룸)
@@ -113,7 +117,8 @@ appState.isPropPanelExpanded = true;
 | `src/features/prop-panel/state.js` | 신규 | 패널 관련 헬퍼 (`createInitialPropPanelState`, `setEditingTarget` 등) |
 | `src/features/prop-panel/view.js` | 신규 | `renderPropPanel(target, aquarium)` — 타입별 분기 |
 | `src/features/prop-panel/fish-props.js` | 신규 | `renderFishProps(fish)` — 기존 `renderFishEditor` 이전 |
-| `src/features/prop-panel/events.js` | 신규 | 편집 이벤트 바인딩 (현재 `main.js:589-722` 추출) |
+| `src/features/prop-panel/godmode-props.dev.js` | 신규 (DEV 전용) | `renderGodModeProps(godModeState)` — PR #13 의 `renderGodModePanel` 을 prop-panel 폼으로 재구성 |
+| `src/features/prop-panel/events.js` | 신규 | 편집 이벤트 바인딩 (현재 `main.js:589-722` 추출 + `bindGodModePropsEvents` DEV 가드) |
 | `src/main.js` | 수정 | `renderFishEditor` 제거, `renderFishList` 에서 인라인 편집 패널 제거, `prop-panel` 렌더링 추가, `editingFishId` → `editingTarget` 마이그레이션 |
 | `src/styles/components.css` | 수정 | `.prop-panel`, `.prop-panel-header`, `.prop-panel-body`, `.prop-toggle`, `.prop-action-btn` 스타일 추가. 기존 `.fish-editor` 스타일은 prop-panel 내부 컨텍스트로 이전 |
 | `src/styles/components.css` | 수정 | 물고기 목록 아이템에서 `.fish-editor` 슬롯 제거 후 정리 |
@@ -145,6 +150,99 @@ function renderPropPanel(target, aquarium) {
 
 이벤트 바인딩도 동일한 분기 구조로 작성한다.
 
+### God Mode 통합 설계 (PR #13 흡수)
+
+#### 배경
+
+PR #13 (`claude/implement-aquarium-cleaning-9xz4t`) 은 별도의 `S-DEV-god-mode.md` 스펙으로 이끼 임계값 조정용 플로팅 패널을 신설했다. 본 스펙은 이를 prop-panel 의 한 타깃 타입으로 통합하여 패널 인프라를 일원화한다.
+
+#### 통합 모델
+
+`editingTarget` 의 타입을 확장:
+
+```js
+appState.editingTarget = { id: null, type: 'godmode' };
+// 또는 일반 prop:
+// { id: 'uuid-123', type: 'fish' }
+```
+
+GodMode 는 단일 인스턴스이므로 `id: null` 로 처리한다. `findEntityByTarget()` 은 `type === 'godmode'` 일 때 `aquarium` 자체(혹은 `appState.godModeState`)를 반환한다.
+
+#### 진입 경로
+
+1. **DEV 빌드 한정**: 이슈 #14 의 우측 하단 버튼 클러스터에서 `🛠️ GodMode` 버튼 클릭 → `setEditingTarget({ id: null, type: 'godmode' })` → prop-panel 등장.
+2. 프로덕션 빌드에서는 GodMode 버튼과 렌더러 모두 번들에서 제거된다 (`IS_DEV` 가드 + Vite 트리쉐이킹).
+
+#### 렌더러 분기
+
+```js
+// src/features/prop-panel/view.js
+import { renderFishProps } from './fish-props.js';
+
+const PROP_RENDERERS = {
+  fish: renderFishProps,
+};
+
+if (import.meta.env.DEV) {
+  // DEV 전용 동적 등록 — 프로덕션 빌드에서는 import 자체가 제거됨
+  const { renderGodModeProps } = await import('./godmode-props.dev.js');
+  PROP_RENDERERS.godmode = renderGodModeProps;
+}
+```
+
+> 구현 시 정적 import + `if (import.meta.env.DEV)` 가드로 동기 등록하여 트리쉐이킹이 보장되는 방식이 더 안전하다. 위 예시는 개념 설명용.
+
+#### `godmode-props.dev.js` 폼 구성
+
+| 필드 | 타입 | 데이터 속성 | 범위 |
+|------|------|------------|------|
+| 🌱 light (시간) | number input | `data-edit-prop-threshold-light` | 0 이상 정수 |
+| 🌿 medium (시간) | number input | `data-edit-prop-threshold-medium` | light 보다 큼 |
+| 🌳 heavy (시간) | number input | `data-edit-prop-threshold-heavy` | medium 보다 큼 |
+| 🔄 기본값 복원 | 둥근 이모지 버튼 | `data-reset-prop-thresholds` | — |
+
+- 패널 헤더: 미리보기 썸네일 자리에 🛠️ 아이콘, 이름은 "God Mode", 타입 배지 `dev`.
+- 입력 변경 즉시 `appState.godModeState.thresholds` 갱신 → `restoreAlgaeState(aquarium, thresholds)` → `renderApp()`.
+
+#### 상태 구조
+
+```js
+// src/features/prop-panel/state.js
+export function createInitialPropPanelState() {
+  return {
+    editingTarget: null,
+    isAdvancedExpanded: false,
+    godModeState: import.meta.env.DEV
+      ? { thresholds: { light: 12, medium: 24, heavy: 48 } }
+      : null,
+  };
+}
+```
+
+- `godModeState.visible` 은 제거 (prop-panel 가시성은 `editingTarget` 으로 일원화).
+- 프로덕션에서 `godModeState === null` → `type: 'godmode'` 진입 자체가 차단된다.
+
+#### 이벤트 바인딩
+
+```js
+// src/features/prop-panel/events.js
+export function bindPropPanelEvents(root, aquarium, appState, render) {
+  bindCommonPanelEvents(root, appState, render);  // 닫기 버튼 등
+  bindFishPropsEvents(root, aquarium, appState, render);
+
+  if (import.meta.env.DEV) {
+    bindGodModePropsEvents(root, aquarium, appState, render);
+  }
+}
+```
+
+#### 디자인 언어 통일
+
+GodMode 폼도 prop-panel 의 디자인 토큰을 그대로 따른다:
+- 모든 입력/버튼 최소 44×44px 터치 타겟
+- 둥근 이모지 버튼 + 툴팁
+- 다만 헤더 배지 색상은 `var(--color-warning)` 으로 표시하여 DEV 전용임을 시각적으로 구분
+
 ### 이슈 #14 와의 관계
 
 - 이슈 #14 의 우측 하단 버튼 위젯 클러스터(Feed / Add Fish / Cleaning / GodMode)는 별도 스펙에서 다룬다.
@@ -166,3 +264,8 @@ function renderPropPanel(target, aquarium) {
 - [ ] 브라우저 콘솔 오류가 없다.
 - [ ] `npm run lint` 와 `npm run test` 가 통과한다.
 - [ ] `npm run build` 가 통과한다.
+- [ ] **DEV 빌드**(`npm run dev`)에서 우측 하단 클러스터의 `🛠️ GodMode` 버튼을 누르면 prop-panel 이 `type: 'godmode'` 로 열린다.
+- [ ] GodMode 폼의 light/medium/heavy 임계값 입력 변경 시 이끼 단계가 즉시 재계산되어 화면에 반영된다.
+- [ ] GodMode 폼의 🔄 기본값 복원 버튼이 정상 동작한다.
+- [ ] **프로덕션 빌드**(`npm run build`) 결과물에서 `godmode-props.dev.js` 와 GodMode 관련 코드가 번들에 포함되지 않는다 (grep 으로 `godmode` 키워드 부재 확인).
+- [ ] 프로덕션 빌드에서 우측 하단 클러스터에 GodMode 버튼이 렌더링되지 않는다.
