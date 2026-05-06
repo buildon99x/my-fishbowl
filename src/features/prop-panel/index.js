@@ -4,7 +4,7 @@ export { renderPropPanel, renderActionCluster } from './view.js';
 import { bindCommonPanelEvents, bindFishPropsEvents, bindGodModePropsEvents } from './events.js';
 
 export function bindActionClusterEvents(root, { fishInputState, propPanelState }, callbacks) {
-  const { render, onFeedingToggle, onFoodTypeChange } = callbacks;
+  const { render, onFeedingToggle, onFoodTypeChange, onCleaningToggle } = callbacks;
 
   root.querySelector('[data-prop-feed]')?.addEventListener('click', () => {
     onFeedingToggle();
@@ -21,7 +21,7 @@ export function bindActionClusterEvents(root, { fishInputState, propPanelState }
   });
 
   root.querySelector('[data-prop-cleaning]')?.addEventListener('click', () => {
-    propPanelState.cleaningMode = !propPanelState.cleaningMode;
+    onCleaningToggle?.();
     render();
   });
 

@@ -703,6 +703,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         feedingState,
         fishInputState,
         propPanelState: appState.propPanel,
+        cleaningState: appState.cleaningState,
       })}
     </main>
   `;
@@ -740,6 +741,20 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
       onFeedingToggle: () => { feedingState.feedingMode = !feedingState.feedingMode; },
       onFoodTypeChange: (type) => { feedingState.selectedType = type; },
+      onCleaningToggle: () => {
+        const cs = appState.cleaningState;
+        if (cs.cleaningMode) {
+          exitCleaningMode(cs);
+        } else if (aquarium.algaeLevel > 0) {
+          cs.cleaningMode = true;
+          cs.cleaning = false;
+          cs.cleaned = false;
+          cs.cleaningProgress = 0;
+          cs.snapshotData = null;
+          cs.initialAlphaSum = 0;
+          cs.initialAlgaePixels = 0;
+        }
+      },
     },
   );
   bindPropPanelEvents(

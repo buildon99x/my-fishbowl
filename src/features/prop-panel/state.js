@@ -29,7 +29,6 @@ export function savePropPanelPosition(pos) {
 
 export function createPropPanelState() {
   return {
-    cleaningMode: false,
     editingTarget: null,
     isAdvancedExpanded: false,
     position: loadSavedPosition(),

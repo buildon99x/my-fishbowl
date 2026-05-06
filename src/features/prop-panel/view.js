@@ -102,10 +102,10 @@ export function renderPropPanel(target, aquarium, propPanelState) {
   return renderPanelShell(entity, target, typeBadge, contentHtml, pos);
 }
 
-export function renderActionCluster({ feedingState, fishInputState, propPanelState }) {
+export function renderActionCluster({ feedingState, fishInputState, propPanelState, cleaningState }) {
   const feedActive = feedingState.feedingMode;
   const addFishActive = fishInputState.isExpanded;
-  const cleanActive = propPanelState.cleaningMode;
+  const cleanActive = cleaningState?.cleaningMode ?? false;
 
   const godModeButton = import.meta.env.DEV
     ? (() => {
