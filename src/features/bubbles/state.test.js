@@ -37,9 +37,22 @@ describe('createBubblesState', () => {
     expect(ids).toContain('eel-one');
     expect(ids).toContain('eel-two');
   });
+
+  it('initializes pauseUntilMs as 0 (not paused)', () => {
+    const state = createBubblesState();
+
+    expect(state.pauseUntilMs).toBe(0);
+  });
+
+  it('schedules first pause at least 20 s after startup', () => {
+    const state = createBubblesState();
+
+    // performance.now() is mocked to 0, so nextPauseAt >= 20000
+    expect(state.nextPauseAt).toBeGreaterThanOrEqual(20000);
+  });
 });
 
-describe('tickBubbles', () => {
+describe('tickBubbles — emission', () => {
   it('initializes lastTickAt on first tick', () => {
     const state = createBubblesState();
 
@@ -51,7 +64,6 @@ describe('tickBubbles', () => {
   it('emits a bubble when a source timer expires', () => {
     const state = createBubblesState();
 
-    // Force all sources to emit immediately
     for (const source of state.sources) {
       source.nextEmitAt = 0;
     }
@@ -61,7 +73,7 @@ describe('tickBubbles', () => {
     expect(state.bubbles.length).toBe(5);
   });
 
-  it('rescheduled source nextEmitAt after emission', () => {
+  it('reschedules source nextEmitAt after emission', () => {
     const state = createBubblesState();
     const source = state.sources[0];
 
@@ -85,10 +97,19 @@ describe('tickBubbles', () => {
     expect(state.bubbles[0].y).toBeLessThan(startY);
   });
 
+  it('does not emit bubbles before source timer expires', () => {
+    const state = createBubblesState();
+
+    tickBubbles(state, 1);
+
+    expect(state.bubbles).toHaveLength(0);
+  });
+});
+
+describe('tickBubbles — bubble lifecycle', () => {
   it('removes bubbles that reach the water surface', () => {
     const state = createBubblesState();
 
-    // Manually inject a bubble near the top
     state.bubbles.push({
       id: 'test-bubble',
       x: 500,
@@ -156,13 +177,92 @@ describe('tickBubbles', () => {
 
     expect(state.bubbles[0].opacity).toBe(1);
   });
+});
 
-  it('does not emit bubbles before source timer expires', () => {
+describe('tickBubbles — pause mechanism', () => {
+  it('does not emit while pause is active', () => {
     const state = createBubblesState();
 
-    // All sources have future emit times (set in createBubblesState)
-    tickBubbles(state, 1);
+    // Force all sources due now, then set active pause
+    for (const source of state.sources) {
+      source.nextEmitAt = 0;
+    }
+    state.pauseUntilMs = 5000; // paused until 5 s
+
+    tickBubbles(state, 1000); // still within pause
 
     expect(state.bubbles).toHaveLength(0);
+  });
+
+  it('resumes emission after pause ends', () => {
+    const state = createBubblesState();
+
+    for (const source of state.sources) {
+      source.nextEmitAt = 0;
+    }
+    state.pauseUntilMs = 500; // pause ended before nowMs
+
+    tickBubbles(state, 1000);
+
+    expect(state.bubbles.length).toBeGreaterThan(0);
+  });
+
+  it('starts a pause when nextPauseAt is reached', () => {
+    const state = createBubblesState();
+
+    state.nextPauseAt = 1000;
+
+    tickBubbles(state, 1000);
+
+    expect(state.pauseUntilMs).toBeGreaterThan(1000);
+  });
+
+  it('pause duration is between 2 and 5 seconds', () => {
+    const state = createBubblesState();
+
+    state.nextPauseAt = 1000;
+    tickBubbles(state, 1000);
+
+    const duration = state.pauseUntilMs - 1000;
+
+    expect(duration).toBeGreaterThanOrEqual(2000);
+    expect(duration).toBeLessThanOrEqual(5000);
+  });
+
+  it('schedules next pause at least 15 s after current pause ends', () => {
+    const state = createBubblesState();
+
+    state.nextPauseAt = 1000;
+    tickBubbles(state, 1000);
+
+    expect(state.nextPauseAt).toBeGreaterThanOrEqual(state.pauseUntilMs + 15000);
+  });
+
+  it('does not start a second pause while one is active', () => {
+    const state = createBubblesState();
+
+    state.nextPauseAt = 0;
+    state.pauseUntilMs = 5000; // already paused until 5 s
+
+    tickBubbles(state, 1000); // still paused
+
+    // pauseUntilMs must not have been overwritten
+    expect(state.pauseUntilMs).toBe(5000);
+  });
+
+  it('defers source timers that fall inside the pause window', () => {
+    const state = createBubblesState();
+
+    // All sources are due now
+    for (const source of state.sources) {
+      source.nextEmitAt = 500;
+    }
+    state.nextPauseAt = 1000;
+
+    tickBubbles(state, 1000); // pause starts now, pauseUntilMs ≥ 3000
+
+    for (const source of state.sources) {
+      expect(source.nextEmitAt).toBeGreaterThanOrEqual(state.pauseUntilMs);
+    }
   });
 });
