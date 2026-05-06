@@ -38,6 +38,12 @@ const PAUSE_GAP_MAX = 35000;
 // Max spread added to source timers when they are deferred past a pause (ms)
 const RESUME_SPREAD = 4000;
 
+// First emission window per source after page load. Kept short so the user
+// sees bubbles within a few seconds of opening the aquarium; subsequent
+// emissions use the per-source intervalMin/intervalMax.
+const INITIAL_EMIT_DELAY_MIN = 500;
+const INITIAL_EMIT_DELAY_MAX = 4000;
+
 export function createBubblesState() {
   const now = performance.now();
 
@@ -45,7 +51,8 @@ export function createBubblesState() {
     bubbles: [],
     sources: SOURCES.map((src) => ({
       ...src,
-      nextEmitAt: now + src.intervalMin + Math.random() * (src.intervalMax - src.intervalMin),
+      nextEmitAt:
+        now + INITIAL_EMIT_DELAY_MIN + Math.random() * (INITIAL_EMIT_DELAY_MAX - INITIAL_EMIT_DELAY_MIN),
     })),
     lastTickAt: 0,
     nextId: 0,
