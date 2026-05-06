@@ -21,6 +21,7 @@ import {
   drawAlgaeLayer,
   restoreAlgaeState,
 } from './features/algae/index.js';
+import { createBubblesState, startBubbles } from './features/bubbles/index.js';
 
 const SELECTORS = {
   app: '#app',
@@ -787,6 +788,7 @@ function bindAquariumControls(root, aquarium, appState, render) {
 
 function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   appState.movementController?.stop();
+  appState.bubbleController?.stop();
 
   root.innerHTML = `
     <main class="fishbowl-page">
@@ -806,6 +808,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
             <div class="water-surface" aria-hidden="true"></div>
             <div class="swim-boundary" aria-hidden="true"></div>
             ${renderDecoration()}
+            <svg class="bubble-layer" data-bubble-svg viewBox="0 0 1152 780" aria-hidden="true"></svg>
             <canvas class="algae-layer" data-algae-canvas aria-hidden="true"></canvas>
             <div class="fish-layer" data-fish-layer>
               <div class="food-layer" aria-hidden="true">
@@ -850,6 +853,10 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     getPausedFishIds: () => new Set(appState.editingFishId ? [appState.editingFishId] : []),
     onSave: () => saveAquarium(aquarium),
   });
+
+  const bubbleSvg = root.querySelector('[data-bubble-svg]');
+
+  appState.bubbleController = startBubbles(bubbleSvg, appState.bubblesState);
 }
 
 function initApp() {
@@ -863,6 +870,8 @@ function initApp() {
     feedingAnimationId: null,
     isFishListCollapsed: false,
     movementController: null,
+    bubbleController: null,
+    bubblesState: createBubblesState(),
   };
 
   normalizeAquariumFishMovement(aquarium, performance.now());
