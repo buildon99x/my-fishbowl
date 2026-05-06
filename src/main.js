@@ -38,6 +38,7 @@ import {
   createCleaningState,
   snapshotCanvas,
 } from './features/cleaning/index.js';
+import { clamp } from './lib/utils.js';
 
 const SELECTORS = {
   app: '#app',
@@ -263,12 +264,6 @@ function updateFishAppearance(aquarium, fishId, patch) {
 function getFishById(aquarium, fishId) {
   return aquarium.fishes.find((fish) => fish.id === fishId);
 }
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
-
 
 function renderCleanButton(aquarium, cleaningState) {
   if (cleaningState.cleaningMode) {

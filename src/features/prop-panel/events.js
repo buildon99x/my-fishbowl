@@ -1,9 +1,6 @@
 import { DEFAULT_ALGAE_THRESHOLDS, restoreAlgaeState } from '../algae/index.js';
 import { savePropPanelPosition } from './state.js';
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
+import { clamp } from '../../lib/utils.js';
 
 function getFishByTarget(aquarium, target) {
   if (!target || target.type !== 'fish') return null;

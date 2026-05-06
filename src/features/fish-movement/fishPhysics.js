@@ -1,9 +1,7 @@
+import { clamp } from '../../lib/utils.js';
+
 export const TURN_DURATION_MS = 500;
 export const MAX_TILT_DEGREES = 15;
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
 
 function getRandomInRange(random, min, max) {
   return min + random() * (max - min);

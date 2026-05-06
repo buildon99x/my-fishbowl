@@ -1,4 +1,5 @@
-import { addFoods, clamp, createFeedingState, createFoodsAt, tickFeeding } from './state.js';
+import { addFoods, createFeedingState, createFoodsAt, tickFeeding } from './state.js';
+import { clamp } from '../../lib/utils.js';
 import { renderFeedingControls, renderFoods } from './view.js';
 
 export { createFeedingState, renderFeedingControls, renderFoods, tickFeeding };

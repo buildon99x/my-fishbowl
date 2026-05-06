@@ -1,6 +1,7 @@
 import { FOOD_CONFIGS, DEFAULT_FOOD_TYPE } from './foodConfig.js';
 import { tickFoodPhysics, isFoodExpired } from './foodPhysics.js';
 import { applyFoodEffect, getFoodDetectRadius } from './foodEffects.js';
+import { clamp } from '../../lib/utils.js';
 
 export const FOOD_EAT_DISTANCE = 6;
 
@@ -49,10 +50,6 @@ export function createFoodsAt(x, y, type = DEFAULT_FOOD_TYPE) {
 export function addFoods(state, foods) {
   state.foods = [...state.foods, ...foods];
   return foods;
-}
-
-export function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
 }
 
 function getDistance(a, b) {
