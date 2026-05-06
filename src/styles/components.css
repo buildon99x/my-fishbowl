@@ -618,7 +618,7 @@
 }
 
 .fish-input-panel {
-  max-height: min(680px, calc(100vh - 18px - 72px - 32px));
+  max-height: min(780px, calc(100vh - 18px - 72px - 32px));
   overflow: auto;
   padding: var(--space-lg);
 }
@@ -935,7 +935,7 @@
   }
 
   .fish-input-panel {
-    max-height: min(760px, calc(100vh - 92px));
+    max-height: min(860px, calc(100vh - 92px));
   }
 
   .fish-input-grid {
