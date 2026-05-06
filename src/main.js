@@ -7,7 +7,6 @@ import {
 import {
   bindFeedingEvents,
   createFeedingState,
-  renderFeedingControls,
   renderFoods,
   tickFeeding,
 } from './features/feeding/index.js';
@@ -21,6 +20,11 @@ import {
   drawAlgaeLayer,
   restoreAlgaeState,
 } from './features/algae/index.js';
+import {
+  bindPropPanelEvents,
+  createPropPanelState,
+  renderPropPanel,
+} from './features/prop-panel/index.js';
 
 const SELECTORS = {
   app: '#app',
@@ -793,7 +797,6 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       <header class="page-header">
         <p class="eyebrow">My Fishbowl</p>
         <h1>${aquarium.name}</h1>
-        ${renderFeedingControls(feedingState)}
       </header>
 
       <section class="aquarium-layout" aria-labelledby="aquarium-title">
@@ -821,6 +824,13 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       </section>
 
       ${renderFishInputPanel(fishInputState)}
+      ${renderPropPanel({
+        feedingState,
+        fishInputState,
+        propPanelState: appState.propPanel,
+        aquarium,
+        isDev: import.meta.env.DEV,
+      })}
     </main>
   `;
 
@@ -846,6 +856,15 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
   });
+  bindPropPanelEvents(
+    root,
+    { fishInputState, propPanelState: appState.propPanel },
+    {
+      render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+      onFeedingToggle: () => { feedingState.feedingMode = !feedingState.feedingMode; },
+      onFoodTypeChange: (type) => { feedingState.selectedType = type; },
+    },
+  );
   appState.movementController = startFishMovement(root, aquarium, {
     getPausedFishIds: () => new Set(appState.editingFishId ? [appState.editingFishId] : []),
     onSave: () => saveAquarium(aquarium),
@@ -863,6 +882,7 @@ function initApp() {
     feedingAnimationId: null,
     isFishListCollapsed: false,
     movementController: null,
+    propPanel: createPropPanelState(),
   };
 
   normalizeAquariumFishMovement(aquarium, performance.now());
