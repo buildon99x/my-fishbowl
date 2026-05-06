@@ -27,13 +27,15 @@ describe('createBubblesState', () => {
     }
   });
 
-  it('includes sand, seaweed, and eel sources', () => {
+  it('includes sand, seaweed, and eel sources by id', () => {
     const state = createBubblesState();
-    const types = state.sources.map((s) => s.type);
+    const ids = state.sources.map((s) => s.id);
 
-    expect(types).toContain('sand');
-    expect(types).toContain('seaweed');
-    expect(types).toContain('eel');
+    expect(ids).toContain('sand');
+    expect(ids).toContain('seaweed-left');
+    expect(ids).toContain('seaweed-right');
+    expect(ids).toContain('eel-one');
+    expect(ids).toContain('eel-two');
   });
 });
 

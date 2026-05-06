@@ -1,64 +1,32 @@
 // SVG viewBox coordinate space: 0 0 1152 780
-// Bubbles rise from sand, seaweed bases, and garden eel heads
+//
+// Bubble sources are placed at the sand surface (y ≈ 650) for all origins.
+// Garden eel heads sway ±15 SVG units via CSS animation, so using their
+// animated head position would require live DOM measurement. Spawning from
+// the sand base where each eel is rooted is always visually correct and
+// avoids the mismatch.
+//
+// Rise speed is kept fast enough (35–60 SVG/s) so travel time from sand to
+// water surface stays under ~14 s. Combined with 10–30 s intervals per
+// source, at most 1–2 bubbles are in flight from any one source, keeping
+// the total on screen around 2–4 at a time ("가끔씩" natural feel).
 
 const WATER_TOP_Y = 158;
-const FADE_ZONE = 60;
+const FADE_ZONE = 55;
 
+// Each source: { id, xMin, xMax, y, intervalMin, intervalMax }
+// x spawn position is sampled uniformly from [xMin, xMax].
 const SOURCES = [
-  {
-    id: 'sand',
-    type: 'sand',
-    xMin: 280,
-    xMax: 880,
-    y: 652,
-    xVariance: 0,
-    intervalMin: 4000,
-    intervalMax: 10000,
-  },
-  {
-    id: 'seaweed-left',
-    type: 'seaweed',
-    xMin: 0,
-    xMax: 0,
-    xCenter: 318,
-    y: 647,
-    xVariance: 22,
-    intervalMin: 6000,
-    intervalMax: 15000,
-  },
-  {
-    id: 'seaweed-right',
-    type: 'seaweed',
-    xMin: 0,
-    xMax: 0,
-    xCenter: 828,
-    y: 650,
-    xVariance: 18,
-    intervalMin: 7000,
-    intervalMax: 16000,
-  },
-  {
-    id: 'eel-one',
-    type: 'eel',
-    xMin: 0,
-    xMax: 0,
-    xCenter: 520,
-    y: 430,
-    xVariance: 8,
-    intervalMin: 5000,
-    intervalMax: 12000,
-  },
-  {
-    id: 'eel-two',
-    type: 'eel',
-    xMin: 0,
-    xMax: 0,
-    xCenter: 683,
-    y: 445,
-    xVariance: 8,
-    intervalMin: 6000,
-    intervalMax: 13000,
-  },
+  // Random spot along the sand bed
+  { id: 'sand', xMin: 320, xMax: 840, y: 651, intervalMin: 12000, intervalMax: 28000 },
+  // Left seaweed cluster base (SVG paths start at x≈306–336, y≈654)
+  { id: 'seaweed-left', xMin: 302, xMax: 342, y: 648, intervalMin: 14000, intervalMax: 32000 },
+  // Right seaweed cluster base (SVG paths start at x≈818–838, y≈657)
+  { id: 'seaweed-right', xMin: 814, xMax: 844, y: 651, intervalMin: 16000, intervalMax: 36000 },
+  // Garden eel one — rooted at sand base x≈514, y≈650
+  { id: 'eel-one', xMin: 506, xMax: 524, y: 648, intervalMin: 10000, intervalMax: 24000 },
+  // Garden eel two — rooted at sand base x≈642, y≈651
+  { id: 'eel-two', xMin: 634, xMax: 652, y: 649, intervalMin: 12000, intervalMax: 28000 },
 ];
 
 export function createBubblesState() {
@@ -76,13 +44,7 @@ export function createBubblesState() {
 }
 
 function spawnBubble(source, id) {
-  let x;
-
-  if (source.type === 'sand') {
-    x = source.xMin + Math.random() * (source.xMax - source.xMin);
-  } else {
-    x = source.xCenter + (Math.random() - 0.5) * 2 * source.xVariance;
-  }
+  const x = source.xMin + Math.random() * (source.xMax - source.xMin);
 
   return {
     id,
@@ -91,10 +53,11 @@ function spawnBubble(source, id) {
     y: source.y,
     sourceY: source.y,
     radius: 3 + Math.random() * 8,
-    riseSpeed: 22 + Math.random() * 32,
+    // Faster rise keeps travel time short, limiting simultaneous bubble count.
+    riseSpeed: 35 + Math.random() * 25,
     driftPhase: Math.random() * Math.PI * 2,
-    driftSpeed: 0.7 + Math.random() * 1.1,
-    driftAmplitude: 5 + Math.random() * 10,
+    driftSpeed: 0.6 + Math.random() * 1.0,
+    driftAmplitude: 4 + Math.random() * 9,
     opacity: 0,
   };
 }
