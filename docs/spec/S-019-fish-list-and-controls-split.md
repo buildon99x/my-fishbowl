@@ -15,11 +15,14 @@
 ## 범위
 
 - 포함:
+  - aquarium 모델/영속화/fish CRUD를 책임별 3분할로 features/aquarium 하위에 이동:
+    - `storage.js` ← `STORAGE_KEY`, `loadAquarium`, `saveAquarium`
+    - `model.js` ← `DEFAULT_BOUNDS`, `createAquarium`, `normalizeAquarium`
+    - `fish-actions.js` ← `createFishFromDraft`, `addFishToAquarium`, `deleteFishFromAquarium`, `toggleFishHidden`, `updateFishAppearance`, `getFishById`
   - `renderFishList`, `renderAquariumStatus`, `formatRegisteredTime`을 신규 feature 모듈로 이동.
   - `bindAquariumControls`를 책임별로 분해:
     1. fish-list/collapse 관련 이벤트(`data-toggle-fish-list`, `data-select-fish`, `data-toggle-fish-hidden`, `data-edit-fish`, `data-delete-fish`)
     2. fish-sprite 드래그-이동 이벤트(`data-fish-sprite` pointer drag while editing)
-  - aquarium 모델 함수(`toggleFishHidden`, `deleteFishFromAquarium`, `updateFishAppearance`, `getFishById`)의 위치 결정과 사전 분리.
   - 분리 후 main.js의 호출부를 import + 얇은 wiring만 남긴다.
   - 변경 없는 동작을 보장하기 위한 회귀 테스트 항목 정의.
 - 제외:
@@ -66,7 +69,13 @@
 src/features/
   aquarium/
     decoration.js          # 이미 분리됨(S-017 후속)
-    model.js               # 신규: fish 모델 액션 + persistence
+    storage.js             # 신규: STORAGE_KEY, loadAquarium, saveAquarium
+    model.js               # 신규: DEFAULT_BOUNDS, createAquarium, normalizeAquarium
+    fish-actions.js        # 신규: createFishFromDraft, addFishToAquarium,
+                           #       deleteFishFromAquarium, toggleFishHidden,
+                           #       updateFishAppearance, getFishById
+    model.test.js
+    fish-actions.test.js
   fish-list/
     view.js                # renderFishList, renderAquariumStatus, formatRegisteredTime
     events.js              # bindFishListEvents (collapse + list 액션)
@@ -77,15 +86,29 @@ src/features/
     index.js
 ```
 
+- aquarium 모델은 단일 `model.js` 대신 책임별 3분할(옵션 B)을 채택한다.
+  - `storage.js`: localStorage I/O만 책임. `STORAGE_KEY`, `loadAquarium`, `saveAquarium`.
+  - `model.js`: aquarium 객체의 모양/기본값/정규화. `DEFAULT_BOUNDS`, `createAquarium`, `normalizeAquarium`.
+  - `fish-actions.js`: aquarium에 작용하는 fish CRUD. `saveAquarium`을 직접 import해 영속화한다.
 - `src/features/fish-edit/`는 기존 `fish-movement`(자율 움직임)와 책임이 다르므로 별도 디렉터리로 둔다. 추후 합칠 수 있음을 본 스펙 메모에만 남긴다.
-- `src/features/aquarium/model.js`의 위치 대안: `src/features/fish/model.js`. 본 스펙에서는 aquarium 단위 영속화와 fish CRUD가 한 모듈에 모이는 게 호출 흐름상 자연스럽다고 판단해 `aquarium/model.js`로 둔다. 결정이 바뀌면 이 메모를 갱신한다.
+- `fish-actions.js`로 묶는 이유: 6개 함수가 모두 aquarium을 인자로 받고 mutation 후 `saveAquarium`을 호출하는 동일 패턴이며 한 호출 사이클에서 함께 변경되는 경우가 많다. fish 도메인 디렉터리(`features/fish/model.js`)로 빼는 옵션은 보류한다.
 
 ### 분리 순서 (각각 독립 commit)
 
-1. **aquarium 모델 분리** (선행)
-   - `createAquarium`, `normalizeAquarium`, `loadAquarium`, `saveAquarium`, `STORAGE_KEY`, `DEFAULT_BOUNDS`, `createFishFromDraft`, `addFishToAquarium`, `deleteFishFromAquarium`, `toggleFishHidden`, `updateFishAppearance`, `getFishById`를 `src/features/aquarium/model.js`로 이동.
+1. **aquarium storage 분리** (가장 선행)
+   - `STORAGE_KEY`, `loadAquarium`, `saveAquarium`을 `src/features/aquarium/storage.js`로 이동.
+   - `loadAquarium`은 `normalizeAquarium`을 호출하므로 단계 1-b 후에 import 경로를 갱신해도 되고, 본 단계에서 `normalizeAquarium`을 함께 옮겨도 된다. 본 스펙은 1-a → 1-b 순서로 분리.
    - 동작 변경 금지. main.js는 import만 한다.
-   - 단위 테스트 신규 작성: `normalizeAquarium`이 누락 필드를 채우는지, `addFishToAquarium`/`deleteFishFromAquarium`이 `updatedAt`을 갱신하는지, `toggleFishHidden`이 hidden을 토글하는지.
+
+   1-b. **aquarium model 분리**
+   - `DEFAULT_BOUNDS`, `createAquarium`, `normalizeAquarium`을 `src/features/aquarium/model.js`로 이동.
+   - `normalizeAquarium`의 인라인 behavior 상태 enum은 본 단계에서 그대로 유지(별도 commit으로 정리).
+   - 단위 테스트 신규 작성: `normalizeAquarium`이 누락 필드를 채우는지, `bounds` 병합이 정상인지, `createAquarium`의 기본값이 일치하는지.
+
+   1-c. **fish-actions 분리**
+   - `createFishFromDraft`, `addFishToAquarium`, `deleteFishFromAquarium`, `toggleFishHidden`, `updateFishAppearance`, `getFishById`를 `src/features/aquarium/fish-actions.js`로 이동.
+   - `saveAquarium`은 storage에서, fish 초기 상태는 본 모듈에서 직접 import.
+   - 단위 테스트: `addFishToAquarium`/`deleteFishFromAquarium`이 `updatedAt`을 갱신하는지, `toggleFishHidden`이 hidden을 토글하는지, `updateFishAppearance`가 patch만 적용하는지, `getFishById`가 missing id에 대해 undefined를 반환하는지.
 2. **fish-list view 분리**
    - `renderFishList`, `renderAquariumStatus`, `formatRegisteredTime`을 `src/features/fish-list/view.js`로 이동.
    - `escapeHtml`은 `src/lib/utils.js`에서 import. `ALGAE_MAX_LEVEL`/`getAlgaeStateName`은 `features/algae`에서 import.
@@ -99,12 +122,17 @@ src/features/
    - 편집 대상이 아닐 때(early return) 동작이 동일한지 확인하는 회귀 테스트.
 5. **bindAquariumControls 분해 — fish-list 이벤트 추출**
    - 잔여 핸들러(`data-toggle-fish-list`, `data-select-fish`, `data-toggle-fish-hidden`, `data-edit-fish`, `data-delete-fish`)를 `src/features/fish-list/events.js`의 `bindFishListEvents(root, aquarium, appState, { render })`로 이동.
-   - 모델 의존성은 `features/aquarium/model.js`에서 import.
+   - 모델 의존성은 `features/aquarium/fish-actions.js`에서 import.
 6. **main.js 정리**
    - `bindAquariumControls`는 단계 4·5 완료 후 단순 위임 함수가 되거나 삭제한다. main.js는 두 bind 함수를 직접 호출하는 형태로 정리.
    - main.js에서 더 이상 사용되지 않는 helper(`formatRegisteredTime` 등) import가 없는지 확인.
+7. **(선택) prop-panel `saveAquarium` 콜백 인자 제거**
+   - `bindPropPanelEvents`, `bindFishPropsEvents`, `bindGodModePropsEvents`의 5번째 인자(`saveAquarium`)를 제거하고 `features/aquarium/storage.js`에서 직접 import한다.
+   - 호출부 5곳 변경. 단계 1-a 이후 어느 시점이든 가능하지만 본 스펙에서는 마지막 정리 commit으로 둔다.
+8. **(선택) `normalizeAquarium`의 behavior 상태 enum 통합**
+   - 인라인 `['cruising', 'idle', 'dart', 'wander', 'turning']`을 `features/fish-movement/fishBehavior.js`의 `BEHAVIOR_STATUSES` import로 교체.
 
-각 단계는 독립 commit으로 분리해 부분 롤백을 허용한다. 단계 1과 2는 의존 방향상 단계 4·5보다 먼저 와야 한다.
+각 단계는 독립 commit으로 분리해 부분 롤백을 허용한다. 단계 1(a/b/c) → 2 → 3 → 4 → 5 → 6 순서로 진행하며, 단계 7·8은 옵션이며 후속 PR로 미뤄도 무방하다.
 
 ### bindFishSpriteDrag 책임 경계
 
@@ -125,13 +153,15 @@ src/features/
 
 ## 검증 기준
 
-- [ ] `src/features/aquarium/model.js`에 aquarium persistence와 fish CRUD가 모인다.
+- [ ] `src/features/aquarium/storage.js`에 `STORAGE_KEY`, `loadAquarium`, `saveAquarium`이 모인다.
+- [ ] `src/features/aquarium/model.js`에 `DEFAULT_BOUNDS`, `createAquarium`, `normalizeAquarium`이 모인다.
+- [ ] `src/features/aquarium/fish-actions.js`에 fish CRUD 6개 함수가 모이고, 영속화는 `storage.saveAquarium`을 import해 호출한다.
 - [ ] `src/features/fish-list/view.js`에 `renderFishList`, `renderAquariumStatus`, `formatRegisteredTime`이 모인다.
 - [ ] `src/features/fish-list/events.js`에 collapse + list 액션 핸들러가 모이고, fish-sprite 드래그 핸들러는 포함되지 않는다.
 - [ ] `src/features/fish-edit/drag.js`가 fish-sprite 드래그-이동 책임을 단독으로 가진다.
 - [ ] main.js가 위 모듈을 import만 하고 동일 책임의 함수 정의를 가지지 않는다.
-- [ ] aquarium 모델 함수에 대한 Vitest 단위 테스트가 추가된다(`normalizeAquarium`, `toggleFishHidden`, `addFishToAquarium`, `deleteFishFromAquarium`, `updateFishAppearance` 최소 1건씩).
-- [ ] 분리 단계 1·2·3·4·5는 각각 독립 commit으로 분리된다.
+- [ ] aquarium 모듈 함수에 대한 Vitest 단위 테스트가 추가된다(`normalizeAquarium`, `toggleFishHidden`, `addFishToAquarium`, `deleteFishFromAquarium`, `updateFishAppearance`, `getFishById` 최소 1건씩).
+- [ ] 분리 단계 1-a·1-b·1-c·2·3·4·5·6은 각각 독립 commit으로 분리된다(단계 7·8은 옵션).
 - [ ] 빈 상태/1마리/편집 중 fish-list 렌더 결과의 DOM 구조가 분리 전과 동일하다(스냅샷 또는 문자열 동등성).
 - [ ] 편집 모드 진입 후 fish-sprite 드래그가 좌표를 갱신하고 저장한다.
 - [ ] 페이지 새로고침 후 접힘 상태와 스크롤 위치가 보존된다.
