@@ -11,6 +11,7 @@ import {
   renderFoods,
   tickFeeding,
 } from './features/feeding/index.js';
+import {
   normalizeAquariumFishMovement,
   shouldFlipFishForMovement,
   startFishMovement,
@@ -60,7 +61,6 @@ function normalizeAquarium(aquarium) {
     ? aquarium.fishes.map((fish) => ({
         ...fish,
         hidden: Boolean(fish?.hidden),
-        hidden: false,
         vx: Number.isFinite(fish?.vx) ? fish.vx : 0,
         vy: Number.isFinite(fish?.vy) ? fish.vy : 0,
         speed: Number.isFinite(fish?.speed) ? fish.speed : 0,
@@ -784,7 +784,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   bindFeedingEvents(root, feedingState, {
     render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
-  bindAquariumControls(root, aquarium, appState, () => renderApp(root, aquarium, fishInputState, appState));
+  });
   appState.movementController = startFishMovement(root, aquarium, {
     getPausedFishIds: () => new Set(appState.editingFishId ? [appState.editingFishId] : []),
     onSave: () => saveAquarium(aquarium),
