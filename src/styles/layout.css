@@ -1,8 +1,45 @@
-.container {
-  max-width: 640px;
-  margin: 80px auto;
-  padding: 24px;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+.fishbowl-page {
+  width: min(1120px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin-bottom: 6px;
+  color: #39707a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.page-header h1 {
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1;
+}
+
+.aquarium-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(220px, 280px);
+  gap: 32px;
+  align-items: start;
+}
+
+.aquarium-shell {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .fishbowl-page {
+    padding: 28px 16px;
+  }
+
+  .aquarium-layout {
+    grid-template-columns: 1fr;
+  }
 }
