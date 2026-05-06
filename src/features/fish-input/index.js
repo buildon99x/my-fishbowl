@@ -101,7 +101,10 @@ function setupDrawingCanvas(root, state, render) {
   context.lineCap = 'round';
   context.lineJoin = 'round';
   context.lineWidth = 7;
-  context.strokeStyle = '#16323b';
+  context.strokeStyle =
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-ink')
+      .trim() || '#0a0a0a';
   paintStoredSprite(canvas, state.spriteDataUrl);
 
   canvas.addEventListener('pointerdown', (event) => {
