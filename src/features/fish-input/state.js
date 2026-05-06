@@ -1,4 +1,5 @@
 export const FISH_DRAFT_STORAGE_KEY = 'my-fishbowl:fish-draft';
+export const DEFAULT_FISH_NAME = 'Unnamed fish';
 
 export function createFishInputState() {
   const draft = loadFishDraft();
@@ -27,7 +28,7 @@ export function loadFishDraft() {
 export function saveFishDraft(state) {
   const now = new Date().toISOString();
   const draft = {
-    name: state.name.trim(),
+    name: state.name.trim() || DEFAULT_FISH_NAME,
     spriteDataUrl: state.spriteDataUrl,
     source: state.source,
     createdAt: now,

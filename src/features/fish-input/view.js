@@ -1,3 +1,5 @@
+import { DEFAULT_FISH_NAME } from './state.js';
+
 const STATUS_TEXT = {
   idle: 'Choose an image or draw a fish.',
   preview: 'Fish image preview is ready.',
@@ -15,9 +17,9 @@ function escapeHtml(value) {
 
 export function renderFishInputPanel(state) {
   const hasSprite = Boolean(state.spriteDataUrl);
-  const canRegister = hasSprite && state.status !== 'invalid' && state.name.trim().length > 0;
+  const canRegister = hasSprite && state.status !== 'invalid';
   const statusMessage = state.message || STATUS_TEXT[state.status] || STATUS_TEXT.idle;
-  const summary = state.name.trim() || (hasSprite ? 'Unnamed fish' : 'No fish image selected');
+  const summary = state.name.trim() || (hasSprite ? DEFAULT_FISH_NAME : 'No fish image selected');
   const bodyId = 'fish-input-widget-body';
 
   return `
