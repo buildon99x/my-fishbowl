@@ -75,6 +75,7 @@ function spawnBubble(source, id) {
     driftPhase: Math.random() * Math.PI * 2,
     driftSpeed: 0.6 + Math.random() * 1.0,
     driftAmplitude: 4 + Math.random() * 9,
+    maxOpacity: 0.4 + Math.random() * 0.3,
     opacity: 0,
   };
 }
@@ -127,12 +128,14 @@ export function tickBubbles(state, nowMs) {
     const distFromSource = bubble.sourceY - bubble.y;
     const fadeInZone = 24;
 
+    const peak = bubble.maxOpacity ?? 1;
+
     if (distFromSource < fadeInZone) {
-      bubble.opacity = distFromSource / fadeInZone;
+      bubble.opacity = (distFromSource / fadeInZone) * peak;
     } else if (bubble.y < WATER_TOP_Y + FADE_ZONE) {
-      bubble.opacity = Math.max(0, (bubble.y - WATER_TOP_Y) / FADE_ZONE);
+      bubble.opacity = Math.max(0, ((bubble.y - WATER_TOP_Y) / FADE_ZONE) * peak);
     } else {
-      bubble.opacity = 1;
+      bubble.opacity = peak;
     }
 
     if (bubble.y < WATER_TOP_Y) {
