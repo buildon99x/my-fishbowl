@@ -260,6 +260,15 @@ function renderFishes(fishes, selectedFishId, editingFishId) {
 function renderFishEditor(fish) {
   return `
     <div class="fish-editor">
+      <label class="fish-editor-name">
+        <span>이름</span>
+        <input
+          type="text"
+          maxlength="40"
+          value="${escapeHtml(fish.name)}"
+          data-edit-fish-name="${fish.id}"
+        >
+      </label>
       <div class="fish-editor-toolbar">
         <button class="fish-action-button" type="button" data-flip-fish="${fish.id}">
           좌우반전
@@ -374,6 +383,25 @@ function bindAquariumControls(root, aquarium, appState, render) {
     button.addEventListener('click', () => {
       appState.selectedFishId = button.dataset.editFish;
       appState.editingFishId = appState.editingFishId === button.dataset.editFish ? null : button.dataset.editFish;
+      render();
+    });
+  });
+
+  root.querySelectorAll('[data-edit-fish-name]').forEach((input) => {
+    input.addEventListener('input', () => {
+      const fishId = input.dataset.editFishName;
+
+      appState.selectedFishId = fishId;
+      updateFishAppearance(aquarium, fishId, { name: input.value });
+    });
+
+    input.addEventListener('change', () => {
+      const fishId = input.dataset.editFishName;
+      const trimmed = input.value.trim();
+
+      if (!trimmed) {
+        updateFishAppearance(aquarium, fishId, { name: '이름 없는 물고기' });
+      }
       render();
     });
   });
