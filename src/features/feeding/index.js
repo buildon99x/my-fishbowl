@@ -39,7 +39,6 @@ export function bindFeedingEvents(root, state, options = {}) {
     addFood(state, createFoodAt(point.x, point.y, state.selectedType));
     state.lastTickAt = window.performance.now();
     lastDropAt = now;
-    options.render?.();
     options.startAnimation?.();
   }
 
