@@ -6,8 +6,10 @@
 - 디렉터리 구조, 파일 역할, 기능 배치 기준을 판단해야 할 때는 먼저 `ARCHITECTURE.md`를 확인한다.
 - 새 파일이나 새 디렉터리를 추가하기 전에는 `ARCHITECTURE.md`의 배치 기준과 분할 기준을 따른다.
 - 구현 전 기능 목표, 범위, 검증 기준을 정리해야 할 때는 `SPEC.md`에서 스펙 목록을 확인하고 `docs/spec/` 하위 상세 문서를 사용한다.
+- 스펙 작성/검토/구현/완료 기록 명령 패턴, dev server URL 확인 체크리스트, UI 진입점 변경 체크리스트, 코드 수정 위치 맵은 `docs/spec-command-patterns.md`를 참조한다.
+- 작업 시작 전에는 작업과 관련된 `docs/learn/*.md` 실행착오 기록을 훑어 같은 실수를 반복하지 않는다. 새 실행착오는 `docs/learn/_template.md`를 기준으로 `docs/learn/<YYYY-MM-DD>-<topic>.md`에 기록한다.
 - 스펙은 한 번에 완성하지 않고 작은 스펙 조각 단위로 관리한다.
-- `Claude.md`는 AI 코딩 작업 규칙을, `ARCHITECTURE.md`는 프로젝트 구조와 확장 기준을, `SPEC.md`는 스펙 목록과 진행 상태를, `docs/spec/`는 스펙 상세를 담당한다.
+- `Claude.md`는 작업 라우터를, `ARCHITECTURE.md`는 프로젝트 구조와 확장 기준을, `SPEC.md`는 스펙 목록과 진행 상태를, `docs/spec/`는 스펙 상세를, `docs/spec-command-patterns.md`는 명령 패턴과 체크리스트를, `docs/learn/`는 실행착오 기록을 담당한다.
 
 ## 작업 워크플로우
 1. **전체 방향 정리**: `SPEC.md`에 전체 목표와 전체 범위를 짧게 정리한다.
@@ -23,37 +25,17 @@
 - 스펙 상세 문서에는 목표, 범위, 사용자 흐름, UI/상태 요구사항, 검증 기준이 있어야 한다.
 - 구현 중 새 요구사항이 발견되면 현재 구현에 섞지 말고 새 스펙 조각으로 기록한다.
 
-## 스펙 작성 명령 패턴
+## 작업 라우팅
 
-### 새 스펙 조각 작성
-```text
-다음 요구사항을 바탕으로 새 스펙 조각을 설계한다.
-- `SPEC.md`에 새 ID와 상세 문서 경로를 추가한다.
-- `docs/spec/_template.md`를 기준으로 `docs/spec/<ID>-<short-title>.md`를 만든다.
-- 상태는 `draft`, 구현 여부는 `not-started`, 검증 여부는 `not-tested`로 둔다.
-- 목표, 범위, 사용자 흐름, UI/상태 요구사항, 구현 메모, 검증 기준을 작성한다.
-- 구현 파일은 수정하지 않는다.
-```
-
-### 스펙 검토
-```text
-현재 스펙 상세 문서를 검토한다.
-- 모호한 요구사항
-- 구현 범위가 큰 항목
-- 빠진 검증 기준
-- 별도 스펙 조각으로 나눠야 할 항목
-을 찾아 제안한다.
-- 구현 파일은 수정하지 않는다.
-```
-
-### 스펙 구현
-```text
-`SPEC.md`의 현재 작업 ID를 확인하고 해당 `docs/spec/*.md` 상세 문서를 읽는다.
-- 상세 스펙이 `ready` 상태일 때만 구현한다.
-- 구현 전 `ARCHITECTURE.md`를 확인한다.
-- 구현 후 상세 스펙의 검증 기준을 기준으로 테스트한다.
-- 검증 결과를 스펙 문서나 완료 기록에 반영한다.
-```
+| 사용자 요청 | 시작 문서 |
+| --- | --- |
+| 새 스펙 조각 작성 | `docs/spec-command-patterns.md` → "새 스펙 조각 작성" |
+| 스펙 검토 | `docs/spec-command-patterns.md` → "스펙 검토" |
+| 스펙 구현 | `docs/spec-command-patterns.md` → "스펙 구현" |
+| 스펙 완료 기록 | `docs/spec-command-patterns.md` → "스펙 완료 기록" |
+| 코드 수정 위치 찾기 | `docs/spec-command-patterns.md` → "코드 수정 위치 맵" |
+| 브라우저 검증 | `docs/spec-command-patterns.md` → "dev server URL 확인 체크리스트" |
+| UI 진입점 변경 | `docs/spec-command-patterns.md` → "UI 진입점 변경 체크리스트" |
 
 ## 기술 스택
 - 빌드/개발 서버: Vite

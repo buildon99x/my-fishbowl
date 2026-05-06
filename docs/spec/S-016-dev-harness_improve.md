@@ -2,9 +2,9 @@
 
 ## 상태
 
-- 상태: draft
-- 구현 여부: not-started
-- 검증 여부: not-tested
+- 상태: done
+- 구현 여부: done
+- 검증 여부: tested
 
 ## 목표
 
