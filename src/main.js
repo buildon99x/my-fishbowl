@@ -303,16 +303,7 @@ function renderDecoration() {
           <ellipse class="sand-glint sand-glint-right" cx="782" cy="663" rx="154" ry="22" />
         </g>
 
-        <g class="reference-bubbles">
-          <circle cx="876" cy="372" r="22" fill="#86cfee" stroke="#d4f0ff" stroke-width="4" />
-          <circle cx="923" cy="448" r="18" fill="#86cfee" stroke="#d4f0ff" stroke-width="4" />
-          <circle cx="884" cy="367" r="5" fill="#ffffff" />
-          <circle cx="926" cy="436" r="5" fill="#ffffff" />
-          <path d="M861 374 C860 389 871 400 884 402" fill="none" stroke="#d4f0ff" stroke-width="7" stroke-linecap="round" opacity="0.8" />
-          <path d="M909 450 C909 461 918 469 928 471" fill="none" stroke="#d4f0ff" stroke-width="6" stroke-linecap="round" opacity="0.8" />
-        </g>
-
-        <path d="M936 112 C970 113 980 116 970 139 C956 172 925 207 914 191 C907 181 927 129 936 112 Z" fill="#e6f5ff" opacity="0.85" />
+<path d="M936 112 C970 113 980 116 970 139 C956 172 925 207 914 191 C907 181 927 129 936 112 Z" fill="#e6f5ff" opacity="0.85" />
         <path d="M935 224 C994 228 1072 340 1035 394 C1006 436 965 267 935 224 Z" fill="#e6f5ff" opacity="0.7" />
         <ellipse cx="1071" cy="458" rx="25" ry="36" fill="#e6f5ff" opacity="0.52" />
         <path d="M180 68 C204 32 941 34 972 68 C984 83 979 154 949 177 C1065 279 1116 404 1091 523 C1057 685 878 769 583 769 C287 769 113 672 77 515 C50 398 96 278 213 177 C181 148 169 88 180 68 Z" fill="none" stroke="#e6f5ff" stroke-width="16" stroke-linejoin="round" opacity="0.78" />
