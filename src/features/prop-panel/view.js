@@ -81,7 +81,7 @@ export function renderPropPanel({ feedingState, fishInputState, propPanelState, 
             data-prop-cleaning
             aria-pressed="${cleanActive}"
             aria-label="청소 모드"
-          >🧹</button>
+          >🧽</button>
         </div>
 
         ${godModeButton}
