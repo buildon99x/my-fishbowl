@@ -190,8 +190,8 @@
 }
 
 .food-pellet--bloodworm {
-  width: 10px;
-  height: 18px;
+  width: 11px;
+  height: 21px;
   background: url('../../assets/food/bloodworm.svg') center / contain no-repeat;
   filter: drop-shadow(0 2px 4px rgba(120, 20, 10, 0.35));
 }
