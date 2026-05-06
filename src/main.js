@@ -799,8 +799,13 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   );
   appState.movementController = startFishMovement(root, aquarium, {
     getPausedFishIds: () => {
+      const paused = new Set();
       const t = appState.propPanel.editingTarget;
-      return new Set(t?.type === 'fish' ? [t.id] : []);
+      if (t?.type === 'fish') paused.add(t.id);
+      if (feedingState.foods.length > 0) {
+        aquarium.fishes.forEach((fish) => paused.add(fish.id));
+      }
+      return paused;
     },
     onSave: () => saveAquarium(aquarium),
   });
