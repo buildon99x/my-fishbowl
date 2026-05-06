@@ -11,10 +11,16 @@ import {
   renderFoods,
   tickFeeding,
 } from './features/feeding/index.js';
+import {
   normalizeAquariumFishMovement,
   shouldFlipFishForMovement,
   startFishMovement,
 } from './features/fish-movement/index.js';
+import {
+  ALGAE_STATE_NAMES,
+  drawAlgaeLayer,
+  restoreAlgaeState,
+} from './features/algae/index.js';
 
 const SELECTORS = {
   app: '#app',
@@ -60,7 +66,6 @@ function normalizeAquarium(aquarium) {
     ? aquarium.fishes.map((fish) => ({
         ...fish,
         hidden: Boolean(fish?.hidden),
-        hidden: false,
         vx: Number.isFinite(fish?.vx) ? fish.vx : 0,
         vy: Number.isFinite(fish?.vy) ? fish.vy : 0,
         speed: Number.isFinite(fish?.speed) ? fish.speed : 0,
@@ -205,6 +210,9 @@ function renderDecoration() {
       <defs>
         <clipPath id="bowl-shape">
           <path d="M180 68 C204 32 941 34 972 68 C984 83 979 154 949 177 C1065 279 1116 404 1091 523 C1057 685 878 769 583 769 C287 769 113 672 77 515 C50 398 96 278 213 177 C181 148 169 88 180 68 Z" />
+        </clipPath>
+        <clipPath id="bowl-clip" clipPathUnits="objectBoundingBox">
+          <path d="M0.122 0.049 C0.145 0 0.836 0.003 0.865 0.049 C0.876 0.069 0.872 0.166 0.843 0.197 C0.952 0.335 1 0.505 0.977 0.666 C0.945 0.886 0.777 1 0.5 1 C0.222 1 0.059 0.869 0.025 0.655 C0 0.497 0.043 0.334 0.153 0.197 C0.123 0.157 0.112 0.076 0.122 0.049 Z" />
         </clipPath>
         <clipPath id="water-shape">
           <path d="M118 142 C238 118 341 164 455 142 C571 119 656 166 774 142 C856 126 916 141 972 158 C1066 260 1116 403 1091 523 C1057 685 878 769 583 769 C287 769 113 672 77 515 C50 397 71 244 118 142 Z" />
@@ -502,7 +510,7 @@ function renderAquariumStatus(aquarium, appState) {
           </div>
           <div>
             <dt>이끼 단계</dt>
-            <dd>${aquarium.algaeLevel}</dd>
+            <dd>${aquarium.algaeLevel} · ${ALGAE_STATE_NAMES[aquarium.algaeLevel] ?? 'clean'}</dd>
           </div>
         </dl>
         ${renderFishList(aquarium.fishes, appState.selectedFishId, appState.editingFishId)}
@@ -751,6 +759,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
             <div class="water-surface" aria-hidden="true"></div>
             <div class="swim-boundary" aria-hidden="true"></div>
             ${renderDecoration()}
+            <canvas class="algae-layer" data-algae-canvas aria-hidden="true"></canvas>
             <div class="fish-layer" data-fish-layer>
               <div class="food-layer" aria-hidden="true">
                 ${renderFoods(feedingState.foods)}
@@ -768,6 +777,11 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     </main>
   `;
 
+  const algaeCanvas = root.querySelector('[data-algae-canvas]');
+  if (algaeCanvas) {
+    drawAlgaeLayer(algaeCanvas, aquarium.algaeLevel);
+  }
+
   bindFishInputEvents(
     root,
     fishInputState,
@@ -784,7 +798,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   bindFeedingEvents(root, feedingState, {
     render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
-  bindAquariumControls(root, aquarium, appState, () => renderApp(root, aquarium, fishInputState, appState));
+  });
   appState.movementController = startFishMovement(root, aquarium, {
     getPausedFishIds: () => new Set(appState.editingFishId ? [appState.editingFishId] : []),
     onSave: () => saveAquarium(aquarium),
@@ -805,6 +819,7 @@ function initApp() {
   };
 
   normalizeAquariumFishMovement(aquarium, performance.now());
+  restoreAlgaeState(aquarium);
   saveAquarium(aquarium);
   renderApp(app, aquarium, fishInputState, feedingState, appState);
 }
