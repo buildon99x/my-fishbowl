@@ -2,6 +2,7 @@
 @import './base.css';
 @import './layout.css';
 @import './components.css';
+@import './components/aquarium.css';
 @import './components/fish.css';
 @import './components/cleaning.css';
 @import './utilities.css';
