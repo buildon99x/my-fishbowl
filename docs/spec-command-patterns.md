@@ -91,17 +91,76 @@
 Claude가 자주 수정하는 영역의 진입 함수/파일을 모은다.
 구조가 바뀌면 이 맵을 함께 갱신한다.
 
-- 물고기 표시 / transform
-  - `src/main.js`: `renderFishes`
-  - `src/styles/components.css`: `.fish-sprite`
-- 물고기 편집 UI
-  - `src/main.js`: `renderFishEditor`, `bindAquariumControls`
-- 청소 UI
-  - `src/main.js`: `renderCleanButton`, `renderCleaningOverlay`, `bindCleaningEvents`
-- 저장 / 복원
-  - `src/main.js`: `normalizeAquarium`, `loadAquarium`, `saveAquarium`
-- prop panel
-  - `src/features/prop-panel/`
-  - `src/styles/components.css`: `.prop-panel`
+### 어항 모델과 영속화
 
-향후 코드 리팩터링(예: `src/main.js` 분리, CSS 분리)은 본 하네스 개선 후 별도 스펙 조각에서 다룬다.
+- 신규 어항 객체와 정규화: `src/features/aquarium/model.js` (`createAquarium`, `normalizeAquarium`, `DEFAULT_BOUNDS`)
+- localStorage 로드/저장: `src/features/aquarium/storage.js` (`loadAquarium`, `saveAquarium`, `STORAGE_KEY`)
+- 물고기 CRUD: `src/features/aquarium/fish-actions.js` (`createFishFromDraft`, `addFishToAquarium`, `deleteFishFromAquarium`, `toggleFishHidden`, `updateFishAppearance`, `getFishById`)
+- 어항 장식 SVG: `src/features/aquarium/decoration.js` (`renderDecoration`)
+
+### 물고기 표시 / transform
+
+- 물고기 sprite 렌더: `src/main.js`의 `renderFishes`, `patchFishPositions`
+- CSS 변수 helper: `src/lib/fishSpriteStyle.js` (`getFishSpriteStyleVars`, `cssVarsToInlineStyle`)
+- 물고기 sprite 스타일: `src/styles/components/fish.css` (`.fish-sprite`, `@keyframes fish-eat`)
+- 자율 움직임 시뮬레이션: `src/features/fish-movement/`
+- 편집 모드 드래그-이동: `src/features/fish-edit/drag.js` (`bindFishSpriteDrag`)
+
+### 물고기 목록 / 편집
+
+- 목록과 어항 상태 패널 view: `src/features/fish-list/view.js` (`renderFishList`, `renderAquariumStatus`, `formatRegisteredTime`)
+- 목록 이벤트(접기/선택/숨기기/편집/삭제): `src/features/fish-list/events.js` (`bindFishListEvents`)
+- 목록 스크롤 보존: `src/features/fish-list/scroll.js` (`captureFishListScroll`, `restoreFishListScroll`)
+- 목록/편집 스타일: `src/styles/components.css` (`.aquarium-status`, `.status-list`, `.fish-list*`, `.fish-action-button`, `.fish-editor`)
+
+### 물고기 입력 (등록 패널)
+
+- view와 이벤트: `src/features/fish-input/`
+- 스타일: `src/styles/components.css` (`.fish-input-*`, `.draw-*`, `.preview-*`)
+
+### 청소
+
+- 진행률/오버레이 view: `src/features/cleaning/view.js` (`renderCleaningProgressBar`, `renderCleaningOverlay`)
+- 상태/계산/이벤트: `src/features/cleaning/index.js` (`createCleaningState`, `applyBrush`, `clearAlgaeCanvas`, `snapshotCanvas`, `bindCleaningEvents`, `exitCleaningMode`)
+- 스타일과 keyframes: `src/styles/components/cleaning.css` (`.clean-*`, `.cleaning-*`, `@keyframes cleaning-ripple`/`cleaning-complete-in`)
+
+### 먹이
+
+- 상태 전이 / 물리 / 효과: `src/features/feeding/state.js`, `foodPhysics.js`, `foodEffects.js`, `foodConfig.js`
+- view: `src/features/feeding/view.js` (`renderFoods`)
+- 이벤트와 진입점: `src/features/feeding/index.js` (`bindFeedingEvents`)
+- main.js 측 연결: `startFeedingAnimation`, `patchFoodLayer`
+- food 베이스 스타일: `src/styles/components/aquarium.css` (`.food-pellet`, `.food-layer`)
+- food 종류별 modifier: `src/styles/components/panels.css` (`.food-pellet--flake/--pellet/--bloodworm`)
+
+### 이끼
+
+- 상태/계산: `src/features/algae/state.js`
+- 캔버스 view: `src/features/algae/view.js`
+- 진입점: `src/features/algae/index.js` (`drawAlgaeLayer`, `restoreAlgaeState`, `ALGAE_MAX_LEVEL`, `getAlgaeStateName`)
+
+### 거품
+
+- 상태와 진입점: `src/features/bubbles/`
+
+### Prop Panel / God Mode / Action Cluster
+
+- 컴포넌트와 이벤트: `src/features/prop-panel/`
+- 스타일: `src/styles/components/panels.css` (`.prop-action-panel`, `.prop-panel`, `.prop-control-*`, `.prop-btn-*`, `.prop-feed-submenu`, `.prop-godmode-*`, `.god-mode-*`)
+
+### 어항 시각 레이어와 장식 스타일
+
+- 셸/그라운드/플랜트/장어/물 레이어: `src/styles/components/aquarium.css` (`.aquarium-bowl`, `.aquarium-art`, `.aquarium-ground`, `.sand-*`, `.sway-plant`, `.garden-eel`, `.bubble-layer`, `.algae-layer`, `.fish-layer`, `.food-layer`, `.aquarium-empty`, `@keyframes aquatic-sway`/`eel-sway`)
+
+### 공용 유틸 / 공통 컨트롤
+
+- 문자열·수치 helper: `src/lib/utils.js` (`escapeHtml`, `clamp`)
+- 공용 버튼/입력 스타일: `src/styles/components.css` (`.button`, `.button-primary`, `.button-secondary`, `.text-input`, `.file-input`, `.select-input`)
+
+### main.js 잔여 책임
+
+- 앱 초기화와 화면 조립: `initApp`, `renderApp`
+- 물고기 렌더 helper: `renderFishes`, `patchFishPositions`, `renderEmptyState`
+- feeding 애니메이션 / food 레이어 패치: `startFeedingAnimation`, `patchFoodLayer`
+- 빈 상태 메시지: `renderEmptyState`
+- 외부 모듈을 import해 wiring하는 역할 위주(직접 정의된 도메인 로직 없음).
