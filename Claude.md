@@ -44,11 +44,15 @@
 
 ## 디렉터리 규칙
 - `index.html`: 앱 진입점, `#app` 마운트 노드만 둔다.
-- `src/main.js`: 앱 초기화, 화면 렌더링, 이벤트 연결 담당. 파일 분리는 필요한 시점까지 미룬다.
-- `src/styles/index.css`: 스타일 진입점. 역할별 CSS 파일을 import한다.
+- `src/main.js`: 앱 초기화와 조립(wiring) 담당. 도메인 로직은 `src/features/`로 분리한다.
+- `src/lib/`: 도메인에 묶이지 않은 공용 helper (`utils.js`, `fishSpriteStyle.js`).
+- `src/features/<feature>/`: 도메인별 모듈. 역할이 드러나는 파일명(`index.js`, `state.js`, `view.js`, `events.js` 등)을 사용한다. 세부 배치는 `ARCHITECTURE.md` 참조.
+- `src/styles/index.css`: 스타일 진입점. 역할별 CSS 파일을 정해진 순서로 import한다.
 - `src/styles/base.css`: reset, root 변수, body, 기본 typography.
+- `src/styles/tokens.css`: 색/간격 등 디자인 토큰.
 - `src/styles/layout.css`: page, container, grid, section 같은 큰 배치.
-- `src/styles/components.css`: button, card, form 등 재사용 UI.
+- `src/styles/components.css`: 공용 button, input, list 등 재사용 UI 베이스.
+- `src/styles/components/`: 도메인별 컴포넌트 스타일(`aquarium.css`, `fish.css`, `cleaning.css`, `panels.css`).
 - `src/styles/utilities.css`: `.sr-only` 같은 작은 유틸리티.
 
 ## 구현 원칙
