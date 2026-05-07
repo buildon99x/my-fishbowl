@@ -38,14 +38,13 @@ import {
   snapshotCanvas,
 } from './features/cleaning/index.js';
 import { renderDecoration } from './features/aquarium/decoration.js';
+import { STORAGE_KEY, saveAquarium } from './features/aquarium/storage.js';
 import { clamp, escapeHtml } from './lib/utils.js';
 import { cssVarsToInlineStyle, getFishSpriteStyleVars } from './lib/fishSpriteStyle.js';
 
 const SELECTORS = {
   app: '#app',
 };
-
-const STORAGE_KEY = 'my-fishbowl:aquarium';
 
 const DEFAULT_BOUNDS = {
   shape: 'rounded-bowl',
@@ -147,14 +146,6 @@ function loadAquarium() {
   } catch (error) {
     console.warn('Saved aquarium data could not be loaded.', error);
     return createAquarium();
-  }
-}
-
-function saveAquarium(aquarium) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(aquarium));
-  } catch (error) {
-    console.warn('Aquarium data could not be saved.', error);
   }
 }
 
