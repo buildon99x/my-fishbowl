@@ -8,7 +8,7 @@ const PROP_RENDERERS = {
 
 if (import.meta.env.DEV) {
   import('./godmode-props.dev.js').then(({ renderGodModeProps }) => {
-    PROP_RENDERERS['god' + 'mode'] = renderGodModeProps;
+    PROP_RENDERERS.godmode = renderGodModeProps;
   });
 }
 
