@@ -13,6 +13,7 @@
   - UI 진입점 변경 → `docs/learn/2026-05-06-bottom-button-panel-mistakes.md`
   - dev server URL/포트 → `docs/learn/2026-05-06-dev-server-port-confusion.md`
   - 애니메이션 루프, 상태 충돌, surgical patch → `docs/learn/2026-05-06-feeding-animation-and-action-cluster-mistakes.md`
+  - 린트/cleanup 분리 실수 → `docs/learn/2026-05-07-lint-cleanup-gap.md`
 
 ## 명령 패턴
 
@@ -49,6 +50,7 @@
 - 구현 후 상세 스펙의 검증 기준을 기준으로 테스트한다.
 - 브라우저 검증이 필요한 경우 본 문서의 "dev server URL 확인 체크리스트"를 따른다.
 - UI 진입점이 바뀌는 경우 본 문서의 "UI 진입점 변경 체크리스트"를 따른다.
+- 푸시 전에 `npm run cleanup`(lint + knip + depcheck)을 통과시킨다. `pre-push` 훅이 같은 검사를 자동으로 실행한다.
 - 검증 결과를 스펙 문서나 완료 기록에 반영한다.
 ```
 

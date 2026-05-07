@@ -79,6 +79,9 @@
 - 개발: `npm run dev`
 - 빌드: `npm run build`
 - 프리뷰: `npm run preview`
+- 린트: `npm run lint` (ESLint + knip 미사용 export 검사)
+- 정리: `npm run cleanup` (lint + depcheck) — 푸시 전에 1회 실행. `pre-push` 훅도 같은 검사를 자동 실행한다.
+- 테스트: `npm test`
 
 ## 다음 기능 추가 시 권장
 - 구조 변경이나 파일 추가가 필요하면 먼저 `ARCHITECTURE.md` 참조

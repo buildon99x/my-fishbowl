@@ -21,9 +21,9 @@ else
   exit 1
 fi
 
-# Validate linter
-echo "[session-start] Running ESLint..."
-npm run lint -- --max-warnings=0
+# Validate linter (ESLint + knip)
+echo "[session-start] Running lint (ESLint + knip)..."
+npm run lint
 
 # Validate tests
 echo "[session-start] Running Vitest..."
