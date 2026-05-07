@@ -42,6 +42,7 @@ import {
 } from './features/aquarium/fish-actions.js';
 import { loadAquarium, saveAquarium } from './features/aquarium/storage.js';
 import { renderAquariumStatus } from './features/fish-list/view.js';
+import { captureFishListScroll, restoreFishListScroll } from './features/fish-list/scroll.js';
 import { clamp, escapeHtml } from './lib/utils.js';
 import { cssVarsToInlineStyle, getFishSpriteStyleVars } from './lib/fishSpriteStyle.js';
 
@@ -145,20 +146,6 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
 }
 
 
-
-function captureFishListScroll(root, appState) {
-  const fishList = root.querySelector('[data-fish-list]');
-  if (!fishList) return;
-
-  appState.fishListScrollTop = fishList.scrollTop;
-}
-
-function restoreFishListScroll(root, appState) {
-  const fishList = root.querySelector('[data-fish-list]');
-  if (!fishList) return;
-
-  fishList.scrollTop = appState.fishListScrollTop ?? 0;
-}
 
 
 function bindAquariumControls(root, aquarium, appState, render) {
