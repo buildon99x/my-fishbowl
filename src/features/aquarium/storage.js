@@ -1,4 +1,21 @@
+import { createAquarium, normalizeAquarium } from './model.js';
+
 export const STORAGE_KEY = 'my-fishbowl:aquarium';
+
+export function loadAquarium() {
+  try {
+    const savedAquarium = localStorage.getItem(STORAGE_KEY);
+
+    if (!savedAquarium) {
+      return createAquarium();
+    }
+
+    return normalizeAquarium(JSON.parse(savedAquarium));
+  } catch (error) {
+    console.warn('Saved aquarium data could not be loaded.', error);
+    return createAquarium();
+  }
+}
 
 export function saveAquarium(aquarium) {
   try {
