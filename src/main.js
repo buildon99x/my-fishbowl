@@ -33,18 +33,13 @@ import {
   snapshotCanvas,
 } from './features/cleaning/index.js';
 import { renderDecoration } from './features/aquarium/decoration.js';
-import {
-  addFishToAquarium,
-  deleteFishFromAquarium,
-  getFishById,
-  toggleFishHidden,
-  updateFishAppearance,
-} from './features/aquarium/fish-actions.js';
+import { addFishToAquarium } from './features/aquarium/fish-actions.js';
 import { loadAquarium, saveAquarium } from './features/aquarium/storage.js';
+import { bindFishListEvents } from './features/fish-list/events.js';
 import { renderAquariumStatus } from './features/fish-list/view.js';
 import { captureFishListScroll, restoreFishListScroll } from './features/fish-list/scroll.js';
 import { bindFishSpriteDrag } from './features/fish-edit/drag.js';
-import { clamp, escapeHtml } from './lib/utils.js';
+import { escapeHtml } from './lib/utils.js';
 import { cssVarsToInlineStyle, getFishSpriteStyleVars } from './lib/fishSpriteStyle.js';
 
 const SELECTORS = {
@@ -149,55 +144,6 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
 
 
 
-function bindAquariumControls(root, aquarium, appState, render) {
-  root.querySelector('[data-toggle-fish-list]')?.addEventListener('click', () => {
-    appState.isFishListCollapsed = !appState.isFishListCollapsed;
-    render();
-  });
-
-  root.querySelectorAll('[data-select-fish]').forEach((button) => {
-    button.addEventListener('click', () => {
-      appState.selectedFishId = button.dataset.selectFish;
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-toggle-fish-hidden]').forEach((button) => {
-    button.addEventListener('click', () => {
-      toggleFishHidden(aquarium, button.dataset.toggleFishHidden);
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-edit-fish]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const fishId = button.dataset.editFish;
-      appState.selectedFishId = fishId;
-      const current = appState.propPanel.editingTarget;
-      appState.propPanel.editingTarget =
-        current?.type === 'fish' && current?.id === fishId
-          ? null
-          : { id: fishId, type: 'fish' };
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-delete-fish]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const fishId = button.dataset.deleteFish;
-
-      deleteFishFromAquarium(aquarium, fishId);
-      if (appState.selectedFishId === fishId) {
-        appState.selectedFishId = null;
-      }
-      if (appState.propPanel.editingTarget?.type === 'fish' && appState.propPanel.editingTarget?.id === fishId) {
-        appState.propPanel.editingTarget = null;
-      }
-      render();
-    });
-  });
-}
-
 function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   captureFishListScroll(root, appState);
   appState.movementController?.stop();
@@ -270,7 +216,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     },
   );
   const renderAppCallback = () => renderApp(root, aquarium, fishInputState, feedingState, appState);
-  bindAquariumControls(root, aquarium, appState, renderAppCallback);
+  bindFishListEvents(root, aquarium, appState, { render: renderAppCallback });
   bindFishSpriteDrag(root, aquarium, appState, { render: renderAppCallback });
   bindFeedingEvents(root, feedingState, {
     startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
