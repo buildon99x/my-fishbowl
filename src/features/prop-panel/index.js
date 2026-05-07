@@ -1,4 +1,4 @@
-export { createPropPanelState, setEditingTarget } from './state.js';
+export { createPropPanelState } from './state.js';
 export { renderPropPanel, renderActionCluster } from './view.js';
 
 import { bindCommonPanelEvents, bindFishPropsEvents, bindGodModePropsEvents } from './events.js';

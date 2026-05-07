@@ -1,7 +1,7 @@
-export const DEFAULT_DETECT_RADIUS = 26;
-export const BLOODWORM_DETECT_RADIUS = 38;
-export const BLOODWORM_DETECT_DURATION_MS = 10000;
-export const BLOODWORM_DART_DURATION_MS = 15000;
+const DEFAULT_DETECT_RADIUS = 26;
+const BLOODWORM_DETECT_RADIUS = 38;
+const BLOODWORM_DETECT_DURATION_MS = 10000;
+const BLOODWORM_DART_DURATION_MS = 15000;
 
 export function applyFoodEffect(fish, foodType, nowMs) {
   if (foodType === 'bloodworm') {

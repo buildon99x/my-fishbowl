@@ -1,11 +1,11 @@
 import { clamp } from '../../lib/utils.js';
 
-export const BEHAVIOR_STATUSES = ['cruising', 'idle', 'dart', 'wander', 'turning'];
+const BEHAVIOR_STATUSES = ['cruising', 'idle', 'dart', 'wander', 'turning'];
 
-export const BEHAVIOR_INTERVAL_MS = 3000;
-export const DART_DURATION_MS = 800;
-export const WANDER_DURATION_MS = 2000;
-export const MOUSE_AVOID_DISTANCE = 80;
+const BEHAVIOR_INTERVAL_MS = 3000;
+const DART_DURATION_MS = 800;
+const WANDER_DURATION_MS = 2000;
+const MOUSE_AVOID_DISTANCE = 80;
 
 const PREFERRED_DEPTHS = ['top', 'middle', 'bottom'];
 
@@ -44,7 +44,7 @@ export function createFishLiveliness(fish = {}, nowMs = 0, random = Math.random)
   };
 }
 
-export function chooseNextBehavior(fish, nowMs, random = Math.random) {
+function chooseNextBehavior(fish, nowMs, random = Math.random) {
   const idleWeight = 0.2 + clamp(fish.idleBias ?? 0, 0, 0.4);
   const dartWeight = fish.dartBoostUntilMs && nowMs < fish.dartBoostUntilMs ? 0.25 : 0.1;
   const weights = [

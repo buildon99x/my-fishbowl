@@ -1,11 +1,11 @@
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
 
-export const ALGAE_INTERVAL_MINUTES = 30;
-export const ALGAE_MAX_HOURS = 48;
+const ALGAE_INTERVAL_MINUTES = 30;
+const ALGAE_MAX_HOURS = 48;
 export const ALGAE_MAX_LEVEL = (ALGAE_MAX_HOURS * 60) / ALGAE_INTERVAL_MINUTES;
 
-export const ALGAE_STATE_NAMES = ['clean', 'lightAlgae', 'mediumAlgae', 'heavyAlgae'];
+const ALGAE_STATE_NAMES = ['clean', 'lightAlgae', 'mediumAlgae', 'heavyAlgae'];
 
 export const DEFAULT_ALGAE_THRESHOLDS = {
   intervalMinutes: ALGAE_INTERVAL_MINUTES,

@@ -1,4 +1,4 @@
-export const COMPLETION_THRESHOLD = 0.8;
+const COMPLETION_THRESHOLD = 0.8;
 
 const BRUSH_RADIUS = 40;
 const VISIBLE_ALPHA_THRESHOLD = 8;
@@ -42,7 +42,7 @@ export function snapshotCanvas(canvas, cleaningState) {
   cleaningState.cleaningProgress = cleaningState.initialAlgaePixels === 0 ? 1 : 0;
 }
 
-export function applyBrush(canvas, clientX, clientY, cleaningState) {
+function applyBrush(canvas, clientX, clientY, cleaningState) {
   if (!canvas || cleaningState.cleaned) return cleaningState.cleaningProgress;
 
   const rect = canvas.getBoundingClientRect();

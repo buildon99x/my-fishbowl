@@ -38,6 +38,3 @@ export function createPropPanelState() {
   };
 }
 
-export function setEditingTarget(propPanelState, target) {
-  propPanelState.editingTarget = target;
-}

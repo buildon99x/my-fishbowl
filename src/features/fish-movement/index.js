@@ -1,4 +1,6 @@
 import { normalizeFishMovement, shouldFlipFishForMovement, stepFishesMovement } from './state.js';
+
+export { shouldFlipFishForMovement } from './state.js';
 import { trackAquariumMouse } from './mouseInteraction.js';
 
 const SAVE_INTERVAL_MS = 2000;
@@ -61,4 +63,3 @@ export function startFishMovement(root, aquarium, options = {}) {
   };
 }
 
-export { shouldFlipFishForMovement, stepFishMovement, stepFishesMovement } from './state.js';
