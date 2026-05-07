@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "[pre-push] Running cleanup (lint + knip + depcheck)..."
+npm run cleanup
+
+echo "[pre-push] Running tests..."
+npm test

@@ -7,11 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint src",
+    "lint": "eslint src --max-warnings=0 && npx --yes knip --reporter compact",
     "test": "vitest run",
-    "cleanup:knip": "knip",
-    "cleanup:deps": "depcheck",
-    "cleanup": "npm run lint && npm run cleanup:knip && npm run cleanup:deps"
+    "cleanup:knip": "npx --yes knip",
+    "cleanup:deps": "npx --yes depcheck --ignores=\"@eslint/js,vite,vitest,eslint\"",
+    "cleanup": "npm run lint && npm run cleanup:deps",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
