@@ -3,7 +3,7 @@ import { tickFoodPhysics, isFoodExpired } from './foodPhysics.js';
 import { applyFoodEffect, getFoodDetectRadius } from './foodEffects.js';
 import { clamp } from '../../lib/utils.js';
 
-export const FOOD_EAT_DISTANCE = 6;
+const FOOD_EAT_DISTANCE = 6;
 
 export function createFeedingState() {
   return {

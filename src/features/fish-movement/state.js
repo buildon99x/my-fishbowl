@@ -25,7 +25,7 @@ const MAX_FRAME_MS = 80;
 const MIN_WALL_PAUSE_MS = 500;
 const MAX_WALL_PAUSE_MS = 5000;
 
-export function normalizeHeadDirection(value) {
+function normalizeHeadDirection(value) {
   return value === 'left' ? 'left' : 'right';
 }
 
@@ -44,7 +44,7 @@ function createMovementVector(random, directionX = 1, speed = DEFAULT_SPEED) {
   };
 }
 
-export function createFishMovementState(fish, index = 0, nowMs = 0, random = Math.random) {
+function createFishMovementState(fish, index = 0, nowMs = 0, random = Math.random) {
   const directionX = Number.isFinite(fish?.vx) && fish.vx !== 0
     ? Math.sign(fish.vx)
     : index % 2 === 0

@@ -43,7 +43,7 @@ export function createFishInputState() {
   };
 }
 
-export function loadFishDraft() {
+function loadFishDraft() {
   try {
     const savedDraft = localStorage.getItem(FISH_DRAFT_STORAGE_KEY);
 

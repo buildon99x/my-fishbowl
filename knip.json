@@ -1,6 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/main.js", "index.html", "vite.config.js"],
+  "entry": ["src/main.js", "index.html", "vite.config.js", "src/**/*.test.js"],
   "project": ["src/**/*.js"],
-  "ignore": ["dist/**", "node_modules/**"]
+  "ignore": ["dist/**", "node_modules/**"],
+  "ignoreBinaries": ["knip", "depcheck"]
 }
