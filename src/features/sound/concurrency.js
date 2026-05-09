@@ -16,14 +16,21 @@ export function shouldRateLimit(state, soundId, now) {
 }
 
 export function registerActive(state, entry) {
-  state.active.push(entry);
-  if (state.active.length <= MAX_CONCURRENT) return null;
-  const evictableIdx = state.active.findIndex((e) => e.category !== 'magic');
-  if (evictableIdx === -1) {
-    return null;
+  if (state.active.length >= MAX_CONCURRENT) {
+    const evictableIdx = state.active.findIndex((e) => e.category !== 'magic');
+    if (evictableIdx === -1) {
+      if (entry.category === 'magic') {
+        state.active.push(entry);
+        return { evicted: null, accepted: true };
+      }
+      return { evicted: null, accepted: false };
+    }
+    const [evicted] = state.active.splice(evictableIdx, 1);
+    state.active.push(entry);
+    return { evicted, accepted: true };
   }
-  const [evicted] = state.active.splice(evictableIdx, 1);
-  return evicted;
+  state.active.push(entry);
+  return { evicted: null, accepted: true };
 }
 
 export function releaseActive(state, entry) {

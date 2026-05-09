@@ -28,7 +28,16 @@ export function createSoundController() {
   }
 
   function setMasterMuted(muted) {
-    settings.masterEnabled = !muted;
+    const turningOn = !muted;
+    settings.masterEnabled = turningOn;
+    if (turningOn) {
+      const allCategoriesOff = SOUND_CATEGORIES.every((name) => !settings.categories[name].enabled);
+      if (allCategoriesOff) {
+        SOUND_CATEGORIES.forEach((name) => {
+          settings.categories[name].enabled = true;
+        });
+      }
+    }
     persist();
     if (settings.masterEnabled && settings.categories.ambient.enabled) {
       engine.startAmbient();
