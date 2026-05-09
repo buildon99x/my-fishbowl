@@ -14,14 +14,16 @@ function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function ensureOverlay(root) {
-  let overlay = root.querySelector('[data-magic-overlay]');
+function ensureOverlay() {
+  // Attach to document.body so the overlay survives parent re-renders
+  // that wipe the app root (#app).
+  let overlay = document.body.querySelector('[data-magic-overlay]');
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.className = 'magic-moment-overlay';
     overlay.dataset.magicOverlay = '';
     overlay.setAttribute('aria-hidden', 'true');
-    root.appendChild(overlay);
+    document.body.appendChild(overlay);
   }
   return overlay;
 }
@@ -107,7 +109,7 @@ export function createMagicMomentController({ getState, getRoot, getSound }) {
     const root = getRoot();
     const sound = getSound?.();
     const reduced = prefersReducedMotion();
-    const overlay = ensureOverlay(root);
+    const overlay = ensureOverlay();
     const target = getTargetPoint();
     if (!target) {
       onWelcoming?.();
@@ -177,10 +179,12 @@ export function createMagicMomentController({ getState, getRoot, getSound }) {
     await wait(reduced ? 600 : MAGIC_PHASE_DURATIONS.welcoming);
     glow.remove();
 
-    // Breath
+    // Breath — stay active so concurrent registers queue rather than
+    // starting a parallel ritual during the quiet 200ms.
+    state.phase = 'breath';
+    await wait(MAGIC_PHASE_DURATIONS.breath);
     state.phase = 'idle';
     state.targetFishId = null;
-    await wait(MAGIC_PHASE_DURATIONS.breath);
     onBreathEnd?.();
 
     // Continue queue
@@ -203,7 +207,7 @@ export function createMagicMomentController({ getState, getRoot, getSound }) {
       tickIndicator();
       if (!enqueued) {
         // Mini bubble fallback + immediate registration
-        const overlay = ensureOverlay(getRoot());
+        const overlay = ensureOverlay();
         const tp = payload.getTargetPoint?.();
         if (tp) {
           const pt = getOverlayPoint(overlay, tp.clientX, tp.clientY);
@@ -214,7 +218,16 @@ export function createMagicMomentController({ getState, getRoot, getSound }) {
       }
       return;
     }
-    runPhases(payload);
+    // Reserve phase synchronously so concurrent triggers queue, then start
+    // the ritual after the caller's synchronous re-render (which would
+    // otherwise wipe overlay nodes parented to #app).
+    state.phase = 'anticipating';
+    state.targetFishId = payload.fishId ?? null;
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => runPhases(payload));
+    } else {
+      setTimeout(() => runPhases(payload), 0);
+    }
   }
 
   function setEnabled(enabled) {
