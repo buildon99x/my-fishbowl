@@ -90,6 +90,67 @@
 - 빈 어항 빈 상태(추가 제안):
   - 어항이 비어 있고 fish-list가 비어 있을 때 어항 위에 옅은 안내 오버레이 "Default Objects에서 시작해보세요"를 띄우고, 클릭 시 패널이 열린다(별도 스펙 가능, 본 스펙에서는 hook 지점만 기록).
 
+## 직관성/충돌 점검 및 개선안
+
+### 발견된 충돌
+
+1. **Prop 타입 인프라 미구현 (Blocker)**
+   - SPEC 문서상 S-020 prop-type-classification은 done처럼 보이지만, 실제 코드(`src/features/aquarium/fish-actions.js`, `model.js`)에는 `type` 필드가 없고 movement/feeding 루프에 deco 분기도 없다. `aquarium.fishes` 배열 단일.
+   - S-021의 "deco는 movement/feeding 루프에서 무시" 요구는 인프라 없이 충족 불가.
+   - **개선**: 본 스펙을 두 단계로 분할한다.
+     - **S-021a (선행, 인프라)**: model에 `type: 'fish' | 'deco'` 추가, `addPropToAquarium(aquarium, draft, type)`, fish-list/movement/feeding이 type으로 필터링, prop-panel의 deco 편집기 최소 폼(이름/위치/크기/삭제만).
+     - **S-021b (본 스펙)**: 카탈로그 manifest + 갤러리 UI. S-021a 완료 전제.
+2. **fish-input 패널 명칭/아이콘이 fish 전용**
+   - 현재 `Add fish image`, 🐠 아이콘, "Fish name" 라벨. 같은 패널에서 deco를 등록하면 명백히 어색.
+   - **개선**: S-021a에서 `Add object`(또는 `오브젝트 추가`) + 중립 아이콘으로 변경. "Fish name" → "Object name". 사용자 직접 등록 흐름에 fish/deco 타입 토글을 추가하여 일관성을 맞춘다.
+3. **등록 후 자동 prop-panel 열림 동작 충돌**
+   - `main.js:214` 의 `onRegister`는 등록 즉시 prop-panel을 연다. 본 스펙은 카탈로그에서 "연속 등록"을 권장.
+   - **개선**: 카탈로그 클릭 등록은 prop-panel을 열지 않고 fish-list 항목 강조(1.2초)만 한다. 직접 업로드/그리기는 기존 동작 유지(한 번에 한 마리 등록 흐름이 자연스러움).
+4. **fish-input draft localStorage 오염 위험**
+   - 카탈로그 등록 흐름이 같은 `onRegister` 콜백을 그대로 쓰면 `saveFishDraft`가 호출되어 사용자가 작업 중이던 draft가 카탈로그 항목으로 덮인다.
+   - **개선**: 카탈로그용 별도 등록 경로(`registerCatalogProp`)를 둔다. draft 저장 단계 생략, 바로 `addPropToAquarium`만 호출.
+5. **카드 그리드를 fish-input 패널 내부에 두면 화면이 길어짐**
+   - fish-input은 드래그 가능한 부동 패널이고 이미 업로드/그리기/이름/움직임/미리보기가 들어있다. 카드 11장 + 그룹 헤더가 더해지면 패널이 화면을 가린다.
+   - **개선(권장)**: 액션 클러스터에 "Default Objects" 별도 진입점(예: 🎁 버튼)을 추가하고, 클릭 시 전용 갤러리 모달/패널을 연다. 직관성↑, 코드 결합도↓. fish-input과는 독립.
+   - 대안: fish-input 패널 내부 collapsible 섹션(기본 접힘). 진입은 한 번에 모이지만 패널이 무거워진다.
+6. **위치 결정: 같은 카드 빠르게 두 번 클릭 시 동일 lane에 겹침**
+   - `createFishFromDraft`는 `index % 5` 로 lane 계산. 카탈로그 연속 클릭은 사고로 발생할 가능성도 큼.
+   - **개선**: 등록 직전 200ms 디바운스 또는 동일 카드 연타 방지. 위치는 화면 안 랜덤 좌표(여백 고려)로 분산. deco는 y 좌표를 바닥 근처(예: 75~92%)로 클램핑.
+7. **이름 중복**
+   - 같은 카드를 두 번 등록하면 `Nimo` 두 마리. 어린이 사용자가 fish-list에서 구분 어려움.
+   - **개선**: 두 번째부터 자동 suffix `Nimo (2)`. 단순 카운트는 fish-list에서 동일 base name 개수로 결정.
+8. **localStorage / 번들 크기**
+   - PNG 11개를 dataURL로 저장하면 사용자가 모두 등록 시 수 MB 차지. localStorage 5~10MB 한도에 영향.
+   - **개선**:
+     - 카탈로그 PNG는 `import.meta.glob('./fish/*.png', { query: '?url', eager: true })`로 URL만 보유.
+     - 사용자가 카드 클릭 시점에만 fetch → 240×160 PNG로 리사이즈(기존 fish-input 파이프라인 재사용) → dataURL 1회 변환 → 메모리 캐시(같은 카드 재등록 시 캐시 재사용). 어항에는 dataURL 저장(기존과 동일).
+9. **deco에 부여되는 fish 전용 필드 다수**
+   - `createFishFromDraft`는 `movementStatus`, `wavingFrequency`, `preferredDepth` 등 fish 전용 필드를 채움. deco에 그대로 들어가면 의미 없는 데이터가 storage에 누적된다.
+   - **개선**: S-021a에서 `createPropFromDraft(draft, type, index)`로 통합하고 type별로 필드 세트를 분리. deco는 `{ id, type, name, imageUrl, x, y, size, rotation, scaleX, scaleY, hidden, createdAt }` 만.
+10. **manifest의 `defaultMovementEnabled` 고정값 의도**
+    - shark, squid 같은 큰 fish는 등장 직후 너무 빨라 보일 수 있음.
+    - **개선**: manifest 항목별 `defaultSize`, `defaultSpeedMultiplier`(선택)을 둬서 항목별 톤 차이를 둔다. deco는 `defaultMovementEnabled: false` 고정.
+11. **빈 어항 hook 지점 표현 모호**
+    - 본 스펙은 "별도 스펙 가능" 으로만 적었다.
+    - **개선**: 빈 상태 onboarding은 본 스펙에서 명시적 out-of-scope로 두고, 진입점만 `#aquarium-empty-cta`처럼 future-hook 셀렉터를 예약 정의.
+12. **접근성/연속 등록 키보드 흐름**
+    - Tab → Enter 등록은 좋지만, Enter 후 포커스가 사라지면 다음 카드로 이동 어렵다.
+    - **개선**: Enter 등록 직후 같은 카드에 포커스 유지. Esc로 패널/모달 닫기.
+13. **SPEC ID 중복(부수 발견)**
+    - `docs/spec/S-020-adr-lrn-kb-harness.md`와 `docs/spec/S-020-prop-type-classification.md` 가 동일 ID를 가진다. 인덱스에는 전자만 등록.
+    - **개선(범위 밖)**: prop-type-classification 문서는 새 ID(예: S-014 또는 S-022)로 리넘버링. 본 스펙과 별도 PR.
+
+### 개선안 요약 (의사결정 필요 항목)
+
+| 항목 | 권장안 | 대안 |
+| --- | --- | --- |
+| 분할 | S-021a 인프라 + S-021b 갤러리 | 단일 스펙 유지 |
+| 진입점 | 액션 클러스터에 별도 🎁 버튼 → 갤러리 모달 | fish-input 내부 collapsible 섹션 |
+| 등록 후 동작 | prop-panel 자동 오픈 X, fish-list 항목 강조만 | 토스트 메시지만 |
+| 이미지 처리 | 클릭 시 fetch → 리사이즈 → 메모리 캐시 | eager dataURL 사전 변환 |
+| 이름 충돌 | 자동 `(2)` suffix | 무처리 |
+| deco 위치 | 바닥 75~92% y 클램프 | 사용자 수동 배치만 |
+
 ## 검증 기준
 
 - [ ] `src/assets/default-objects/` 아래 fish 6개, deco 5개 PNG가 존재한다.
