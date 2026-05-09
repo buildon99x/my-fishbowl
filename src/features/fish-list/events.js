@@ -1,4 +1,10 @@
-import { deleteFishFromAquarium, toggleFishHidden } from '../aquarium/fish-actions.js';
+import {
+  PENDING_DELETE_TIMEOUT_MS,
+  commitPendingDelete,
+  restoreProp,
+  softDeleteProp,
+  toggleFishHidden,
+} from '../aquarium/fish-actions.js';
 
 export function bindFishListEvents(root, aquarium, appState, { render }) {
   root.querySelector('[data-toggle-fish-list]')?.addEventListener('click', () => {
@@ -22,29 +28,60 @@ export function bindFishListEvents(root, aquarium, appState, { render }) {
 
   root.querySelectorAll('[data-edit-fish]').forEach((button) => {
     button.addEventListener('click', () => {
-      const fishId = button.dataset.editFish;
-      appState.selectedFishId = fishId;
+      const propId = button.dataset.editFish;
+      const target = aquarium.fishes.find((f) => f.id === propId);
+      if (!target) return;
+      appState.selectedFishId = propId;
       const current = appState.propPanel.editingTarget;
       appState.propPanel.editingTarget =
-        current?.type === 'fish' && current?.id === fishId
+        current?.id === propId
           ? null
-          : { id: fishId, type: 'fish' };
+          : { id: propId, type: target.type === 'deco' ? 'deco' : 'fish' };
       render();
     });
   });
 
   root.querySelectorAll('[data-delete-fish]').forEach((button) => {
     button.addEventListener('click', () => {
-      const fishId = button.dataset.deleteFish;
+      const propId = button.dataset.deleteFish;
+      const target = aquarium.fishes.find((f) => f.id === propId);
+      if (!target) return;
 
-      deleteFishFromAquarium(aquarium, fishId);
-      if (appState.selectedFishId === fishId) {
+      softDeleteProp(aquarium, propId);
+      if (appState.selectedFishId === propId) {
         appState.selectedFishId = null;
       }
-      if (appState.propPanel.editingTarget?.type === 'fish' && appState.propPanel.editingTarget?.id === fishId) {
+      if (appState.propPanel.editingTarget?.id === propId) {
         appState.propPanel.editingTarget = null;
       }
+
+      const undo = appState.undoDelete ?? (appState.undoDelete = {});
+      if (undo.timerId) {
+        window.clearTimeout(undo.timerId);
+      }
+      undo.visible = true;
+      undo.propId = propId;
+      undo.name = target.name;
+      undo.timerId = window.setTimeout(() => {
+        commitPendingDelete(aquarium, propId);
+        undo.visible = false;
+        undo.propId = null;
+        undo.timerId = null;
+        render();
+      }, PENDING_DELETE_TIMEOUT_MS);
+
       render();
     });
+  });
+
+  root.querySelector('[data-undo-delete]')?.addEventListener('click', () => {
+    const undo = appState.undoDelete;
+    if (!undo?.propId) return;
+    if (undo.timerId) window.clearTimeout(undo.timerId);
+    restoreProp(aquarium, undo.propId);
+    undo.visible = false;
+    undo.propId = null;
+    undo.timerId = null;
+    render();
   });
 }
