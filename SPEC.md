@@ -50,7 +50,7 @@
 | S-020 | ADR/LRN KB Harness | draft | not-started | not-tested | `docs/spec/S-020-adr-lrn-kb-harness.md` |
 | S-021 | Draw-to-Life Magic Moment | draft | done | not-tested | `docs/spec/S-021-magic-moment.md` |
 | S-022 | Sound system | draft | done | not-tested | `docs/spec/S-022-sound-system.md` |
-| S-023 | First-entry onboarding | draft | not-started | not-tested | `docs/spec/S-023-onboarding.md` |
+| S-023 | First-entry onboarding | draft | done | not-tested | `docs/spec/S-023-onboarding.md` |
 
 ## 상태 값
 

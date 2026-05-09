@@ -44,6 +44,11 @@ import {
   createMagicMomentController,
   createMagicMomentState,
 } from './features/magic-moment/index.js';
+import {
+  createOnboardingController,
+  renderHelpButton,
+  renderOnboardingOverlay,
+} from './features/onboarding/index.js';
 import { bindFishListEvents } from './features/fish-list/events.js';
 import { renderAquariumStatus } from './features/fish-list/view.js';
 import { captureFishListScroll, restoreFishListScroll } from './features/fish-list/scroll.js';
@@ -206,6 +211,8 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         cleaningState: appState.cleaningState,
       })}
       ${renderMuteToggle(appState.sound.getSettings().masterEnabled)}
+      ${renderHelpButton()}
+      ${renderOnboardingOverlay(appState.onboarding.getState())}
       ${appState.sound.shouldShowModal() ? renderSoundModal() : ''}
     </main>
   `;
@@ -230,6 +237,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         const fish = addFishToAquarium(aquarium, draft);
         appState.selectedFishId = fish.id;
         appState.magicMomentState.hiddenFishIds.add(fish.id);
+        appState.onboarding.onFishRegistered();
 
         const renderRef = () => renderApp(root, aquarium, fishInputState, feedingState, appState);
         appState.magicController.trigger({
@@ -252,6 +260,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
           onBreathEnd: () => {
             appState.propPanel.editingTarget = { id: fish.id, type: 'fish' };
             renderRef();
+            appState.onboarding.onMagicMomentDone();
           },
         });
       },
@@ -314,6 +323,13 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
   appState.bubbleController = startBubbles(bubbleSvg, appState.bubblesState);
 
+  appState.onboarding.bind(root, {
+    fishInputState,
+    render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+  });
+
+  document.addEventListener('pointerdown', () => appState.onboarding.activity(), { once: true, capture: true });
+
   appState.sound.bindModal(root, {
     onResolved: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
   });
@@ -341,7 +357,15 @@ function initApp() {
     sound: createSoundController(),
     magicMomentState: createMagicMomentState(),
     magicController: null,
+    onboarding: null,
   };
+  appState.onboarding = createOnboardingController({
+    getRoot: () => app,
+    getSound: () => appState.sound,
+    onAdvance: () => renderApp(app, aquarium, fishInputState, feedingState, appState),
+    onReset: () => renderApp(app, aquarium, fishInputState, feedingState, appState),
+  });
+  appState.onboarding.startIdleWatch();
   appState.magicController = createMagicMomentController({
     getState: () => appState.magicMomentState,
     getRoot: () => app,
