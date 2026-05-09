@@ -1,0 +1,79 @@
+name: Bug Report
+description: Report a product, UI, browser validation, test, or workflow regression.
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for reproducible failures. Include enough detail to decide whether this is a regression in an existing spec or needs a new spec chunk.
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Symptom
+      description: What went wrong, and where did you observe it?
+      placeholder: Describe the visible behavior, failing command, or unexpected state.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Provide the shortest reliable path to reproduce the issue.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected vs Actual
+      value: |
+        Expected:
+        -
+
+        Actual:
+        -
+    validations:
+      required: true
+
+  - type: input
+    id: related-spec
+    attributes:
+      label: Related Spec
+      description: Existing spec ID, suspected regression source, or "new spec needed".
+      placeholder: "S-006, S-020, regression from PR #, or new spec needed"
+
+  - type: textarea
+    id: browser-validation
+    attributes:
+      label: Browser / Dev Server Details
+      description: Required for UI bugs. Do not rely on an already-open tab without checking the current worktree server.
+      value: |
+        Observed URL:
+        Current worktree dev server URL:
+        Fingerprint checked:
+        Console errors:
+
+  - type: textarea
+    id: command-output
+    attributes:
+      label: Command Output
+      description: Paste relevant test, build, lint, or console output.
+      render: text
+
+  - type: checkboxes
+    id: follow-up
+    attributes:
+      label: Follow-up Needed
+      options:
+        - label: Add or update regression test
+        - label: Browser validation required
+        - label: Update related spec acceptance criteria
+        - label: Record LRN in `docs/kb/lrn`
+        - label: Architecture doc update may be needed
