@@ -1,16 +1,11 @@
+import { jitterPropPosition, DEFAULT_FISH_DEFAULTS, DEFAULT_DECO_DEFAULTS } from './model.js';
 import { saveAquarium } from './storage.js';
 
-export function createFishFromDraft(draft, index) {
-  const now = new Date().toISOString();
-  const lane = index % 5;
-  const preferredDepths = ['top', 'middle', 'bottom'];
+const PENDING_DELETE_MS = 5000;
 
+function fishDefaults() {
+  const preferredDepths = ['top', 'middle', 'bottom'];
   return {
-    id: crypto.randomUUID(),
-    name: draft.name,
-    imageUrl: draft.spriteDataUrl,
-    x: 28 + lane * 10,
-    y: 46 + (lane % 3) * 8,
     vx: 0,
     vy: 0,
     speed: 0,
@@ -40,21 +35,48 @@ export function createFishFromDraft(draft, index) {
     wanderUntilMs: 0,
     nextBehaviorAtMs: 0,
     headDirection: 'right',
-    movementEnabled: draft.movementEnabled !== false,
-    size: 120,
+    hunger: 0,
+  };
+}
+
+export function createFishFromDraft(draft, index, options = {}) {
+  const now = new Date().toISOString();
+  const type = draft?.type === 'deco' ? 'deco' : 'fish';
+  const lane = index % 5;
+  const baseX = type === 'deco'
+    ? DEFAULT_DECO_DEFAULTS.x
+    : DEFAULT_FISH_DEFAULTS.x + lane * 10;
+  const baseY = type === 'deco'
+    ? DEFAULT_DECO_DEFAULTS.y
+    : DEFAULT_FISH_DEFAULTS.y + (lane % 3) * 8;
+  const pos = options.aquarium
+    ? jitterPropPosition(options.aquarium, baseX, baseY)
+    : { x: baseX, y: baseY };
+
+  return {
+    id: crypto.randomUUID(),
+    type,
+    name: draft.name,
+    imageUrl: draft.spriteDataUrl,
+    x: pos.x,
+    y: pos.y,
+    ...fishDefaults(),
+    movementEnabled: type === 'deco' ? false : draft.movementEnabled !== false,
+    size: type === 'deco' ? DEFAULT_DECO_DEFAULTS.size : DEFAULT_FISH_DEFAULTS.size,
     rotation: 0,
     scaleX: 1,
     scaleY: 1,
     flipped: false,
     flippedY: false,
-    hunger: 0,
     hidden: false,
+    pendingDelete: false,
+    pendingDeleteAt: null,
     createdAt: now,
   };
 }
 
 export function addFishToAquarium(aquarium, draft) {
-  const fish = createFishFromDraft(draft, aquarium.fishes.length);
+  const fish = createFishFromDraft(draft, aquarium.fishes.length, { aquarium });
 
   aquarium.fishes = [...aquarium.fishes, fish];
   aquarium.updatedAt = new Date().toISOString();
@@ -63,11 +85,44 @@ export function addFishToAquarium(aquarium, draft) {
   return fish;
 }
 
+export const addUserPropToAquarium = addFishToAquarium;
+
 export function deleteFishFromAquarium(aquarium, fishId) {
   aquarium.fishes = aquarium.fishes.filter((fish) => fish.id !== fishId);
   aquarium.updatedAt = new Date().toISOString();
   saveAquarium(aquarium);
 }
+
+export function softDeleteProp(aquarium, propId) {
+  const now = new Date().toISOString();
+  aquarium.fishes = aquarium.fishes.map((fish) =>
+    fish.id === propId
+      ? { ...fish, pendingDelete: true, pendingDeleteAt: now }
+      : fish,
+  );
+  aquarium.updatedAt = now;
+  saveAquarium(aquarium);
+}
+
+export function restoreProp(aquarium, propId) {
+  aquarium.fishes = aquarium.fishes.map((fish) =>
+    fish.id === propId
+      ? { ...fish, pendingDelete: false, pendingDeleteAt: null }
+      : fish,
+  );
+  aquarium.updatedAt = new Date().toISOString();
+  saveAquarium(aquarium);
+}
+
+export function commitPendingDelete(aquarium, propId) {
+  const target = aquarium.fishes.find((fish) => fish.id === propId);
+  if (!target || !target.pendingDelete) return;
+  aquarium.fishes = aquarium.fishes.filter((fish) => fish.id !== propId);
+  aquarium.updatedAt = new Date().toISOString();
+  saveAquarium(aquarium);
+}
+
+export const PENDING_DELETE_TIMEOUT_MS = PENDING_DELETE_MS;
 
 export function toggleFishHidden(aquarium, fishId) {
   aquarium.fishes = aquarium.fishes.map((fish) =>
@@ -93,6 +148,37 @@ export function updateFishAppearance(aquarium, fishId, patch) {
   );
   aquarium.updatedAt = new Date().toISOString();
   saveAquarium(aquarium);
+}
+
+export function updatePropType(aquarium, propId, nextType) {
+  const type = nextType === 'deco' ? 'deco' : 'fish';
+  let changed = false;
+  aquarium.fishes = aquarium.fishes.map((fish) => {
+    if (fish.id !== propId) return fish;
+    if (fish.type === type) return fish;
+    changed = true;
+    if (type === 'deco') {
+      return { ...fish, type: 'deco', movementEnabled: false };
+    }
+    const restored = {
+      ...fish,
+      type: 'fish',
+      movementEnabled: fish.movementEnabled === false ? fish.movementEnabled : true,
+      headDirection: fish.headDirection === 'left' ? 'left' : 'right',
+      hunger: Number.isFinite(fish.hunger) ? fish.hunger : 0,
+      vx: Number.isFinite(fish.vx) ? fish.vx : 0,
+      vy: Number.isFinite(fish.vy) ? fish.vy : 0,
+      speed: Number.isFinite(fish.speed) && fish.speed > 0 ? fish.speed : 0,
+      movementStatus: fish.movementStatus ?? 'cruising',
+      behaviorStatus: fish.behaviorStatus ?? 'cruising',
+    };
+    return restored;
+  });
+  if (changed) {
+    aquarium.updatedAt = new Date().toISOString();
+    saveAquarium(aquarium);
+  }
+  return changed;
 }
 
 export function getFishById(aquarium, fishId) {
