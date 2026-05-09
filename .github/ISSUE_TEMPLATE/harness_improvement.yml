@@ -1,0 +1,82 @@
+name: Harness Improvement
+description: Propose an improvement to specs, docs, ADR/LRN, Claude/Codex workflow, templates, or automation.
+title: "[Harness]: "
+labels: ["harness", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for workflow and harness changes. Prefer evidence from ADR/LRN records, repeated failures, or repeated manual work.
+
+  - type: textarea
+    id: problem-pattern
+    attributes:
+      label: Problem Pattern
+      description: What repeated failure, friction, or manual workflow should this improve?
+      placeholder: Describe the repeated pattern and why it matters.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Link ADR/LRN records, docs/learn entries, issues, PRs, or command output.
+      placeholder: |
+        - docs/kb/adr/...
+        - docs/kb/lrn/...
+        - docs/learn/...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target Area
+      description: Which harness surface is likely affected?
+      options:
+        - AGENTS.md
+        - Claude.md
+        - docs/spec-command-patterns.md
+        - docs/spec/_template.md
+        - docs/kb templates
+        - .claude skills or commands
+        - .github templates or workflows
+        - scripts or command patterns
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-change
+    attributes:
+      label: Proposed Change
+      description: What should change? Keep this as a plan unless a ready spec already exists.
+      placeholder: Describe the proposed harness change.
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk / Over-Automation Concern
+      description: What could become noisy, too broad, or hard to maintain?
+      placeholder: Describe risks and mitigation.
+
+  - type: checkboxes
+    id: governance
+    attributes:
+      label: Governance
+      options:
+        - label: Needs Harness Improvement Plan in `docs/kb/harness-improvements`
+        - label: Needs new spec chunk before implementation
+        - label: Requires user approval before editing governance docs
+        - label: Does not directly modify runtime product behavior
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      value: |
+        - [ ]
+        - [ ]
