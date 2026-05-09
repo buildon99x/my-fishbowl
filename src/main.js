@@ -40,6 +40,10 @@ import {
   renderMuteToggle,
   renderSoundModal,
 } from './features/sound/index.js';
+import {
+  createMagicMomentController,
+  createMagicMomentState,
+} from './features/magic-moment/index.js';
 import { bindFishListEvents } from './features/fish-list/events.js';
 import { renderAquariumStatus } from './features/fish-list/view.js';
 import { captureFishListScroll, restoreFishListScroll } from './features/fish-list/scroll.js';
@@ -60,9 +64,9 @@ function renderEmptyState(fishCount) {
 }
 
 
-function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId) {
+function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId, magicHidden) {
   return fishes
-    .filter((fish) => !fish.hidden)
+    .filter((fish) => !fish.hidden && !magicHidden?.has(fish.id))
     .map(
       (fish) => `
         <img
@@ -183,7 +187,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
               <div class="food-layer" data-food-layer aria-hidden="true">
                 ${renderFoods(feedingState.foods)}
               </div>
-              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.propPanel.editingTarget?.type === 'fish' ? appState.propPanel.editingTarget.id : null, feedingState.fishEating)}
+              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.propPanel.editingTarget?.type === 'fish' ? appState.propPanel.editingTarget.id : null, feedingState.fishEating, appState.magicMomentState?.hiddenFishIds)}
             </div>
             ${renderEmptyState(aquarium.fishes.length)}
             ${cleaningState.cleaningMode ? renderCleaningOverlay(cleaningState) : ''}
@@ -221,9 +225,35 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     {
       onRegister: (draft) => {
+        const previewCanvas = root.querySelector('[data-fish-canvas]');
+        const sourceRect = previewCanvas?.getBoundingClientRect();
         const fish = addFishToAquarium(aquarium, draft);
         appState.selectedFishId = fish.id;
-        appState.propPanel.editingTarget = { id: fish.id, type: 'fish' };
+        appState.magicMomentState.hiddenFishIds.add(fish.id);
+
+        const renderRef = () => renderApp(root, aquarium, fishInputState, feedingState, appState);
+        appState.magicController.trigger({
+          fishId: fish.id,
+          sourceRect,
+          spriteUrl: fish.imageUrl,
+          getTargetPoint: () => {
+            const bowl = root.querySelector('.aquarium-bowl');
+            if (!bowl) return null;
+            const r = bowl.getBoundingClientRect();
+            return {
+              clientX: r.left + (fish.x / 100) * r.width,
+              clientY: r.top + (fish.y / 100) * r.height,
+            };
+          },
+          onWelcoming: () => {
+            appState.magicMomentState.hiddenFishIds.delete(fish.id);
+            renderRef();
+          },
+          onBreathEnd: () => {
+            appState.propPanel.editingTarget = { id: fish.id, type: 'fish' };
+            renderRef();
+          },
+        });
       },
     },
   );
@@ -309,7 +339,14 @@ function initApp() {
     propPanel: createPropPanelState(),
     cleaningState: createCleaningState(),
     sound: createSoundController(),
+    magicMomentState: createMagicMomentState(),
+    magicController: null,
   };
+  appState.magicController = createMagicMomentController({
+    getState: () => appState.magicMomentState,
+    getRoot: () => app,
+    getSound: () => appState.sound,
+  });
   appState.sound.bindVisibility();
   if (appState.sound.getSettings().masterEnabled && appState.sound.getSettings().categories.ambient.enabled) {
     appState.sound.acceptSoundOnboarding();

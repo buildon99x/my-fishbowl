@@ -48,7 +48,7 @@
 | S-017 | Main and components structure | draft | not-started | not-tested | `docs/spec/S-017-main-components-structure.md` |
 | S-018 | ARCHITECTURE.md / SPEC.md 동기화 | draft | not-started | not-tested | `docs/spec/S-018-docs-sync.md` |
 | S-020 | ADR/LRN KB Harness | draft | not-started | not-tested | `docs/spec/S-020-adr-lrn-kb-harness.md` |
-| S-021 | Draw-to-Life Magic Moment | draft | not-started | not-tested | `docs/spec/S-021-magic-moment.md` |
+| S-021 | Draw-to-Life Magic Moment | draft | done | not-tested | `docs/spec/S-021-magic-moment.md` |
 | S-022 | Sound system | draft | done | not-tested | `docs/spec/S-022-sound-system.md` |
 | S-023 | First-entry onboarding | draft | not-started | not-tested | `docs/spec/S-023-onboarding.md` |
 
