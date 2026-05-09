@@ -96,13 +96,22 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
         advance(2);
       });
 
-      // Listen for off-target taps to apply pulse retry
-      overlay.addEventListener('click', (e) => {
+      // Listen at the document level for off-target taps. The overlay itself
+      // uses pointer-events: none so taps pass through, which means a
+      // bubbling listener on the overlay never fires for non-CTA targets.
+      const docTapHandler = (e) => {
+        if (state.sequence !== 1) {
+          document.removeEventListener('pointerdown', docTapHandler, true);
+          return;
+        }
         if (!(e.target instanceof HTMLElement)) return;
         if (e.target.closest('[data-onboarding-cta]')) return;
+        if (e.target.closest('[data-onboarding-help]')) return;
+        if (e.target.closest('[data-sound-modal]')) return;
         reportPulseRetry();
         activity();
-      });
+      };
+      document.addEventListener('pointerdown', docTapHandler, true);
     }
 
     if (state.sequence === 2) {
@@ -122,6 +131,9 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
           activity();
           if (canvasIdleTimer) clearTimeout(canvasIdleTimer);
           canvasIdleTimer = setTimeout(() => {
+            // Guard: if user has already moved past sequence 2 (e.g. registered
+            // a fish before the timer fired), do not rewind onboarding.
+            if (state.sequence !== 2) return;
             outlineVisible = true;
             render?.();
             advance(3);
