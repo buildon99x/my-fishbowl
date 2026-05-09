@@ -7,7 +7,10 @@ export function bindFishSpriteDrag(root, aquarium, appState, { render }) {
       const fishId = sprite.dataset.fishSprite;
       const { editingTarget } = appState.propPanel;
 
-      if (editingTarget?.type !== 'fish' || editingTarget?.id !== fishId) {
+      if (
+        (editingTarget?.type !== 'fish' && editingTarget?.type !== 'deco') ||
+        editingTarget?.id !== fishId
+      ) {
         return;
       }
 

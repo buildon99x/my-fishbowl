@@ -100,7 +100,7 @@ export function tickFeeding(state, fishes, nowMs) {
 
   updatedFoods.forEach((food) => {
     const nearest = updatedFishes
-      .filter((fish) => !fish.hidden)
+      .filter((fish) => !fish.hidden && fish.type !== 'deco' && !fish.pendingDelete)
       .map((fish) => ({
         fish,
         distance: getDistance(fish, food),

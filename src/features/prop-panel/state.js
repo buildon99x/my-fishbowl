@@ -40,7 +40,7 @@ export function createPropPanelState() {
   };
 }
 
-export const PROP_PANEL_STATUS_MS = 3500;
+const PROP_PANEL_STATUS_MS = 3500;
 
 export function setPropPanelStatus(propPanelState, message, render) {
   if (propPanelState.statusTimerId) {

@@ -76,16 +76,18 @@ export function createFishFromDraft(draft, index, options = {}) {
 }
 
 export function addFishToAquarium(aquarium, draft) {
-  const fish = createFishFromDraft(draft, aquarium.fishes.length, { aquarium });
+  return addUserPropToAquarium(aquarium, draft);
+}
 
-  aquarium.fishes = [...aquarium.fishes, fish];
+export function addUserPropToAquarium(aquarium, draft) {
+  const prop = createFishFromDraft(draft, aquarium.fishes.length, { aquarium });
+
+  aquarium.fishes = [...aquarium.fishes, prop];
   aquarium.updatedAt = new Date().toISOString();
   saveAquarium(aquarium);
 
-  return fish;
+  return prop;
 }
-
-export const addUserPropToAquarium = addFishToAquarium;
 
 export function deleteFishFromAquarium(aquarium, fishId) {
   aquarium.fishes = aquarium.fishes.filter((fish) => fish.id !== fishId);

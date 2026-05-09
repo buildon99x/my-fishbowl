@@ -5,7 +5,6 @@ export const DEFAULT_BOUNDS = {
   padding: 66,
 };
 
-export const PROP_TYPES = ['fish', 'deco'];
 export const DEFAULT_FISH_DEFAULTS = { x: 28, y: 46, size: 120 };
 export const DEFAULT_DECO_DEFAULTS = { x: 50, y: 78, size: 110 };
 
