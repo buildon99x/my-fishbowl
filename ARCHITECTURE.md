@@ -300,3 +300,33 @@ CSS import 순서는 `tokens → base → layout → components → components/a
 5. main.js는 wiring 위주를 유지하고, 새 도메인 로직은 features/ 하위 적절한 위치에 추가한다.
 6. 영속화는 `features/aquarium/storage.js` 한 곳에서만 일어난다. 다른 feature가 직접 localStorage를 호출하지 않는다.
 7. 문서의 요구사항이 바뀌면 `SPEC.md`, 관련 `docs/spec/*.md`, 이 문서, `docs/spec-command-patterns.md`의 코드 수정 위치 맵을 함께 갱신한다.
+
+## 예정 변경사항 (Pending Specs)
+
+본 문서는 현재 코드 상태를 기준으로 한다. 아래 항목은 관련 스펙이 `done`이 되는 시점에 본문 트리/책임 절에 통합한다.
+
+### S-021a Prop 타입 인프라 (draft)
+
+- `src/features/aquarium/model.js`, `fish-actions.js`: `aquarium.fishes` 항목에 `type: 'fish' | 'deco'` 필드 추가, `createPropFromDraft(draft, type, index)` / `addPropToAquarium(aquarium, draft, type)`로 일반화. 누락 데이터는 로드 시 `'fish'`로 보정.
+- `src/features/fish-input/`: 패널 책임을 fish 전용에서 fish/deco 모두 다루는 "오브젝트 추가" 패널로 일반화(헤더 명칭/아이콘/라벨 변경, 타입 세그먼트 컨트롤). `data-fish-*` 속성을 `data-prop-*`로 일괄 리네임.
+- `src/features/fish-movement/`, `src/features/feeding/`: 루프 진입에서 `type === 'fish'` 필터링. deco는 자율 이동/먹이 반응에서 제외.
+- `src/features/fish-list/view.js`: 항목에 type 배지(fish=파랑, deco=모래/녹색).
+- `src/features/prop-panel/`:
+  - 신규 `deco-props.js`(이름/크기/반전/삭제만).
+  - `view.js`/`events.js`에 deco 분기 추가.
+  - 헤더의 fish↔deco 타입 토글 버튼.
+- 공용 helper 추출 후보: 240×160 sprite 리사이즈를 `src/lib/spriteResize.js`로 분리(S-021b와 공유).
+
+### S-021b Default Objects 갤러리 (draft, S-021a 의존)
+
+- 신규 자산: `src/assets/default-objects/fish/*.png`(6), `src/assets/default-objects/deco/*.png`(5), `src/assets/default-objects/manifest.js`(`id`, `type`, `name`, `spriteUrl`, `defaultSize`, `defaultMovementEnabled`, `defaultSpeedMultiplier?`).
+- 신규 feature: `src/features/default-objects/`
+  - `index.js`: 외부 진입점, 모달 마운트/언마운트, 액션 클러스터의 🎁 버튼 wiring.
+  - `view.js`: 갤러리 모달 + fish/deco 그룹 카드 그리드.
+  - `events.js`: 카드 클릭/키보드 등록, Esc/배경 클릭 닫기, 동일 카드 200ms 디바운스, 등록 후 fish-list 항목 강조.
+  - `catalog.js`: manifest 항목 → Prop 등록 변환. fetch → 240×160 리사이즈(`src/lib/spriteResize.js`) → dataURL → 메모리 `Map<id, dataURL>` 캐시. 이름 충돌 시 `(2)`, `(3)` suffix. 위치 계산(fish=랜덤, deco=y 75~92% 클램프).
+  - `catalog.test.js`: 분류 규칙(deco prefix → deco), id 중복 없음, 이름 suffix 규칙.
+- 신규 스타일: `src/styles/components/default-objects.css`. `src/styles/index.css` import 순서는 cascade 규칙에 맞춰 `components/panels.css` 이후에 배치한다.
+- 신규 UI 상태: `appState.galleryOpen: boolean`. 카탈로그 dataURL 캐시는 모듈 스코프로 영속하지 않는다.
+- 카탈로그 등록 경로는 fish-input draft localStorage를 변경하지 않으며, prop-panel을 자동으로 열지 않는다(직접 등록 흐름과의 책임 분리).
+- 미래 hook: 빈 어항 onboarding을 위한 `#aquarium-empty-cta` 셀렉터 예약(별도 스펙).
