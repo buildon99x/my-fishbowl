@@ -48,7 +48,8 @@
 | S-017 | Main and components structure | draft | not-started | not-tested | `docs/spec/S-017-main-components-structure.md` |
 | S-018 | ARCHITECTURE.md / SPEC.md 동기화 | draft | not-started | not-tested | `docs/spec/S-018-docs-sync.md` |
 | S-020 | ADR/LRN KB Harness | draft | not-started | not-tested | `docs/spec/S-020-adr-lrn-kb-harness.md` |
-| S-021 | Default Objects 프리셋 갤러리 | draft | not-started | not-tested | `docs/spec/S-021-default-objects.md` |
+| S-021a | Prop 타입 인프라 실구현 | draft | not-started | not-tested | `docs/spec/S-021a-prop-type-infra.md` |
+| S-021b | Default Objects 프리셋 갤러리 | draft | not-started | not-tested | `docs/spec/S-021b-default-objects-gallery.md` |
 
 ## 상태 값
 
