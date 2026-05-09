@@ -1,7 +1,13 @@
 export { createPropPanelState } from './state.js';
 export { renderPropPanel, renderActionCluster } from './view.js';
 
-import { bindCommonPanelEvents, bindFishPropsEvents, bindGodModePropsEvents } from './events.js';
+import {
+  bindCommonPanelEvents,
+  bindDecoPropsEvents,
+  bindFishPropsEvents,
+  bindGodModePropsEvents,
+  bindPropTypeSegmentedEvents,
+} from './events.js';
 
 export function bindActionClusterEvents(root, { fishInputState, propPanelState }, callbacks) {
   const { render, onFeedingToggle, onFoodTypeChange, onCleaningToggle } = callbacks;
@@ -34,14 +40,21 @@ export function bindActionClusterEvents(root, { fishInputState, propPanelState }
   }
 }
 
-export function bindPropPanelEvents(root, aquarium, appState, saveAquarium, render) {
+export function bindPropPanelEvents(root, aquarium, appState, saveAquarium, render, options = {}) {
   bindCommonPanelEvents(root, appState, render);
 
   const { editingTarget } = appState.propPanel;
   if (!editingTarget) return;
 
+  bindPropTypeSegmentedEvents(root, aquarium, appState, saveAquarium, render, options.feedingState);
+
   if (editingTarget.type === 'fish') {
     bindFishPropsEvents(root, aquarium, appState, saveAquarium, render);
+    return;
+  }
+
+  if (editingTarget.type === 'deco') {
+    bindDecoPropsEvents(root, aquarium, appState, saveAquarium, render);
     return;
   }
 
