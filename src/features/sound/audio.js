@@ -185,17 +185,21 @@ export function createAudioEngine(getSettings) {
       g.gain.value = opts.volume ?? 1;
       src.connect(g).connect(categoryGains[category]);
       const entry = { id: soundId, category, source: src, gain: g };
-      const evicted = registerActive(concurrency, entry);
-      if (evicted) {
+      const result = registerActive(concurrency, entry);
+      if (!result.accepted) {
+        try { src.disconnect(); g.disconnect(); } catch { /* ignore */ }
+        return;
+      }
+      if (result.evicted) {
         try {
           const t = ctx.currentTime;
-          evicted.gain.gain.cancelScheduledValues(t);
-          evicted.gain.gain.linearRampToValueAtTime(0, t + 0.08);
-          evicted.source.stop(t + 0.1);
+          result.evicted.gain.gain.cancelScheduledValues(t);
+          result.evicted.gain.gain.linearRampToValueAtTime(0, t + 0.08);
+          result.evicted.source.stop(t + 0.1);
         } catch {
           /* ignore */
         }
-        releaseActive(concurrency, evicted);
+        releaseActive(concurrency, result.evicted);
       }
       src.onended = () => releaseActive(concurrency, entry);
       try {
