@@ -1,0 +1,85 @@
+name: Spec Chunk Request
+description: Propose a scoped product or workflow change to be turned into SPEC.md + docs/spec.
+title: "[Spec]: "
+labels: ["spec", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for feature or workflow requests that should become a small spec chunk before implementation.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should change?
+      placeholder: Describe the intended change in one or two paragraphs.
+    validations:
+      required: true
+
+  - type: input
+    id: spec-id
+    attributes:
+      label: Spec ID
+      description: Existing spec ID, or write "new spec needed".
+      placeholder: "S-020 or new spec needed"
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-flow
+    attributes:
+      label: User Flow
+      description: Describe the user or agent workflow this should support.
+      placeholder: |
+        1. User starts from...
+        2. User does...
+        3. Expected result...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Define what belongs in this issue and what should stay out.
+      value: |
+        Included:
+        -
+
+        Excluded:
+        -
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Concrete checks that would make this spec complete.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: validation
+    attributes:
+      label: Expected Verification
+      options:
+        - label: "`npm test`"
+        - label: "`npm run build`"
+        - label: "`npm run cleanup`"
+        - label: Browser validation
+        - label: Architecture doc update
+        - label: ADR/LRN record
+
+  - type: textarea
+    id: related-context
+    attributes:
+      label: Related Context
+      description: Link related specs, docs, screenshots, ADR/LRN records, issues, or PRs.
+      placeholder: |
+        - docs/spec/...
+        - docs/kb/...

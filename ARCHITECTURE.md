@@ -14,6 +14,17 @@
 ├── DESIGN.md
 ├── docs/
 │   ├── spec-command-patterns.md
+│   ├── kb/
+│   │   ├── README.md
+│   │   ├── adr/
+│   │   │   ├── _template.md
+│   │   │   └── ADR-*.md
+│   │   ├── lrn/
+│   │   │   ├── _template.md
+│   │   │   └── LRN-*.md
+│   │   └── harness-improvements/
+│   │       ├── _template.md
+│   │       └── HIP-*.md
 │   └── spec/
 │       ├── _template.md
 │       └── S-*-*.md
@@ -98,6 +109,15 @@
 ```
 
 ## 파일 책임
+
+### 문서 지식 베이스
+
+- `docs/kb/README.md`: ADR/LRN/HIP 지식 저장소의 역할과 `docs/learn`와의 관계를 설명한다.
+- `docs/kb/adr/_template.md`: architecture/workflow decision record 템플릿.
+- `docs/kb/lrn/_template.md`: failure learning과 prevention rule 기록 템플릿.
+- `docs/kb/harness-improvements/_template.md`: 반복 ADR/LRN 패턴에서 도출한 하네스 개선 계획 템플릿.
+- `.claude/skills/extract_knowledge/SKILL.md`: Claude와 Codex가 함께 읽을 수 있는 ADR/LRN 추출 절차.
+- `.claude/commands/extract_knowledge.md`: Claude Code에서 `/extract_knowledge`로 skill을 호출하는 slash command 진입점.
 
 ### 진입점
 
