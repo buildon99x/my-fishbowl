@@ -35,6 +35,11 @@ import {
 import { renderDecoration } from './features/aquarium/decoration.js';
 import { addFishToAquarium } from './features/aquarium/fish-actions.js';
 import { loadAquarium, saveAquarium } from './features/aquarium/storage.js';
+import {
+  createSoundController,
+  renderMuteToggle,
+  renderSoundModal,
+} from './features/sound/index.js';
 import { bindFishListEvents } from './features/fish-list/events.js';
 import { renderAquariumStatus } from './features/fish-list/view.js';
 import { captureFishListScroll, restoreFishListScroll } from './features/fish-list/scroll.js';
@@ -120,6 +125,11 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
       saveAquarium(aquarium);
     }
 
+    if (result.didEat) {
+      appState.sound?.playSound('interaction.food-eat');
+      appState.sound?.playHaptic('medium');
+    }
+
     patchFoodLayer(root, feedingState.foods);
     patchFishPositions(root, aquarium.fishes, feedingState.fishEating);
 
@@ -191,6 +201,8 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         propPanelState: appState.propPanel,
         cleaningState: appState.cleaningState,
       })}
+      ${renderMuteToggle(appState.sound.getSettings().masterEnabled)}
+      ${appState.sound.shouldShowModal() ? renderSoundModal() : ''}
     </main>
   `;
   restoreFishListScroll(root, appState);
@@ -271,6 +283,13 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   const bubbleSvg = root.querySelector('[data-bubble-svg]');
 
   appState.bubbleController = startBubbles(bubbleSvg, appState.bubblesState);
+
+  appState.sound.bindModal(root, {
+    onResolved: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+  });
+  appState.sound.bindMuteToggle(root, {
+    render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+  });
 }
 
 
@@ -289,12 +308,27 @@ function initApp() {
     bubblesState: createBubblesState(),
     propPanel: createPropPanelState(),
     cleaningState: createCleaningState(),
+    sound: createSoundController(),
   };
+  appState.sound.bindVisibility();
+  if (appState.sound.getSettings().masterEnabled && appState.sound.getSettings().categories.ambient.enabled) {
+    appState.sound.acceptSoundOnboarding();
+  }
 
   normalizeAquariumFishMovement(aquarium, performance.now());
   restoreAlgaeState(aquarium);
   saveAquarium(aquarium);
   renderApp(app, aquarium, fishInputState, feedingState, appState);
+
+  document.addEventListener('click', (e) => {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest('[data-sound-modal]')) return;
+    const btn = target.closest('button');
+    if (!btn) return;
+    appState.sound.playSound('ui.tap');
+    appState.sound.playHaptic('light');
+  }, true);
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && appState.cleaningState.cleaningMode) {
