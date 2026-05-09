@@ -1,5 +1,6 @@
 import { ALGAE_MAX_LEVEL, getAlgaeStateName } from '../algae/index.js';
 import { escapeHtml } from '../../lib/utils.js';
+import { getFishThumbTransform } from '../../lib/fishSpriteStyle.js';
 
 export function formatRegisteredTime(value) {
   if (!value) {
@@ -32,7 +33,7 @@ export function renderFishList(fishes, selectedFishId, editingTarget) {
           (fish) => `
             <div class="fish-list-item ${fish.id === selectedFishId ? 'is-selected' : ''}" role="listitem" data-fish-id="${fish.id}">
               <button class="fish-list-select" type="button" data-select-fish="${fish.id}" aria-pressed="${fish.id === selectedFishId}">
-                <img src="${fish.imageUrl}" alt="" class="fish-list-thumb">
+                <img src="${fish.imageUrl}" alt="" class="fish-list-thumb" style="transform: ${getFishThumbTransform(fish)};">
                 <span class="fish-list-name">${escapeHtml(fish.name)}</span>
                 <time class="fish-list-time" datetime="${escapeHtml(fish.createdAt)}">${formatRegisteredTime(fish.createdAt)}</time>
               </button>
