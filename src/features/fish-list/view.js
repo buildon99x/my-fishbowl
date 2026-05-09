@@ -26,7 +26,7 @@ export function renderFishList(fishes, selectedFishId, editingTarget) {
   const visibleProps = fishes.filter((item) => !item?.pendingDelete);
 
   if (visibleProps.length === 0) {
-    return '<p class="fish-list-empty">위쪽 + 버튼을 눌러 첫 친구를 만들어 보세요!</p>';
+    return '<p class="fish-list-empty">오른쪽 아래 ➕ 버튼을 눌러 첫 친구를 만들어 보세요!</p>';
   }
 
   const editingId = editingTarget?.id ?? null;

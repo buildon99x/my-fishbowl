@@ -1,6 +1,7 @@
 import { DEFAULT_ALGAE_THRESHOLDS, restoreAlgaeState } from '../algae/index.js';
 import { savePropPanelPosition, setPropPanelStatus } from './state.js';
 import { updatePropType } from '../aquarium/fish-actions.js';
+import { DEFAULT_DECO_DEFAULTS, DEFAULT_FISH_DEFAULTS } from '../aquarium/model.js';
 import { clamp } from '../../lib/utils.js';
 
 function getFishByTarget(aquarium, target) {
@@ -73,13 +74,14 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
   });
 
   panel.querySelector('[data-reset-prop-transform]')?.addEventListener('click', () => {
+    const defaultSize = target.type === 'deco' ? DEFAULT_DECO_DEFAULTS.size : DEFAULT_FISH_DEFAULTS.size;
     updateFish(aquarium, target, {
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
       flipped: false,
       flippedY: false,
-      size: 120,
+      size: defaultSize,
     }, saveAquarium);
     render();
   });

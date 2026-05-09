@@ -103,9 +103,9 @@ function renderPanelShell(entity, target, typeBadge, contentHtml, pos, propPanel
           aria-label="닫기"
         >❌</button>
       </div>
-      ${typeControl}
-      ${statusHtml}
       <div class="prop-panel-body">
+        ${typeControl}
+        ${statusHtml}
         ${contentHtml}
       </div>
     </div>

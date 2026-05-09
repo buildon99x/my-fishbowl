@@ -143,12 +143,28 @@ describe('updatePropType', () => {
     expect(aq.fishes[0].movementEnabled).toBe(false);
   });
 
-  it("transitions deco to fish restoring movementEnabled when previously not explicitly disabled", () => {
+  it("transitions deco to fish defaulting movementEnabled to true when no prior preference is recorded", () => {
     const aq = makeAquarium([{ id: 'a', type: 'deco', x: 50, y: 78, size: 110, movementEnabled: false }]);
     const changed = updatePropType(aq, 'a', 'fish');
     expect(changed).toBe(true);
     expect(aq.fishes[0].type).toBe('fish');
+    expect(aq.fishes[0].movementEnabled).toBe(true);
+  });
+
+  it("round-trips fish->deco->fish preserving the user's prior movementEnabled=false preference", () => {
+    const aq = makeAquarium([{ id: 'a', type: 'fish', movementEnabled: false }]);
+    updatePropType(aq, 'a', 'deco');
     expect(aq.fishes[0].movementEnabled).toBe(false);
+    updatePropType(aq, 'a', 'fish');
+    expect(aq.fishes[0].type).toBe('fish');
+    expect(aq.fishes[0].movementEnabled).toBe(false);
+  });
+
+  it("round-trips fish->deco->fish defaulting movementEnabled=true when prior was true", () => {
+    const aq = makeAquarium([{ id: 'a', type: 'fish', movementEnabled: true }]);
+    updatePropType(aq, 'a', 'deco');
+    updatePropType(aq, 'a', 'fish');
+    expect(aq.fishes[0].movementEnabled).toBe(true);
   });
 
   it("is a no-op when target type matches current type", () => {

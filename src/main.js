@@ -51,7 +51,7 @@ function renderEmptyState(propCount) {
     return '';
   }
 
-  return '<p class="aquarium-empty">위쪽 + 버튼을 눌러 첫 친구를 만들어 보세요!</p>';
+  return '<p class="aquarium-empty">오른쪽 아래 ➕ 버튼을 눌러 첫 친구를 만들어 보세요!</p>';
 }
 
 

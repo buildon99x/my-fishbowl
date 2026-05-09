@@ -160,12 +160,19 @@ export function updatePropType(aquarium, propId, nextType) {
     if (fish.type === type) return fish;
     changed = true;
     if (type === 'deco') {
-      return { ...fish, type: 'deco', movementEnabled: false };
+      const preservedMovementEnabled = fish.movementEnabled !== false;
+      return {
+        ...fish,
+        type: 'deco',
+        movementEnabled: false,
+        movementEnabledBeforeDeco: preservedMovementEnabled,
+      };
     }
     const restored = {
       ...fish,
       type: 'fish',
-      movementEnabled: fish.movementEnabled === false ? fish.movementEnabled : true,
+      movementEnabled: fish.movementEnabledBeforeDeco === false ? false : true,
+      movementEnabledBeforeDeco: undefined,
       headDirection: fish.headDirection === 'left' ? 'left' : 'right',
       hunger: Number.isFinite(fish.hunger) ? fish.hunger : 0,
       vx: Number.isFinite(fish.vx) ? fish.vx : 0,

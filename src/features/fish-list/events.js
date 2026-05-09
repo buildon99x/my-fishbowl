@@ -58,6 +58,9 @@ export function bindFishListEvents(root, aquarium, appState, { render }) {
       const undo = appState.undoDelete ?? (appState.undoDelete = {});
       if (undo.timerId) {
         window.clearTimeout(undo.timerId);
+        if (undo.propId && undo.propId !== propId) {
+          commitPendingDelete(aquarium, undo.propId);
+        }
       }
       undo.visible = true;
       undo.propId = propId;
