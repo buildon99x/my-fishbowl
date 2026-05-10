@@ -14,6 +14,12 @@ export const MOVEMENT_BOUNDS = {
   maxX: 96,
   minY: 8,
   maxY: 92,
+  ellipse: {
+    cx: 50,
+    cy: 50,
+    rx: 46,
+    ry: 42,
+  },
 };
 
 const DEFAULT_SPEED = 6;
@@ -231,6 +237,34 @@ export function stepFishMovement(fish, elapsedMs, nowMs, options = {}) {
       wallResumeVx: getRandomInRange(random, -speed, speed) || speed,
       wallResumeVy: y <= bounds.minY ? Math.abs(speed * 0.55) : -Math.abs(speed * 0.55),
     };
+  }
+
+  if (bounds.ellipse) {
+    const { cx, cy, rx, ry } = bounds.ellipse;
+    const dx = (x - cx) / rx;
+    const dy = (y - cy) / ry;
+    const distSquared = dx * dx + dy * dy;
+
+    if (distSquared > 1) {
+      const dist = Math.sqrt(distSquared);
+      x = cx + ((x - cx) / dist);
+      y = cy + ((y - cy) / dist);
+      const inwardLen = Math.hypot(x - cx, y - cy) || 1;
+      const inwardX = -(x - cx) / inwardLen;
+      const inwardY = -(y - cy) / inwardLen;
+      const resumeSpeed = Math.abs(speed) || DEFAULT_SPEED;
+
+      vx = 0;
+      vy = 0;
+      behaviorStatus = 'idle';
+      movementStatus = 'idle';
+      movement = {
+        ...movement,
+        wallPauseUntilMs: nowMs + getRandomInRange(random, MIN_WALL_PAUSE_MS, MAX_WALL_PAUSE_MS),
+        wallResumeVx: inwardX * resumeSpeed,
+        wallResumeVy: inwardY * resumeSpeed * 0.6,
+      };
+    }
   }
 
   return {

@@ -3,6 +3,15 @@ import { savePropPanelPosition, setPropPanelStatus } from './state.js';
 import { updatePropType } from '../aquarium/fish-actions.js';
 import { DEFAULT_DECO_DEFAULTS, DEFAULT_FISH_DEFAULTS } from '../aquarium/model.js';
 import { clamp } from '../../lib/utils.js';
+import { getFishThumbTransform } from '../../lib/fishSpriteStyle.js';
+
+function updateThumbTransforms(root, fish) {
+  const transform = getFishThumbTransform(fish);
+  const listThumb = root.querySelector(`[data-fish-id="${fish.id}"] .fish-list-thumb`);
+  if (listThumb) listThumb.style.transform = transform;
+  const panelThumb = root.querySelector('.prop-panel-thumb');
+  if (panelThumb) panelThumb.style.transform = transform;
+}
 
 function getFishByTarget(aquarium, target) {
   if (!target || (target.type !== 'fish' && target.type !== 'deco')) return null;
@@ -171,6 +180,8 @@ export function bindFishPropsEvents(root, aquarium, appState, saveAquarium, rend
     if (display) display.textContent = `${rotation}°`;
     const sprite = root.querySelector(`[data-fish-sprite="${editingTarget.id}"]`);
     if (sprite) sprite.style.setProperty('--fish-rotation', `${rotation}deg`);
+    const fish = getFishByTarget(aquarium, editingTarget);
+    if (fish) updateThumbTransforms(root, fish);
   });
 
   panel.querySelector('[data-edit-prop-scale-x]')?.addEventListener('input', (e) => {
@@ -180,6 +191,8 @@ export function bindFishPropsEvents(root, aquarium, appState, saveAquarium, rend
     if (display) display.textContent = scaleX.toFixed(2);
     const sprite = root.querySelector(`[data-fish-sprite="${editingTarget.id}"]`);
     if (sprite) sprite.style.setProperty('--fish-scale-x', String(scaleX));
+    const fish = getFishByTarget(aquarium, editingTarget);
+    if (fish) updateThumbTransforms(root, fish);
   });
 
   panel.querySelector('[data-edit-prop-scale-y]')?.addEventListener('input', (e) => {
@@ -189,6 +202,8 @@ export function bindFishPropsEvents(root, aquarium, appState, saveAquarium, rend
     if (display) display.textContent = scaleY.toFixed(2);
     const sprite = root.querySelector(`[data-fish-sprite="${editingTarget.id}"]`);
     if (sprite) sprite.style.setProperty('--fish-scale-y', String(scaleY));
+    const fish = getFishByTarget(aquarium, editingTarget);
+    if (fish) updateThumbTransforms(root, fish);
   });
 
   panel.querySelectorAll('[data-edit-prop-head-direction]').forEach((btn) => {
