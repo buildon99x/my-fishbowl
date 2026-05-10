@@ -17,10 +17,27 @@ function pulseCard(card, className, durationMs) {
   setTimeout(() => card.classList.remove(className), durationMs);
 }
 
+function setLoadingState(card, on) {
+  if (!card) return;
+  card.classList.toggle('default-objects-card--ready', on);
+}
+
 function peekModal(modal) {
   if (!modal || prefersReducedMotion()) return;
   modal.classList.add('default-objects-modal--peek');
   setTimeout(() => modal.classList.remove('default-objects-modal--peek'), 700);
+}
+
+// Module-scoped to dedupe across re-renders (state.open stays true across
+// successive renderApp calls and bindDefaultObjectsEvents would otherwise
+// stack a new keydown listener each time).
+let activeKeyHandler = null;
+
+function clearActiveKeyHandler() {
+  if (activeKeyHandler) {
+    document.removeEventListener('keydown', activeKeyHandler);
+    activeKeyHandler = null;
+  }
 }
 
 function highlightFishListItem(root, propId) {
@@ -53,27 +70,30 @@ export function bindDefaultObjectsEvents(root, ctx) {
     });
   }
 
-  if (!state.open) return;
+  if (!state.open) {
+    clearActiveKeyHandler();
+    return;
+  }
 
   const modal = root.querySelector('[data-default-objects-modal]');
   if (!modal) return;
 
   const close = () => {
     state.open = false;
+    clearActiveKeyHandler();
     render();
   };
 
   root.querySelector('[data-default-objects-close]')?.addEventListener('click', close);
 
   // Background click is intentionally disabled (child mistap protection).
-  // Esc to close.
-  const onKey = (e) => {
-    if (e.key === 'Escape') {
-      close();
-      document.removeEventListener('keydown', onKey);
-    }
+  // Esc to close. Single-instance handler — replace any stale one from
+  // previous render before binding so listeners don't accumulate.
+  clearActiveKeyHandler();
+  activeKeyHandler = (e) => {
+    if (e.key === 'Escape') close();
   };
-  document.addEventListener('keydown', onKey);
+  document.addEventListener('keydown', activeKeyHandler);
 
   // Focus first card for keyboard users.
   const firstCard = modal.querySelector('[data-default-object-id]');
@@ -90,18 +110,20 @@ export function bindDefaultObjectsEvents(root, ctx) {
         return;
       }
 
-      // Immediate (<100ms) "받음" visual feedback.
-      pulseCard(card, 'default-objects-card--ready', 220);
+      // Immediate (<100ms) "받음" visual feedback. Held until load resolves
+      // so that cache misses don't leave the user thinking the tap was lost.
+      setLoadingState(card, true);
 
-      // Load (cache hit returns immediately).
       let spriteDataUrl;
       try {
         spriteDataUrl = await loadEntryDataUrl(entry);
       } catch (err) {
         console.warn('default-objects load failed', entry.id, err);
+        setLoadingState(card, false);
         pulseCard(card, 'default-objects-card--error', 700);
         return;
       }
+      setLoadingState(card, false);
       if (!spriteDataUrl) return;
 
       // Resolve name collision: ②/③ suffix (display) + internal (2)/(3).

@@ -53,6 +53,7 @@ import { bindFishListEvents } from './features/fish-list/events.js';
 import {
   bindDefaultObjectsEvents,
   createDefaultObjectsState,
+  markCtaPulseShown,
   renderDefaultObjectsModal,
   shouldShowCtaPulse,
 } from './features/default-objects/index.js';
@@ -222,7 +223,14 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         fishInputState,
         propPanelState: appState.propPanel,
         cleaningState: appState.cleaningState,
-        defaultObjectsCtaPulse: shouldShowCtaPulse(aquarium.fishes.filter((p) => !p.pendingDelete).length),
+        defaultObjectsCtaPulse: (() => {
+          const show = shouldShowCtaPulse(
+            aquarium.fishes.filter((p) => !p.pendingDelete).length,
+            appState.defaultObjects,
+          );
+          if (show) markCtaPulseShown(appState.defaultObjects);
+          return show;
+        })(),
       })}
       ${renderDefaultObjectsModal(appState.defaultObjects)}
       ${renderUndoSnackbar(appState.undoDelete)}
@@ -361,9 +369,9 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
       // Short magic-moment for fish (deco skips per main flow convention).
       if (entry.type === 'fish' && appState.magicController) {
-        appState.magicMomentState.hiddenFishIds.add(prop.id);
         const sourceRect = cardElement?.getBoundingClientRect?.() ?? null;
         appState.magicController.trigger({
+          short: true,
           fishId: prop.id,
           sourceRect,
           spriteUrl: prop.imageUrl,
@@ -375,10 +383,6 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
               clientX: r.left + (prop.x / 100) * r.width,
               clientY: r.top + (prop.y / 100) * r.height,
             };
-          },
-          onWelcoming: () => {
-            appState.magicMomentState.hiddenFishIds.delete(prop.id);
-            renderApp(root, aquarium, fishInputState, feedingState, appState);
           },
         });
       }

@@ -6,16 +6,22 @@ export function createDefaultObjectsState() {
     open: false,
     lastClickAt: new Map(),
     pendingIds: new Set(),
+    ctaPulseShownThisSession: false,
   };
 }
 
-export function shouldShowCtaPulse(propsLength) {
+export function shouldShowCtaPulse(propsLength, state) {
   if (propsLength > 0) return false;
+  if (state?.ctaPulseShownThisSession) return false;
   try {
     return localStorage.getItem(CTA_SEEN_KEY) !== 'true';
   } catch {
     return true;
   }
+}
+
+export function markCtaPulseShown(state) {
+  if (state) state.ctaPulseShownThisSession = true;
 }
 
 export function markCtaSeen() {
