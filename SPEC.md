@@ -51,6 +51,9 @@
 | S-021a | Prop 타입 인프라 실구현 | draft | not-started | not-tested | `docs/spec/S-021a-prop-type-infra.md` |
 | S-021b | Default Objects 프리셋 갤러리 | draft | not-started | not-tested | `docs/spec/S-021b-default-objects-gallery.md` |
 | S-021 | 어항 경계(타원) 충돌로 물고기 이탈 방지 | done | done | tested | `docs/spec/S-021-fish-bowl-boundary.md` |
+| S-021 | Draw-to-Life Magic Moment | draft | done | not-tested | `docs/spec/S-021-magic-moment.md` |
+| S-022 | Sound system | draft | done | not-tested | `docs/spec/S-022-sound-system.md` |
+| S-023 | First-entry onboarding | draft | done | not-tested | `docs/spec/S-023-onboarding.md` |
 
 ## 상태 값
 

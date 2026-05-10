@@ -6,4 +6,7 @@
 @import './components/fish.css';
 @import './components/cleaning.css';
 @import './components/panels.css';
+@import './components/sound.css';
+@import './components/magic.css';
+@import './components/onboarding.css';
 @import './utilities.css';

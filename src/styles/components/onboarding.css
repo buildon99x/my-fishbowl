@@ -1,0 +1,132 @@
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.onboarding-overlay > * {
+  pointer-events: auto;
+}
+
+.onboarding-cta-plus {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: none;
+  font-size: 56px;
+  line-height: 88px;
+  color: white;
+  background: #2c8fff;
+  box-shadow: 0 8px 24px rgba(44, 143, 255, 0.45);
+  cursor: pointer;
+  animation: onboarding-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes onboarding-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 24px rgba(44, 143, 255, 0.45); }
+  50%      { transform: scale(1.07); box-shadow: 0 12px 36px rgba(44, 143, 255, 0.6); }
+}
+
+.onboarding-overlay.is-static-highlight .onboarding-cta-plus {
+  animation: none;
+  outline: 4px solid rgba(44, 143, 255, 0.55);
+  outline-offset: 4px;
+}
+
+.onboarding-overlay.is-emphasized .onboarding-cta-plus {
+  animation: onboarding-pulse 1s ease-in-out 1;
+  outline: 4px solid rgba(255, 200, 60, 0.75);
+  outline-offset: 4px;
+}
+
+.onboarding-seq1-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.onboarding-caption-fish {
+  width: 56px;
+  height: auto;
+  margin-top: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+  animation: caption-fish-bob 1s ease-in-out infinite;
+}
+
+@keyframes caption-fish-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(6px); }
+}
+
+.onboarding-ghost-finger {
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+}
+
+.onboarding-ghost-finger.is-tap {
+  margin-top: 12px;
+  animation: ghost-tap 1s ease-in-out infinite;
+}
+
+@keyframes ghost-tap {
+  0%, 100% { transform: translateY(0); opacity: 0.85; }
+  50%      { transform: translateY(8px); opacity: 1; }
+}
+
+.onboarding-ghost-finger.is-point-register,
+.onboarding-ghost-finger.is-point-prop {
+  position: fixed;
+  bottom: 120px;
+  right: 120px;
+  animation: ghost-point 1.4s ease-in-out infinite;
+}
+
+@keyframes ghost-point {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(-6px, -6px); }
+}
+
+.onboarding-help-btn {
+  position: fixed;
+  top: 16px;
+  right: 76px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 30px;
+  cursor: pointer;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.onboarding-canvas-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.25;
+  transition: opacity 0.4s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-cta-plus { animation: none; outline: 3px solid rgba(44,143,255,0.5); }
+  .onboarding-ghost-finger.is-tap,
+  .onboarding-ghost-finger.is-point-register,
+  .onboarding-ghost-finger.is-point-prop { animation: none; opacity: 0.85; }
+  .onboarding-caption-fish { animation: none; }
+}
