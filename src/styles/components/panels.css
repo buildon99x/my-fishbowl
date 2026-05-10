@@ -22,12 +22,13 @@
 
 .prop-action-panel {
   position: fixed;
-  right: 18px;
+  left: 50%;
   bottom: 18px;
+  transform: translateX(-50%);
   z-index: 30;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: row;
+  align-items: center;
   gap: var(--space-sm);
 }
 
@@ -350,8 +351,9 @@
 
 .prop-btn-cluster {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
   gap: var(--space-xs);
 }
 
@@ -359,13 +361,14 @@
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .prop-btn-wrap::before {
   content: attr(data-tooltip);
   position: absolute;
-  right: calc(100% + 10px);
+  bottom: calc(100% + 10px);
+  left: 50%;
   white-space: nowrap;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-sm);
@@ -378,13 +381,13 @@
   box-shadow: 0 4px 12px rgba(10, 10, 10, 0.08);
   opacity: 0;
   pointer-events: none;
-  transform: translateX(4px);
+  transform: translate(-50%, 4px);
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .prop-btn-wrap:hover::before {
   opacity: 1;
-  transform: translateX(0);
+  transform: translate(-50%, 0);
 }
 
 .prop-btn {
@@ -426,9 +429,18 @@
 
 .prop-feed-submenu {
   display: none;
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
   align-items: center;
   gap: var(--space-xs);
-  margin-right: var(--space-xs);
+  padding: 6px 10px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface-soft) 95%, transparent);
+  backdrop-filter: blur(8px);
+  z-index: 1;
 }
 
 .prop-btn-wrap:hover .prop-feed-submenu,
@@ -510,7 +522,6 @@
 
 @media (max-width: 760px) {
   .prop-action-panel {
-    right: 12px;
     bottom: 12px;
   }
 
@@ -524,7 +535,6 @@
 /* ── God Mode (dev only) ─────────────────────────────────────── */
 
 .god-mode-button {
-  margin-top: var(--space-sm);
   border-color: rgba(255, 221, 68, 0.5);
   color: #9a7e00;
   background: rgba(255, 221, 68, 0.08);
