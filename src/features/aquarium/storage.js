@@ -21,7 +21,7 @@ export function saveAquarium(aquarium) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(aquarium));
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+    if (error?.name === 'QuotaExceededError') {
       console.warn('[fishbowl] 저장 공간이 부족해 수족관 데이터를 저장할 수 없어요.', error);
     } else {
       console.warn('[fishbowl] 수족관 데이터를 저장할 수 없어요.', error);
