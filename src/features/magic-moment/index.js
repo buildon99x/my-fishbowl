@@ -126,7 +126,7 @@ export function createMagicMomentController({ getState, getRoot, getSound }) {
     renderQueueIndicator(getRoot(), getState().queue.length);
   }
 
-  async function runPhases({ fishId, sourceRect, getTargetPoint, spriteUrl, onBreathEnd, onWelcoming }) {
+  async function runPhases({ fishId, sourceRect, getTargetPoint, spriteUrl, onBreathEnd, onWelcoming, short }) {
     const state = getState();
     const root = getRoot();
     const sound = getSound?.();
@@ -146,6 +146,29 @@ export function createMagicMomentController({ getState, getRoot, getSound }) {
       : { x: target.clientX, y: target.clientY };
     const sourcePt = getOverlayPoint(overlay, sourceClient.x, sourceClient.y);
     const targetPt = getOverlayPoint(overlay, target.clientX, target.clientY);
+
+    if (short) {
+      // Short ritual for default-objects gallery: bubble burst + ring only,
+      // no anticipation, no viewport follow, no glow ramp. ~600ms total.
+      state.phase = 'transforming';
+      state.targetFishId = fishId;
+      state.startedAt = performance.now();
+      onWelcoming?.();
+      if (!reduced) {
+        emitBubbleBurst(overlay, targetPt.x, targetPt.y, silent ? 14 : 10);
+        emitSplashRing(overlay, targetPt.x, targetPt.y);
+      }
+      sound?.playSound('magic.splash');
+      sound?.playHaptic('light');
+      await wait(reduced ? 200 : 600);
+      state.phase = 'idle';
+      state.targetFishId = null;
+      onBreathEnd?.();
+      const next = dequeueMagicMoment(state);
+      tickIndicator();
+      if (next) setTimeout(() => runPhases(next), 0);
+      return;
+    }
 
     // Sprite clone
     const clone = document.createElement('img');

@@ -50,6 +50,13 @@ import {
   renderOnboardingOverlay,
 } from './features/onboarding/index.js';
 import { bindFishListEvents } from './features/fish-list/events.js';
+import {
+  bindDefaultObjectsEvents,
+  createDefaultObjectsState,
+  markCtaPulseShown,
+  renderDefaultObjectsModal,
+  shouldShowCtaPulse,
+} from './features/default-objects/index.js';
 import { renderAquariumStatus, renderUndoSnackbar } from './features/fish-list/view.js';
 import { captureFishListScroll, restoreFishListScroll } from './features/fish-list/scroll.js';
 import { bindFishSpriteDrag } from './features/fish-edit/drag.js';
@@ -216,7 +223,16 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         fishInputState,
         propPanelState: appState.propPanel,
         cleaningState: appState.cleaningState,
+        defaultObjectsCtaPulse: (() => {
+          const show = shouldShowCtaPulse(
+            aquarium.fishes.filter((p) => !p.pendingDelete).length,
+            appState.defaultObjects,
+          );
+          if (show) markCtaPulseShown(appState.defaultObjects);
+          return show;
+        })(),
       })}
+      ${renderDefaultObjectsModal(appState.defaultObjects)}
       ${renderUndoSnackbar(appState.undoDelete)}
       ${renderMuteToggle(appState.sound.getSettings().masterEnabled)}
       ${renderHelpButton()}
@@ -323,6 +339,62 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     save: saveAquarium,
   });
+  bindDefaultObjectsEvents(root, {
+    state: appState.defaultObjects,
+    appState,
+    aquarium,
+    render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+    onRegisterEntry: ({ entry, spriteDataUrl, name, cardElement }) => {
+      const draft = {
+        name,
+        spriteDataUrl,
+        type: entry.type,
+        movementEnabled: entry.defaultMovementEnabled,
+      };
+      const prop = addUserPropToAquarium(aquarium, draft);
+      // Apply manifest defaults that the generic addUserPropToAquarium doesn't know about.
+      const updates = {};
+      if (typeof entry.defaultSize === 'number') updates.size = entry.defaultSize;
+      if (entry.type === 'fish' && typeof entry.defaultSpeedMultiplier === 'number') {
+        updates.speedMultiplier = entry.defaultSpeedMultiplier;
+      }
+      if (Object.keys(updates).length > 0) {
+        Object.assign(prop, updates);
+        saveAquarium(aquarium);
+      }
+
+      // Sound: S-022 splash SE (1x, no-op when muted).
+      appState.sound?.playSound('magic.splash');
+      appState.sound?.playHaptic('light');
+
+      // Short magic-moment for fish (deco skips per main flow convention).
+      if (entry.type === 'fish' && appState.magicController) {
+        const sourceRect = cardElement?.getBoundingClientRect?.() ?? null;
+        appState.magicController.trigger({
+          short: true,
+          fishId: prop.id,
+          sourceRect,
+          spriteUrl: prop.imageUrl,
+          getTargetPoint: () => {
+            const bowl = root.querySelector('.aquarium-bowl');
+            if (!bowl) return null;
+            const r = bowl.getBoundingClientRect();
+            return {
+              clientX: r.left + (prop.x / 100) * r.width,
+              clientY: r.top + (prop.y / 100) * r.height,
+            };
+          },
+        });
+      }
+
+      // Re-render so the new prop (deco or fish) and its fish-list row
+      // appear immediately. The fish magic-moment short path doesn't
+      // schedule a render itself, and deco never enters that path.
+      renderApp(root, aquarium, fishInputState, feedingState, appState);
+
+      return prop;
+    },
+  });
   appState.movementController = startFishMovement(root, aquarium, {
     getPausedFishIds: () => {
       const paused = new Set();
@@ -377,6 +449,7 @@ function initApp() {
     magicMomentState: createMagicMomentState(),
     magicController: null,
     onboarding: null,
+    defaultObjects: createDefaultObjectsState(),
   };
   appState.onboarding = createOnboardingController({
     getRoot: () => app,

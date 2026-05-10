@@ -43,9 +43,8 @@ function bindFishInputDrag(panel, state) {
   });
 }
 import { renderFishInputPanel } from './view.js';
+import { resizeImageToSprite } from '../../lib/spriteResize.js';
 
-const SPRITE_WIDTH = 240;
-const SPRITE_HEIGHT = 160;
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
 
@@ -80,26 +79,6 @@ function isSupportedImageFile(file) {
   const extension = file.name.split('.').pop()?.toLowerCase();
 
   return SUPPORTED_IMAGE_TYPES.has(file.type) || SUPPORTED_IMAGE_EXTENSIONS.has(extension);
-}
-
-async function resizeImageToSprite(dataUrl) {
-  const image = await loadImage(dataUrl);
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  const scale = Math.min(SPRITE_WIDTH / image.naturalWidth, SPRITE_HEIGHT / image.naturalHeight);
-  const width = Math.round(image.naturalWidth * scale);
-  const height = Math.round(image.naturalHeight * scale);
-  const x = Math.round((SPRITE_WIDTH - width) / 2);
-  const y = Math.round((SPRITE_HEIGHT - height) / 2);
-
-  canvas.width = SPRITE_WIDTH;
-  canvas.height = SPRITE_HEIGHT;
-  context.clearRect(0, 0, SPRITE_WIDTH, SPRITE_HEIGHT);
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = 'high';
-  context.drawImage(image, x, y, width, height);
-
-  return canvas.toDataURL('image/png');
 }
 
 function paintStoredSprite(canvas, spriteDataUrl) {
