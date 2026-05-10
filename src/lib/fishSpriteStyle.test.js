@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cssVarsToInlineStyle, getFishSpriteStyleVars } from './fishSpriteStyle.js';
+import { cssVarsToInlineStyle, getFishSpriteStyleVars, getFishThumbTransform } from './fishSpriteStyle.js';
 
 function makeFish(overrides = {}) {
   return {
@@ -54,6 +54,34 @@ describe('getFishSpriteStyleVars', () => {
   it('uses flippedY for vertical flip', () => {
     expect(getFishSpriteStyleVars(makeFish({ flippedY: false }))['--fish-flip-y']).toBe(1);
     expect(getFishSpriteStyleVars(makeFish({ flippedY: true }))['--fish-flip-y']).toBe(-1);
+  });
+});
+
+describe('getFishThumbTransform', () => {
+  it('returns identity transform for an unedited fish', () => {
+    expect(getFishThumbTransform(makeFish())).toBe('rotate(0deg) scale(1, 1)');
+  });
+
+  it('applies rotation and scale together', () => {
+    expect(getFishThumbTransform(makeFish({ rotation: 30, scaleX: 0.8, scaleY: 1.2 }))).toBe(
+      'rotate(30deg) scale(0.8, 1.2)',
+    );
+  });
+
+  it('inverts scale X when flipped is true', () => {
+    expect(getFishThumbTransform(makeFish({ flipped: true }))).toBe('rotate(0deg) scale(-1, 1)');
+  });
+
+  it('inverts scale Y when flippedY is true', () => {
+    expect(getFishThumbTransform(makeFish({ flippedY: true }))).toBe('rotate(0deg) scale(1, -1)');
+  });
+
+  it('is independent of movement direction (vx)', () => {
+    expect(getFishThumbTransform(makeFish({ vx: -4 }))).toBe('rotate(0deg) scale(1, 1)');
+  });
+
+  it('falls back to safe defaults for missing fields', () => {
+    expect(getFishThumbTransform({})).toBe('rotate(0deg) scale(1, 1)');
   });
 });
 
