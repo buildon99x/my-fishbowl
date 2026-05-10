@@ -90,10 +90,12 @@ function paintStoredSprite(canvas, spriteDataUrl) {
 
   loadImage(spriteDataUrl)
     .then((image) => {
+      if (!canvas.isConnected) return;
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
     })
     .catch(() => {
+      if (!canvas.isConnected) return;
       context.clearRect(0, 0, canvas.width, canvas.height);
     });
 }
@@ -161,7 +163,7 @@ function setupDrawingCanvas(root, state, render) {
       {
         spriteDataUrl: canvas.toDataURL('image/png'),
         status: 'preview',
-        message: 'Drawing preview is ready.',
+        message: '그림 미리보기가 준비됐어요.',
         source: 'drawing',
       },
       render,
@@ -231,7 +233,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: 'Only PNG, JPG, JPEG, and WEBP files can be registered.',
+          message: 'PNG, JPG, JPEG, WEBP 파일만 등록할 수 있어요.',
           source: '',
         },
         render,
@@ -248,19 +250,19 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl,
           status: 'preview',
-          message: 'Uploaded image preview is ready.',
+          message: '업로드한 이미지 미리보기가 준비됐어요.',
           source: 'upload',
         },
         render,
       );
     } catch (error) {
-      console.warn('Fish image could not be processed.', error);
+      console.warn('[fishbowl] 이미지를 처리할 수 없습니다.', error);
       updateState(
         state,
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: 'The selected image could not be processed.',
+          message: '선택한 이미지를 처리할 수 없어요.',
           source: '',
         },
         render,
@@ -274,7 +276,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         state,
         {
           status: state.status === 'invalid' ? 'invalid' : 'idle',
-          message: 'Add an image before registering.',
+          message: '이미지를 먼저 추가해 주세요.',
         },
         render,
       );
