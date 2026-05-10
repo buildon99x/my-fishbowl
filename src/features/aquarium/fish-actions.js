@@ -1,10 +1,19 @@
 import { jitterPropPosition, DEFAULT_FISH_DEFAULTS, DEFAULT_DECO_DEFAULTS } from './model.js';
 import { saveAquarium } from './storage.js';
 
-const PENDING_DELETE_MS = 5000;
+export const PENDING_DELETE_TIMEOUT_MS = 5000;
+
+function patchFish(aquarium, id, patch) {
+  aquarium.fishes = aquarium.fishes.map((fish) =>
+    fish.id === id ? { ...fish, ...patch } : fish,
+  );
+  aquarium.updatedAt = new Date().toISOString();
+  saveAquarium(aquarium);
+}
+
+const PREFERRED_DEPTHS = ['top', 'middle', 'bottom'];
 
 function fishDefaults() {
-  const preferredDepths = ['top', 'middle', 'bottom'];
   return {
     vx: 0,
     vy: 0,
@@ -27,7 +36,7 @@ function fishDefaults() {
     movementTilt: 0,
     speedMultiplier: 0.7 + Math.random() * 0.6,
     idleBias: Math.random() * 0.4,
-    preferredDepth: preferredDepths[Math.floor(Math.random() * preferredDepths.length)],
+    preferredDepth: PREFERRED_DEPTHS[Math.floor(Math.random() * PREFERRED_DEPTHS.length)],
     wavingFrequency: 2 + Math.random() * 2,
     wavingAmplitude: 2 + Math.random() * 3,
     behaviorStartedAtMs: 0,
@@ -75,10 +84,6 @@ export function createFishFromDraft(draft, index, options = {}) {
   };
 }
 
-export function addFishToAquarium(aquarium, draft) {
-  return addUserPropToAquarium(aquarium, draft);
-}
-
 export function addUserPropToAquarium(aquarium, draft) {
   const prop = createFishFromDraft(draft, aquarium.fishes.length, { aquarium });
 
@@ -96,24 +101,11 @@ export function deleteFishFromAquarium(aquarium, fishId) {
 }
 
 export function softDeleteProp(aquarium, propId) {
-  const now = new Date().toISOString();
-  aquarium.fishes = aquarium.fishes.map((fish) =>
-    fish.id === propId
-      ? { ...fish, pendingDelete: true, pendingDeleteAt: now }
-      : fish,
-  );
-  aquarium.updatedAt = now;
-  saveAquarium(aquarium);
+  patchFish(aquarium, propId, { pendingDelete: true, pendingDeleteAt: new Date().toISOString() });
 }
 
 export function restoreProp(aquarium, propId) {
-  aquarium.fishes = aquarium.fishes.map((fish) =>
-    fish.id === propId
-      ? { ...fish, pendingDelete: false, pendingDeleteAt: null }
-      : fish,
-  );
-  aquarium.updatedAt = new Date().toISOString();
-  saveAquarium(aquarium);
+  patchFish(aquarium, propId, { pendingDelete: false, pendingDeleteAt: null });
 }
 
 export function commitPendingDelete(aquarium, propId) {
@@ -124,32 +116,14 @@ export function commitPendingDelete(aquarium, propId) {
   saveAquarium(aquarium);
 }
 
-export const PENDING_DELETE_TIMEOUT_MS = PENDING_DELETE_MS;
-
 export function toggleFishHidden(aquarium, fishId) {
-  aquarium.fishes = aquarium.fishes.map((fish) =>
-    fish.id === fishId
-      ? {
-          ...fish,
-          hidden: !fish.hidden,
-        }
-      : fish,
-  );
-  aquarium.updatedAt = new Date().toISOString();
-  saveAquarium(aquarium);
+  const fish = aquarium.fishes.find((f) => f.id === fishId);
+  if (!fish) return;
+  patchFish(aquarium, fishId, { hidden: !fish.hidden });
 }
 
 export function updateFishAppearance(aquarium, fishId, patch) {
-  aquarium.fishes = aquarium.fishes.map((fish) =>
-    fish.id === fishId
-      ? {
-          ...fish,
-          ...patch,
-        }
-      : fish,
-  );
-  aquarium.updatedAt = new Date().toISOString();
-  saveAquarium(aquarium);
+  patchFish(aquarium, fishId, patch);
 }
 
 export function updatePropType(aquarium, propId, nextType) {
@@ -171,7 +145,7 @@ export function updatePropType(aquarium, propId, nextType) {
     const restored = {
       ...fish,
       type: 'fish',
-      movementEnabled: fish.movementEnabledBeforeDeco === false ? false : true,
+      movementEnabled: fish.movementEnabledBeforeDeco !== false,
       movementEnabledBeforeDeco: undefined,
       headDirection: fish.headDirection === 'left' ? 'left' : 'right',
       hunger: Number.isFinite(fish.hunger) ? fish.hunger : 0,

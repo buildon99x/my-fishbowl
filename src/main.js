@@ -180,9 +180,14 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   appState.movementController?.stop();
   appState.bubbleController?.stop();
 
+  const render = () => renderApp(root, aquarium, fishInputState, feedingState, appState);
+
   const { cleaningState } = appState;
   const visibleProps = aquarium.fishes.filter((p) => !p.pendingDelete);
   const editingTargetId = appState.propPanel.editingTarget?.id ?? null;
+
+  const defaultObjectsCtaPulse = shouldShowCtaPulse(visibleProps.length, appState.defaultObjects);
+  if (defaultObjectsCtaPulse) markCtaPulseShown(appState.defaultObjects);
 
   root.innerHTML = `
     <main class="fishbowl-page">
@@ -223,14 +228,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         fishInputState,
         propPanelState: appState.propPanel,
         cleaningState: appState.cleaningState,
-        defaultObjectsCtaPulse: (() => {
-          const show = shouldShowCtaPulse(
-            aquarium.fishes.filter((p) => !p.pendingDelete).length,
-            appState.defaultObjects,
-          );
-          if (show) markCtaPulseShown(appState.defaultObjects);
-          return show;
-        })(),
+        defaultObjectsCtaPulse,
       })}
       ${renderDefaultObjectsModal(appState.defaultObjects)}
       ${renderUndoSnackbar(appState.undoDelete)}
@@ -253,17 +251,15 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   bindFishInputEvents(
     root,
     fishInputState,
-    () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+    render,
     {
       onRegister: (draft) => {
         const previewCanvas = root.querySelector('[data-fish-canvas]');
         const sourceRect = previewCanvas?.getBoundingClientRect();
         const prop = addUserPropToAquarium(aquarium, draft);
         appState.selectedFishId = prop.id;
-        const renderRef = () => renderApp(root, aquarium, fishInputState, feedingState, appState);
 
         if (prop.type === 'deco') {
-          // Deco props skip the magic moment ritual.
           appState.propPanel.editingTarget = { id: prop.id, type: prop.type };
           appState.onboarding.onFishRegistered();
           return;
@@ -287,20 +283,19 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
           },
           onWelcoming: () => {
             appState.magicMomentState.hiddenFishIds.delete(prop.id);
-            renderRef();
+            render();
           },
           onBreathEnd: () => {
             appState.propPanel.editingTarget = { id: prop.id, type: prop.type };
-            renderRef();
+            render();
             appState.onboarding.onMagicMomentDone();
           },
         });
       },
     },
   );
-  const renderAppCallback = () => renderApp(root, aquarium, fishInputState, feedingState, appState);
-  bindFishListEvents(root, aquarium, appState, { render: renderAppCallback });
-  bindFishSpriteDrag(root, aquarium, appState, { render: renderAppCallback });
+  bindFishListEvents(root, aquarium, appState, { render });
+  bindFishSpriteDrag(root, aquarium, appState, { render });
   bindFeedingEvents(root, feedingState, {
     startAnimation: () => startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState),
   });
@@ -308,7 +303,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     root,
     { fishInputState, propPanelState: appState.propPanel },
     {
-      render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+      render,
       onFeedingToggle: () => { feedingState.feedingMode = !feedingState.feedingMode; },
       onFoodTypeChange: (type) => { feedingState.selectedType = type; },
       onCleaningToggle: () => {
@@ -316,13 +311,15 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         if (cs.cleaningMode) {
           exitCleaningMode(cs);
         } else if (aquarium.algaeLevel > 0) {
-          cs.cleaningMode = true;
-          cs.cleaning = false;
-          cs.cleaned = false;
-          cs.cleaningProgress = 0;
-          cs.snapshotData = null;
-          cs.initialAlphaSum = 0;
-          cs.initialAlgaePixels = 0;
+          Object.assign(cs, {
+            cleaningMode: true,
+            cleaning: false,
+            cleaned: false,
+            cleaningProgress: 0,
+            snapshotData: null,
+            initialAlphaSum: 0,
+            initialAlgaePixels: 0,
+          });
         }
       },
     },
@@ -332,18 +329,18 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     aquarium,
     appState,
     saveAquarium,
-    () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+    render,
     { feedingState },
   );
   bindCleaningEvents(root, aquarium, appState, {
-    render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+    render,
     save: saveAquarium,
   });
   bindDefaultObjectsEvents(root, {
     state: appState.defaultObjects,
     appState,
     aquarium,
-    render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+    render,
     onRegisterEntry: ({ entry, spriteDataUrl, name, cardElement }) => {
       const draft = {
         name,
@@ -352,7 +349,6 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         movementEnabled: entry.defaultMovementEnabled,
       };
       const prop = addUserPropToAquarium(aquarium, draft);
-      // Apply manifest defaults that the generic addUserPropToAquarium doesn't know about.
       const updates = {};
       if (typeof entry.defaultSize === 'number') updates.size = entry.defaultSize;
       if (entry.type === 'fish' && typeof entry.defaultSpeedMultiplier === 'number') {
@@ -363,11 +359,9 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         saveAquarium(aquarium);
       }
 
-      // Sound: S-022 splash SE (1x, no-op when muted).
       appState.sound?.playSound('magic.splash');
       appState.sound?.playHaptic('light');
 
-      // Short magic-moment for fish (deco skips per main flow convention).
       if (entry.type === 'fish' && appState.magicController) {
         const sourceRect = cardElement?.getBoundingClientRect?.() ?? null;
         appState.magicController.trigger({
@@ -387,10 +381,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         });
       }
 
-      // Re-render so the new prop (deco or fish) and its fish-list row
-      // appear immediately. The fish magic-moment short path doesn't
-      // schedule a render itself, and deco never enters that path.
-      renderApp(root, aquarium, fishInputState, feedingState, appState);
+      render();
 
       return prop;
     },
@@ -414,18 +405,10 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
   appState.bubbleController = startBubbles(bubbleSvg, appState.bubblesState);
 
-  appState.onboarding.bind(root, {
-    fishInputState,
-    render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
-  });
+  appState.onboarding.bind(root, { fishInputState, render });
 
-
-  appState.sound.bindModal(root, {
-    onResolved: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
-  });
-  appState.sound.bindMuteToggle(root, {
-    render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
-  });
+  appState.sound.bindModal(root, { onResolved: render });
+  appState.sound.bindMuteToggle(root, { render });
 }
 
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  addFishToAquarium,
+  addUserPropToAquarium,
   commitPendingDelete,
   createFishFromDraft,
   deleteFishFromAquarium,
@@ -62,11 +62,11 @@ describe('createFishFromDraft', () => {
   });
 });
 
-describe('addFishToAquarium', () => {
+describe('addUserPropToAquarium', () => {
   it('appends a fish, bumps updatedAt, and persists', () => {
     const aq = makeAquarium();
     const before = aq.updatedAt;
-    const fish = addFishToAquarium(aq, { name: 'a', spriteDataUrl: 'x' });
+    const fish = addUserPropToAquarium(aq, { name: 'a', spriteDataUrl: 'x' });
     expect(aq.fishes).toHaveLength(1);
     expect(aq.fishes[0]).toBe(fish);
     expect(aq.updatedAt).not.toBe(before);

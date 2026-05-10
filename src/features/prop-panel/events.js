@@ -1,6 +1,6 @@
 import { DEFAULT_ALGAE_THRESHOLDS, restoreAlgaeState } from '../algae/index.js';
 import { savePropPanelPosition, setPropPanelStatus } from './state.js';
-import { updatePropType } from '../aquarium/fish-actions.js';
+import { updateFishAppearance, updatePropType } from '../aquarium/fish-actions.js';
 import { DEFAULT_DECO_DEFAULTS, DEFAULT_FISH_DEFAULTS } from '../aquarium/model.js';
 import { clamp } from '../../lib/utils.js';
 import { getFishThumbTransform } from '../../lib/fishSpriteStyle.js';
@@ -18,23 +18,37 @@ function getFishByTarget(aquarium, target) {
   return aquarium.fishes.find((f) => f.id === target.id) ?? null;
 }
 
-function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, render) {
+function updateFish(aquarium, target, patch) {
+  updateFishAppearance(aquarium, target.id, patch);
+}
+
+function thresholdsToAlgaeParams(thresholds) {
+  const heavy = Math.max(1, thresholds.heavy);
+  const maxLevel = Math.round((DEFAULT_ALGAE_THRESHOLDS.maxHours * 60) / DEFAULT_ALGAE_THRESHOLDS.intervalMinutes);
+  const intervalMinutes = Math.max(1, Math.round((heavy * 60) / maxLevel));
+  return { intervalMinutes, maxHours: heavy };
+}
+
+function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, render, options = {}) {
+  const defaultName = options.defaultName ?? '이름 없는 오브젝트';
+  const onTransformChange = options.onTransformChange ?? null;
+
   panel.querySelector('[data-edit-prop-name]')?.addEventListener('input', (e) => {
-    updateFish(aquarium, target, { name: e.target.value }, saveAquarium);
+    updateFish(aquarium, target, { name: e.target.value });
   });
 
   panel.querySelector('[data-edit-prop-name]')?.addEventListener('change', (e) => {
     const trimmed = e.target.value.trim();
     if (!trimmed) {
-      updateFish(aquarium, target, { name: '이름 없는 오브젝트' }, saveAquarium);
-      e.target.value = '이름 없는 오브젝트';
+      updateFish(aquarium, target, { name: defaultName });
+      e.target.value = defaultName;
     }
     render();
   });
 
   panel.querySelector('[data-edit-prop-size]')?.addEventListener('input', (e) => {
     const size = Number(e.target.value);
-    updateFish(aquarium, target, { size }, saveAquarium);
+    updateFish(aquarium, target, { size });
     const display = panel.querySelector('[data-prop-size-value]');
     if (display) display.textContent = `${size}px`;
     const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
@@ -43,42 +57,45 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
 
   panel.querySelector('[data-edit-prop-rotation]')?.addEventListener('input', (e) => {
     const rotation = Number(e.target.value);
-    updateFish(aquarium, target, { rotation }, saveAquarium);
+    updateFish(aquarium, target, { rotation });
     const display = panel.querySelector('[data-prop-rotation-value]');
     if (display) display.textContent = `${rotation}°`;
     const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
     if (sprite) sprite.style.setProperty('--fish-rotation', `${rotation}deg`);
+    onTransformChange?.();
   });
 
   panel.querySelector('[data-edit-prop-scale-x]')?.addEventListener('input', (e) => {
     const scaleX = Number(e.target.value);
-    updateFish(aquarium, target, { scaleX }, saveAquarium);
+    updateFish(aquarium, target, { scaleX });
     const display = panel.querySelector('[data-prop-scale-x-value]');
     if (display) display.textContent = scaleX.toFixed(2);
     const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
     if (sprite) sprite.style.setProperty('--fish-scale-x', String(scaleX));
+    onTransformChange?.();
   });
 
   panel.querySelector('[data-edit-prop-scale-y]')?.addEventListener('input', (e) => {
     const scaleY = Number(e.target.value);
-    updateFish(aquarium, target, { scaleY }, saveAquarium);
+    updateFish(aquarium, target, { scaleY });
     const display = panel.querySelector('[data-prop-scale-y-value]');
     if (display) display.textContent = scaleY.toFixed(2);
     const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
     if (sprite) sprite.style.setProperty('--fish-scale-y', String(scaleY));
+    onTransformChange?.();
   });
 
   panel.querySelector('[data-flip-prop]')?.addEventListener('click', () => {
     const item = getFishByTarget(aquarium, target);
     if (!item) return;
-    updateFish(aquarium, target, { flipped: !item.flipped }, saveAquarium);
+    updateFish(aquarium, target, { flipped: !item.flipped });
     render();
   });
 
   panel.querySelector('[data-flip-prop-y]')?.addEventListener('click', () => {
     const item = getFishByTarget(aquarium, target);
     if (!item) return;
-    updateFish(aquarium, target, { flippedY: !item.flippedY }, saveAquarium);
+    updateFish(aquarium, target, { flippedY: !item.flippedY });
     render();
   });
 
@@ -91,7 +108,7 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
       flipped: false,
       flippedY: false,
       size: defaultSize,
-    }, saveAquarium);
+    });
     render();
   });
 }
@@ -129,21 +146,6 @@ export function bindDecoPropsEvents(root, aquarium, appState, saveAquarium, rend
   bindCommonTransformEvents(root, panel, aquarium, editingTarget, saveAquarium, render);
 }
 
-function updateFish(aquarium, target, patch, saveAquarium) {
-  aquarium.fishes = aquarium.fishes.map((f) =>
-    f.id === target.id ? { ...f, ...patch } : f,
-  );
-  aquarium.updatedAt = new Date().toISOString();
-  saveAquarium(aquarium);
-}
-
-function thresholdsToAlgaeParams(thresholds) {
-  const heavy = Math.max(1, thresholds.heavy);
-  const maxLevel = Math.round((DEFAULT_ALGAE_THRESHOLDS.maxHours * 60) / DEFAULT_ALGAE_THRESHOLDS.intervalMinutes);
-  const intervalMinutes = Math.max(1, Math.round((heavy * 60) / maxLevel));
-  return { intervalMinutes, maxHours: heavy };
-}
-
 export function bindFishPropsEvents(root, aquarium, appState, saveAquarium, render) {
   const panel = root.querySelector('.prop-panel');
   if (!panel) return;
@@ -151,97 +153,24 @@ export function bindFishPropsEvents(root, aquarium, appState, saveAquarium, rend
   const { editingTarget } = appState.propPanel;
   if (!editingTarget || editingTarget.type !== 'fish') return;
 
-  panel.querySelector('[data-edit-prop-name]')?.addEventListener('input', (e) => {
-    updateFish(aquarium, editingTarget, { name: e.target.value }, saveAquarium);
-  });
-
-  panel.querySelector('[data-edit-prop-name]')?.addEventListener('change', (e) => {
-    const trimmed = e.target.value.trim();
-    if (!trimmed) {
-      updateFish(aquarium, editingTarget, { name: '이름 없는 물고기' }, saveAquarium);
-      e.target.value = '이름 없는 물고기';
-    }
-    render();
-  });
-
-  panel.querySelector('[data-edit-prop-size]')?.addEventListener('input', (e) => {
-    const size = Number(e.target.value);
-    updateFish(aquarium, editingTarget, { size }, saveAquarium);
-    const display = panel.querySelector('[data-prop-size-value]');
-    if (display) display.textContent = `${size}px`;
-    const sprite = root.querySelector(`[data-fish-sprite="${editingTarget.id}"]`);
-    if (sprite) sprite.style.setProperty('--fish-size', `${size}px`);
-  });
-
-  panel.querySelector('[data-edit-prop-rotation]')?.addEventListener('input', (e) => {
-    const rotation = Number(e.target.value);
-    updateFish(aquarium, editingTarget, { rotation }, saveAquarium);
-    const display = panel.querySelector('[data-prop-rotation-value]');
-    if (display) display.textContent = `${rotation}°`;
-    const sprite = root.querySelector(`[data-fish-sprite="${editingTarget.id}"]`);
-    if (sprite) sprite.style.setProperty('--fish-rotation', `${rotation}deg`);
-    const fish = getFishByTarget(aquarium, editingTarget);
-    if (fish) updateThumbTransforms(root, fish);
-  });
-
-  panel.querySelector('[data-edit-prop-scale-x]')?.addEventListener('input', (e) => {
-    const scaleX = Number(e.target.value);
-    updateFish(aquarium, editingTarget, { scaleX }, saveAquarium);
-    const display = panel.querySelector('[data-prop-scale-x-value]');
-    if (display) display.textContent = scaleX.toFixed(2);
-    const sprite = root.querySelector(`[data-fish-sprite="${editingTarget.id}"]`);
-    if (sprite) sprite.style.setProperty('--fish-scale-x', String(scaleX));
-    const fish = getFishByTarget(aquarium, editingTarget);
-    if (fish) updateThumbTransforms(root, fish);
-  });
-
-  panel.querySelector('[data-edit-prop-scale-y]')?.addEventListener('input', (e) => {
-    const scaleY = Number(e.target.value);
-    updateFish(aquarium, editingTarget, { scaleY }, saveAquarium);
-    const display = panel.querySelector('[data-prop-scale-y-value]');
-    if (display) display.textContent = scaleY.toFixed(2);
-    const sprite = root.querySelector(`[data-fish-sprite="${editingTarget.id}"]`);
-    if (sprite) sprite.style.setProperty('--fish-scale-y', String(scaleY));
-    const fish = getFishByTarget(aquarium, editingTarget);
-    if (fish) updateThumbTransforms(root, fish);
+  bindCommonTransformEvents(root, panel, aquarium, editingTarget, saveAquarium, render, {
+    defaultName: '이름 없는 물고기',
+    onTransformChange: () => {
+      const fish = getFishByTarget(aquarium, editingTarget);
+      if (fish) updateThumbTransforms(root, fish);
+    },
   });
 
   panel.querySelectorAll('[data-edit-prop-head-direction]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const direction = btn.dataset.editPropHeadDirection;
-      updateFish(aquarium, editingTarget, { headDirection: direction }, saveAquarium);
+      updateFish(aquarium, editingTarget, { headDirection: direction });
       render();
     });
   });
 
   panel.querySelector('[data-edit-prop-movement]')?.addEventListener('change', (e) => {
-    updateFish(aquarium, editingTarget, { movementEnabled: e.target.checked }, saveAquarium);
-    render();
-  });
-
-  panel.querySelector('[data-flip-prop]')?.addEventListener('click', () => {
-    const fish = getFishByTarget(aquarium, editingTarget);
-    if (!fish) return;
-    updateFish(aquarium, editingTarget, { flipped: !fish.flipped }, saveAquarium);
-    render();
-  });
-
-  panel.querySelector('[data-flip-prop-y]')?.addEventListener('click', () => {
-    const fish = getFishByTarget(aquarium, editingTarget);
-    if (!fish) return;
-    updateFish(aquarium, editingTarget, { flippedY: !fish.flippedY }, saveAquarium);
-    render();
-  });
-
-  panel.querySelector('[data-reset-prop-transform]')?.addEventListener('click', () => {
-    updateFish(aquarium, editingTarget, {
-      rotation: 0,
-      scaleX: 1,
-      scaleY: 1,
-      flipped: false,
-      flippedY: false,
-      size: 120,
-    }, saveAquarium);
+    updateFish(aquarium, editingTarget, { movementEnabled: e.target.checked });
     render();
   });
 }
