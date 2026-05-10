@@ -387,6 +387,11 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         });
       }
 
+      // Re-render so the new prop (deco or fish) and its fish-list row
+      // appear immediately. The fish magic-moment short path doesn't
+      // schedule a render itself, and deco never enters that path.
+      renderApp(root, aquarium, fishInputState, feedingState, appState);
+
       return prop;
     },
   });

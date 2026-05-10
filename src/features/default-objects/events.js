@@ -54,7 +54,6 @@ function highlightFishListItem(root, propId) {
 export function bindDefaultObjectsEvents(root, ctx) {
   const {
     state,
-    appState,
     aquarium,
     render,
     onRegisterEntry,
@@ -135,10 +134,10 @@ export function bindDefaultObjectsEvents(root, ctx) {
       // Registration pulse on the card.
       pulseCard(card, 'default-objects-card--registered', 220);
 
-      // Modal peek motion to reveal the aquarium.
-      peekModal(modal);
-
-      // Hand off to caller — performs addUserPropToAquarium + magic-moment + sound.
+      // Hand off to caller — performs addUserPropToAquarium + magic-moment +
+      // sound + a synchronous renderApp so the new prop and fish-list row
+      // appear immediately. After that re-render the modal DOM is fresh,
+      // so peek/highlight must be applied to the post-render nodes.
       const prop = onRegisterEntry?.({
         entry,
         spriteDataUrl,
@@ -146,9 +145,11 @@ export function bindDefaultObjectsEvents(root, ctx) {
         cardElement: card,
       });
 
+      const freshModal = root.querySelector('[data-default-objects-modal]') ?? modal;
+      peekModal(freshModal);
+
       if (prop) {
-        // Re-bind on next render; meanwhile, queue fish-list highlight.
-        highlightFishListItem(appState?.appRoot ?? root, prop.id);
+        highlightFishListItem(root, prop.id);
       }
     });
   });
