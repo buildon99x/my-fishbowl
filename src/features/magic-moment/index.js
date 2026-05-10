@@ -63,9 +63,8 @@ function emitSplashRing(overlay, x, y) {
 }
 
 function renderQueueIndicator(root, queueLen) {
-  const bowl = root.querySelector('.aquarium-bowl');
-  if (!bowl) return;
-  let indicator = bowl.querySelector('[data-magic-queue]');
+  const overlay = ensureOverlay();
+  let indicator = overlay.querySelector('[data-magic-queue]');
   if (queueLen <= 0) {
     indicator?.remove();
     return;
@@ -74,7 +73,16 @@ function renderQueueIndicator(root, queueLen) {
     indicator = document.createElement('div');
     indicator.className = 'magic-queue-indicator';
     indicator.dataset.magicQueue = '';
-    bowl.appendChild(indicator);
+    overlay.appendChild(indicator);
+  }
+  // Position relative to the aquarium-bowl's top-right corner so the indicator
+  // sits where the user expects, but stays in the long-lived overlay (parented
+  // to document.body) and survives parent re-renders.
+  const bowl = root?.querySelector('.aquarium-bowl');
+  if (bowl) {
+    const rect = bowl.getBoundingClientRect();
+    indicator.style.left = `${rect.right - 16}px`;
+    indicator.style.top = `${rect.top + 8}px`;
   }
   indicator.textContent = '•'.repeat(Math.min(queueLen, MAGIC_QUEUE_MAX));
 }
@@ -84,19 +92,33 @@ function getOverlayPoint(overlay, clientX, clientY) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-function applyViewportFollow(bowl, scale, ms) {
+function applyViewportFollow(bowl, scale, outMs, holdMs, inMs) {
   if (!bowl) return Promise.resolve();
-  bowl.style.transition = `transform ${ms}ms ease-out`;
+  bowl.style.transition = `transform ${outMs}ms ease-out`;
   bowl.style.transform = `scale(${scale})`;
   return new Promise((resolve) => {
     setTimeout(() => {
-      bowl.style.transform = '';
+      // Hold at peak so the follow stays synced with the glow's brightest
+      // moment instead of receding before the glow even peaks.
       setTimeout(() => {
-        bowl.style.transition = '';
-        resolve();
-      }, ms);
-    }, ms);
+        bowl.style.transition = `transform ${inMs}ms ease-in`;
+        bowl.style.transform = '';
+        setTimeout(() => {
+          bowl.style.transition = '';
+          resolve();
+        }, inMs);
+      }, holdMs);
+    }, outMs);
   });
+}
+
+function isSilent(sound) {
+  if (!sound) return true;
+  const s = sound.getSettings?.();
+  if (!s) return true;
+  if (!s.masterEnabled) return true;
+  if (!s.categories?.magic?.enabled) return true;
+  return false;
 }
 
 export function createMagicMomentController({ getState, getRoot, getSound }) {
@@ -109,6 +131,7 @@ export function createMagicMomentController({ getState, getRoot, getSound }) {
     const root = getRoot();
     const sound = getSound?.();
     const reduced = prefersReducedMotion();
+    const silent = isSilent(sound);
     const overlay = ensureOverlay();
     const target = getTargetPoint();
     if (!target) {
@@ -156,11 +179,17 @@ export function createMagicMomentController({ getState, getRoot, getSound }) {
         clone.style.top = `${targetPt.y}px`;
       });
       await wait(MAGIC_PHASE_DURATIONS.transforming - 150);
-      emitBubbleBurst(overlay, targetPt.x, targetPt.y, 14);
+      // When sound is unavailable the visual track must carry the entire
+      // emotional payload — boost particle count and emit a second ring.
+      const bubbleCount = silent ? 20 : 14;
+      emitBubbleBurst(overlay, targetPt.x, targetPt.y, bubbleCount);
       sound?.playSound('magic.splash');
       sound?.playHaptic('magic-b');
       await wait(150);
       emitSplashRing(overlay, targetPt.x, targetPt.y);
+      if (silent) {
+        setTimeout(() => emitSplashRing(overlay, targetPt.x, targetPt.y), 100);
+      }
     }
 
     // Phase C: welcoming
@@ -169,14 +198,18 @@ export function createMagicMomentController({ getState, getRoot, getSound }) {
     sound?.playSound('magic.welcome');
     clone.remove();
     const glow = document.createElement('div');
-    glow.className = 'magic-glow';
+    glow.className = `magic-glow${silent ? ' is-silent' : ''}`;
     glow.style.left = `${targetPt.x}px`;
     glow.style.top = `${targetPt.y}px`;
     overlay.appendChild(glow);
     const bowl = root.querySelector('.aquarium-bowl');
-    const followMs = reduced ? 0 : 250;
-    if (!reduced) applyViewportFollow(bowl, 1.05, followMs);
-    await wait(reduced ? 600 : MAGIC_PHASE_DURATIONS.welcoming);
+    if (!reduced) {
+      // Match follow timing to the glow curve (out + hold + in ≈ 1200ms) so
+      // the "어항이 새 친구를 따라가는" beat lands at the glow's brightest moment.
+      applyViewportFollow(bowl, 1.05, 400, 400, 400);
+    }
+    const welcomingMs = reduced ? 600 : (silent ? 1800 : MAGIC_PHASE_DURATIONS.welcoming);
+    await wait(welcomingMs);
     glow.remove();
 
     // Breath — stay active so concurrent registers queue rather than

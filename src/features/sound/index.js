@@ -27,15 +27,46 @@ export function createSoundController() {
     notify();
   }
 
+  // Snapshot of the most recent per-category opt-in state. Used to restore
+  // user preferences when the master toggle is flipped on after they've been
+  // through onboarding (vs. the first-time recovery from "🤫 나중에", where
+  // we want to enable all categories).
+  const lastEnabledCategories = SOUND_CATEGORIES.reduce((acc, name) => {
+    acc[name] = settings.categories[name].enabled;
+    return acc;
+  }, {});
+
+  function snapshotEnabledCategories() {
+    SOUND_CATEGORIES.forEach((name) => {
+      lastEnabledCategories[name] = settings.categories[name].enabled;
+    });
+  }
+
   function setMasterMuted(muted) {
     const turningOn = !muted;
+    if (!turningOn) snapshotEnabledCategories();
     settings.masterEnabled = turningOn;
     if (turningOn) {
       const allCategoriesOff = SOUND_CATEGORIES.every((name) => !settings.categories[name].enabled);
       if (allCategoriesOff) {
-        SOUND_CATEGORIES.forEach((name) => {
-          settings.categories[name].enabled = true;
-        });
+        if (settings.onboardingShown) {
+          // Restore the snapshot of categories enabled before mute. If every
+          // snapshot entry is false (e.g. the user manually turned everything
+          // off), enable ambient as the gentlest default so the toggle is not
+          // a no-op.
+          let restoredAny = false;
+          SOUND_CATEGORIES.forEach((name) => {
+            if (lastEnabledCategories[name]) {
+              settings.categories[name].enabled = true;
+              restoredAny = true;
+            }
+          });
+          if (!restoredAny) settings.categories.ambient.enabled = true;
+        } else {
+          SOUND_CATEGORIES.forEach((name) => {
+            settings.categories[name].enabled = true;
+          });
+        }
       }
     }
     persist();
@@ -49,6 +80,7 @@ export function createSoundController() {
   function setCategoryEnabled(category, enabled) {
     if (!SOUND_CATEGORIES.includes(category)) return;
     settings.categories[category].enabled = enabled;
+    lastEnabledCategories[category] = enabled;
     persist();
     if (category === 'ambient') {
       if (enabled && settings.masterEnabled) engine.startAmbient();
@@ -85,7 +117,9 @@ export function createSoundController() {
     settings.masterEnabled = true;
     settings.categories.magic.enabled = true;
     engine.applySettings();
-    engine.playSound('magic.splash');
+    // Use the warmest tone (magic.welcome) so the preview represents the
+    // overall character of the app sound rather than a sharp splash burst.
+    engine.playSound('magic.welcome', { volume: 0.6 });
     settings.masterEnabled = wasEnabled;
     settings.categories.magic.enabled = wasMagicEnabled;
     engine.applySettings();

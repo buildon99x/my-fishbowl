@@ -44,13 +44,24 @@
   outline-offset: 4px;
 }
 
-.onboarding-caption {
-  margin-top: 16px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(0, 0, 0, 0.35);
-  padding: 4px 12px;
-  border-radius: 12px;
+.onboarding-seq1-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.onboarding-caption-fish {
+  width: 56px;
+  height: auto;
+  margin-top: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+  animation: caption-fish-bob 1s ease-in-out infinite;
+}
+
+@keyframes caption-fish-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(6px); }
 }
 
 .onboarding-ghost-finger {
@@ -93,7 +104,7 @@
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(255, 255, 255, 0.9);
-  font-size: 22px;
+  font-size: 30px;
   cursor: pointer;
   z-index: 150;
   display: flex;
@@ -117,4 +128,5 @@
   .onboarding-ghost-finger.is-tap,
   .onboarding-ghost-finger.is-point-register,
   .onboarding-ghost-finger.is-point-prop { animation: none; opacity: 0.85; }
+  .onboarding-caption-fish { animation: none; }
 }

@@ -20,6 +20,7 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
   let pulseRetryCount = 0;
   let canvasIdleTimer = null;
   let outlineVisible = true;
+  const refs = { voiceGuidePlayedForSeq1: false, seq4DoneListenersBound: false };
 
   function persist() {
     saveOnboardingState(state);
@@ -50,7 +51,9 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
       if (elapsed >= IDLE_NOTIFY_MS) {
         idleNotified = true;
         const sound = getSound?.();
-        sound?.playSound('ui.toggle-on');
+        // Soft, warm chime — the idle prompt is "여기로 돌아와", not a click.
+        // Reuse magic.welcome at low volume so we don't ship another asset.
+        sound?.playSound('magic.welcome', { volume: 0.4 });
         const overlay = getRoot()?.querySelector('[data-onboarding-overlay]');
         overlay?.classList.add('is-emphasized');
         setTimeout(() => overlay?.classList.remove('is-emphasized'), 1200);
@@ -87,6 +90,33 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
     if (!overlay) return;
 
     if (state.sequence === 1) {
+      // Position the inner CTA at the aquarium-bowl center so the "+" affords
+      // tapping into the bowl, instead of floating at viewport center which
+      // can sit above or below the bowl on tall phones.
+      const bowl = root.querySelector('.aquarium-bowl');
+      const innerWrap = overlay.querySelector('[data-onboarding-seq1-inner]');
+      if (bowl && innerWrap) {
+        const r = bowl.getBoundingClientRect();
+        innerWrap.style.position = 'fixed';
+        innerWrap.style.left = `${r.left + r.width / 2}px`;
+        innerWrap.style.top = `${r.top + r.height / 2}px`;
+        innerWrap.style.transform = 'translate(-50%, -50%)';
+      }
+
+      // Voice guide: when the user opted into sound and hasn't heard the cue
+      // yet this session, play a short voice/chime once on entry to seq 1.
+      const sound = getSound?.();
+      const s = sound?.getSettings?.();
+      if (
+        !refs.voiceGuidePlayedForSeq1
+        && s?.masterEnabled
+        && (s?.voiceGuideEnabled ?? true)
+      ) {
+        refs.voiceGuidePlayedForSeq1 = true;
+        // Short delay so the voice doesn't collide with the modal-dismiss tap.
+        setTimeout(() => sound?.playSound('ui.voice-tap-here', { volume: 0.7 }), 300);
+      }
+
       const cta = overlay.querySelector('[data-onboarding-cta]');
       cta?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -158,12 +188,32 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
       if (state.sequence === 2 || state.sequence === 3) advance(4);
     },
     onMagicMomentDone: () => {
-      if (state.sequence === 4) {
-        // Move to step 5 (done) when prop-panel closes; spec says ghost finger
-        // points at prop-panel after magic moment. The next prop-panel close
-        // triggers complete. For minimal flow, mark done after a short hold.
-        setTimeout(() => advance('done'), 4000);
+      if (state.sequence !== 4) return;
+      if (refs.seq4DoneListenersBound) return;
+      refs.seq4DoneListenersBound = true;
+
+      const finish = () => {
+        if (state.sequence !== 4) return;
+        cleanup();
+        advance('done');
+      };
+
+      // Gesture-based exit: any tap on the aquarium bowl, or a prop-panel
+      // close, ends onboarding. The 4s auto-timeout is replaced with an 8s
+      // safety net so a child who is calmly admiring the new fish is not
+      // interrupted.
+      const gestureHandler = (e) => {
+        if (!(e.target instanceof HTMLElement)) return;
+        if (e.target.closest('.aquarium-bowl')) finish();
+        else if (e.target.closest('.prop-panel-close')) finish();
+      };
+      const safetyTimer = setTimeout(finish, 8000);
+      function cleanup() {
+        document.removeEventListener('pointerdown', gestureHandler, true);
+        clearTimeout(safetyTimer);
+        refs.seq4DoneListenersBound = false;
       }
+      document.addEventListener('pointerdown', gestureHandler, true);
     },
     getOutlineVisible,
   };

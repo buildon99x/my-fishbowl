@@ -88,16 +88,31 @@
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
 }
 
+/* When the audio channel is unavailable, push the visual fallback harder so
+   the magic moment still resolves emotionally. Wider radius, longer duration,
+   higher peak opacity. */
+.magic-glow.is-silent {
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(255, 220, 120, 0.85), rgba(255, 220, 120, 0));
+  animation: magic-glow-fade-silent 1.8s ease-out forwards;
+}
+
+@keyframes magic-glow-fade-silent {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.55); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+}
+
 .magic-queue-indicator {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  position: fixed;
   font-size: 16px;
   letter-spacing: 2px;
   color: rgba(255, 255, 255, 0.85);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   pointer-events: none;
-  z-index: 30;
+  z-index: 60;
+  transform: translate(-100%, 0);
 }
 
 @media (prefers-reduced-motion: reduce) {
