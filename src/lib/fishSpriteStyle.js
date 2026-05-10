@@ -20,3 +20,12 @@ export function cssVarsToInlineStyle(vars) {
     .map(([key, value]) => `${key}: ${value};`)
     .join(' ');
 }
+
+export function getFishThumbTransform(fish) {
+  const rotation = Number.isFinite(fish?.rotation) ? fish.rotation : 0;
+  const baseScaleX = Number.isFinite(fish?.scaleX) ? fish.scaleX : 1;
+  const baseScaleY = Number.isFinite(fish?.scaleY) ? fish.scaleY : 1;
+  const scaleX = baseScaleX * (fish?.flipped ? -1 : 1);
+  const scaleY = baseScaleY * (fish?.flippedY ? -1 : 1);
+  return `rotate(${rotation}deg) scale(${scaleX}, ${scaleY})`;
+}

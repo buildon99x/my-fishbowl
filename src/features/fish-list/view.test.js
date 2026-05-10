@@ -97,7 +97,8 @@ describe('renderAquariumStatus', () => {
       makeAquarium([makeFish()]),
       makeAppState(),
     );
-    expect(html).toContain('1마리');
+    expect(html).toContain('1개');
+    expect(html).toContain('오브젝트 목록');
     expect(html).toContain('100%');
     expect(html).toContain('이끼 단계');
     expect(html).toContain('data-toggle-fish-list');

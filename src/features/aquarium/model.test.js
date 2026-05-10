@@ -48,6 +48,25 @@ describe('normalizeAquarium', () => {
     expect(out.fishes[0].scaleX).toBe(0.7);
   });
 
+  it("defaults missing type to 'fish'", () => {
+    const out = normalizeAquarium({ fishes: [{ id: 'a' }] });
+    expect(out.fishes[0].type).toBe('fish');
+  });
+
+  it("preserves explicit deco type and forces movementEnabled false", () => {
+    const out = normalizeAquarium({ fishes: [{ id: 'a', type: 'deco', movementEnabled: true }] });
+    expect(out.fishes[0].type).toBe('deco');
+    expect(out.fishes[0].movementEnabled).toBe(false);
+  });
+
+  it('drops props with pendingDelete=true on load', () => {
+    const out = normalizeAquarium({ fishes: [
+      { id: 'a' },
+      { id: 'b', pendingDelete: true },
+    ] });
+    expect(out.fishes.map((f) => f.id)).toEqual(['a']);
+  });
+
   it('returns empty fishes when input fishes is not an array', () => {
     expect(normalizeAquarium({ fishes: null }).fishes).toEqual([]);
     expect(normalizeAquarium({ fishes: 'x' }).fishes).toEqual([]);

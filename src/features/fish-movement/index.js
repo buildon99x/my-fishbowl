@@ -40,7 +40,13 @@ export function startFishMovement(root, aquarium, options = {}) {
     lastFrameMs = nowMs;
 
     aquarium.fishes.forEach((fish) => {
-      if (!fish.hidden && fish.movementEnabled !== false && !pausedFishIds.has(fish.id)) {
+      if (
+        !fish.hidden &&
+        fish.type !== 'deco' &&
+        !fish.pendingDelete &&
+        fish.movementEnabled !== false &&
+        !pausedFishIds.has(fish.id)
+      ) {
         applyFishMotion(root, fish);
       }
     });
