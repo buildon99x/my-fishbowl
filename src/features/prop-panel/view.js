@@ -1,6 +1,7 @@
 import { renderFishProps } from './fish-props.js';
 import { FOOD_CONFIGS, FOOD_TYPES } from '../feeding/foodConfig.js';
 import { escapeHtml } from '../../lib/utils.js';
+import { getFishThumbTransform } from '../../lib/fishSpriteStyle.js';
 
 const PROP_RENDERERS = {
   fish: renderFishProps,
@@ -28,7 +29,7 @@ function renderPanelShell(entity, target, typeBadge, contentHtml, pos) {
   const isGodMode = import.meta.env.DEV && target.type === 'godmode';
   const thumbHtml = isGodMode
     ? '<span class="prop-panel-thumb-icon" aria-hidden="true">🛠️</span>'
-    : `<img class="prop-panel-thumb" src="${escapeHtml(entity.imageUrl)}" alt="" width="48" height="36">`;
+    : `<img class="prop-panel-thumb" src="${escapeHtml(entity.imageUrl)}" alt="" width="48" height="36" style="transform: ${getFishThumbTransform(entity)};">`;
   const name = isGodMode ? 'God Mode' : escapeHtml(entity.name);
   const badgeClass = isGodMode ? 'prop-panel-badge is-dev' : 'prop-panel-badge';
 
