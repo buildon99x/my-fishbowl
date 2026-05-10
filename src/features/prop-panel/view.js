@@ -160,10 +160,14 @@ export function renderPropPanel(target, aquarium, propPanelState) {
   return renderPanelShell(entity, target, typeBadge, contentHtml, pos, propPanelState);
 }
 
-export function renderActionCluster({ feedingState, fishInputState, propPanelState, cleaningState }) {
+export function renderActionCluster({ feedingState, fishInputState, propPanelState, cleaningState, defaultObjectsCtaPulse }) {
   const feedActive = feedingState.feedingMode;
   const addFishActive = fishInputState.isExpanded;
   const cleanActive = cleaningState?.cleaningMode ?? false;
+  const ctaPulseClass = defaultObjectsCtaPulse ? ' is-cta-pulse' : '';
+  const ctaArrow = defaultObjectsCtaPulse
+    ? '<span class="default-objects-cta-arrow" aria-hidden="true">↓</span>'
+    : '';
 
   const godModeButton = import.meta.env.DEV
     ? (() => {
@@ -213,6 +217,16 @@ export function renderActionCluster({ feedingState, fishInputState, propPanelSta
             aria-pressed="${addFishActive}"
             aria-label="오브젝트 추가"
           >➕</button>
+        </div>
+
+        <div class="prop-btn-wrap" data-tooltip="기본 오브젝트">
+          <button
+            class="prop-btn prop-btn--default-objects${ctaPulseClass}"
+            type="button"
+            data-prop-default-objects
+            aria-label="기본 오브젝트"
+          >🎁</button>
+          ${ctaArrow}
         </div>
 
         <div class="prop-btn-wrap" data-tooltip="청소 모드">
