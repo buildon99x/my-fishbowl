@@ -1,5 +1,5 @@
 export const FISH_DRAFT_STORAGE_KEY = 'my-fishbowl:fish-draft';
-export const DEFAULT_FISH_NAME = 'Unnamed fish';
+export const DEFAULT_FISH_NAME = '이름 없는 친구';
 
 const POSITION_KEY = 'my-fishbowl:fish-input-pos';
 
@@ -28,6 +28,10 @@ export function saveFishInputPosition(pos) {
   }
 }
 
+function normalizeType(value) {
+  return value === 'deco' ? 'deco' : 'fish';
+}
+
 export function createFishInputState() {
   const draft = loadFishDraft();
 
@@ -35,8 +39,9 @@ export function createFishInputState() {
     name: draft?.name ?? '',
     spriteDataUrl: draft?.spriteDataUrl ?? '',
     status: draft?.spriteDataUrl ? 'preview' : 'idle',
-    message: draft?.spriteDataUrl ? 'Saved fish image is ready.' : '',
+    message: draft?.spriteDataUrl ? '저장된 이미지를 불러왔어요.' : '',
     source: draft?.source ?? '',
+    type: normalizeType(draft?.type),
     movementEnabled: draft?.movementEnabled !== false,
     isExpanded: false,
     position: loadSavedPosition(),
@@ -56,11 +61,13 @@ function loadFishDraft() {
 
 export function saveFishDraft(state) {
   const now = new Date().toISOString();
+  const type = normalizeType(state.type);
   const draft = {
     name: state.name.trim() || DEFAULT_FISH_NAME,
     spriteDataUrl: state.spriteDataUrl,
     source: state.source,
-    movementEnabled: state.movementEnabled !== false,
+    type,
+    movementEnabled: type === 'deco' ? false : state.movementEnabled !== false,
     createdAt: now,
     updatedAt: now,
   };

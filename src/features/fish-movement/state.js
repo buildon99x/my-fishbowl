@@ -293,7 +293,13 @@ export function stepFishesMovement(fishes, elapsedMs, nowMs, options = {}) {
   const pausedFishIds = options.pausedFishIds ?? new Set();
 
   return fishes.map((fish, index) => {
-    if (fish.hidden || fish.movementEnabled === false || pausedFishIds.has(fish.id)) {
+    if (
+      fish.hidden ||
+      fish.type === 'deco' ||
+      fish.pendingDelete ||
+      fish.movementEnabled === false ||
+      pausedFishIds.has(fish.id)
+    ) {
       return fish;
     }
 

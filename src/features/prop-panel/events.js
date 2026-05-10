@@ -1,5 +1,7 @@
 import { DEFAULT_ALGAE_THRESHOLDS, restoreAlgaeState } from '../algae/index.js';
-import { savePropPanelPosition } from './state.js';
+import { savePropPanelPosition, setPropPanelStatus } from './state.js';
+import { updatePropType } from '../aquarium/fish-actions.js';
+import { DEFAULT_DECO_DEFAULTS, DEFAULT_FISH_DEFAULTS } from '../aquarium/model.js';
 import { clamp } from '../../lib/utils.js';
 import { getFishThumbTransform } from '../../lib/fishSpriteStyle.js';
 
@@ -12,8 +14,119 @@ function updateThumbTransforms(root, fish) {
 }
 
 function getFishByTarget(aquarium, target) {
-  if (!target || target.type !== 'fish') return null;
+  if (!target || (target.type !== 'fish' && target.type !== 'deco')) return null;
   return aquarium.fishes.find((f) => f.id === target.id) ?? null;
+}
+
+function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, render) {
+  panel.querySelector('[data-edit-prop-name]')?.addEventListener('input', (e) => {
+    updateFish(aquarium, target, { name: e.target.value }, saveAquarium);
+  });
+
+  panel.querySelector('[data-edit-prop-name]')?.addEventListener('change', (e) => {
+    const trimmed = e.target.value.trim();
+    if (!trimmed) {
+      updateFish(aquarium, target, { name: '이름 없는 오브젝트' }, saveAquarium);
+      e.target.value = '이름 없는 오브젝트';
+    }
+    render();
+  });
+
+  panel.querySelector('[data-edit-prop-size]')?.addEventListener('input', (e) => {
+    const size = Number(e.target.value);
+    updateFish(aquarium, target, { size }, saveAquarium);
+    const display = panel.querySelector('[data-prop-size-value]');
+    if (display) display.textContent = `${size}px`;
+    const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
+    if (sprite) sprite.style.setProperty('--fish-size', `${size}px`);
+  });
+
+  panel.querySelector('[data-edit-prop-rotation]')?.addEventListener('input', (e) => {
+    const rotation = Number(e.target.value);
+    updateFish(aquarium, target, { rotation }, saveAquarium);
+    const display = panel.querySelector('[data-prop-rotation-value]');
+    if (display) display.textContent = `${rotation}°`;
+    const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
+    if (sprite) sprite.style.setProperty('--fish-rotation', `${rotation}deg`);
+  });
+
+  panel.querySelector('[data-edit-prop-scale-x]')?.addEventListener('input', (e) => {
+    const scaleX = Number(e.target.value);
+    updateFish(aquarium, target, { scaleX }, saveAquarium);
+    const display = panel.querySelector('[data-prop-scale-x-value]');
+    if (display) display.textContent = scaleX.toFixed(2);
+    const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
+    if (sprite) sprite.style.setProperty('--fish-scale-x', String(scaleX));
+  });
+
+  panel.querySelector('[data-edit-prop-scale-y]')?.addEventListener('input', (e) => {
+    const scaleY = Number(e.target.value);
+    updateFish(aquarium, target, { scaleY }, saveAquarium);
+    const display = panel.querySelector('[data-prop-scale-y-value]');
+    if (display) display.textContent = scaleY.toFixed(2);
+    const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
+    if (sprite) sprite.style.setProperty('--fish-scale-y', String(scaleY));
+  });
+
+  panel.querySelector('[data-flip-prop]')?.addEventListener('click', () => {
+    const item = getFishByTarget(aquarium, target);
+    if (!item) return;
+    updateFish(aquarium, target, { flipped: !item.flipped }, saveAquarium);
+    render();
+  });
+
+  panel.querySelector('[data-flip-prop-y]')?.addEventListener('click', () => {
+    const item = getFishByTarget(aquarium, target);
+    if (!item) return;
+    updateFish(aquarium, target, { flippedY: !item.flippedY }, saveAquarium);
+    render();
+  });
+
+  panel.querySelector('[data-reset-prop-transform]')?.addEventListener('click', () => {
+    const defaultSize = target.type === 'deco' ? DEFAULT_DECO_DEFAULTS.size : DEFAULT_FISH_DEFAULTS.size;
+    updateFish(aquarium, target, {
+      rotation: 0,
+      scaleX: 1,
+      scaleY: 1,
+      flipped: false,
+      flippedY: false,
+      size: defaultSize,
+    }, saveAquarium);
+    render();
+  });
+}
+
+export function bindPropTypeSegmentedEvents(root, aquarium, appState, saveAquarium, render, feedingState) {
+  const panel = root.querySelector('.prop-panel');
+  if (!panel) return;
+  const { editingTarget } = appState.propPanel;
+  if (!editingTarget || (editingTarget.type !== 'fish' && editingTarget.type !== 'deco')) return;
+
+  panel.querySelectorAll('[data-edit-prop-type]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset.editPropType === 'deco' ? 'deco' : 'fish';
+      if (editingTarget.type === next) return;
+      const changed = updatePropType(aquarium, editingTarget.id, next);
+      if (!changed) return;
+      editingTarget.type = next;
+      if (next === 'deco' && feedingState && feedingState.fishEating === editingTarget.id) {
+        feedingState.fishEating = null;
+      }
+      const message = next === 'deco'
+        ? '장식으로 바뀌었어요. 이제 움직이지 않아요.'
+        : '물고기로 바뀌었어요. 다시 헤엄칠 수 있어요.';
+      setPropPanelStatus(appState.propPanel, message, render);
+      render();
+    });
+  });
+}
+
+export function bindDecoPropsEvents(root, aquarium, appState, saveAquarium, render) {
+  const panel = root.querySelector('.prop-panel');
+  if (!panel) return;
+  const { editingTarget } = appState.propPanel;
+  if (!editingTarget || editingTarget.type !== 'deco') return;
+  bindCommonTransformEvents(root, panel, aquarium, editingTarget, saveAquarium, render);
 }
 
 function updateFish(aquarium, target, patch, saveAquarium) {
