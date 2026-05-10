@@ -50,42 +50,42 @@ For each change, evaluate through these lenses. Skip lenses that don't apply.
 
 ## Output Format
 
-Produce a single Markdown report with this structure. Keep each entry tight — one sentence of evidence + one of recommendation per finding.
+Produce a single Markdown report **in Korean** with this structure. Keep each entry tight — one sentence of evidence + one of recommendation per finding. Use Korean section headings exactly as shown below; technical terms (API/CSS/spec IDs/file paths) stay in their original form.
 
 ```markdown
-# UX Review — <PR# or spec ID or branch>
+# UX 리뷰 — <PR# 또는 spec ID 또는 branch>
 
-## Target persona
-- Inferred from: <where>
-- Primary user: <description>
-- Secondary user: <e.g. parent>
-- Device & context: <e.g. tablet, no-keyboard, often shared>
+## 타깃 페르소나
+- 추론 근거: <문서 위치>
+- 주 사용자: <설명>
+- 보조 사용자: <예: 부모>
+- 디바이스 / 사용 맥락: <예: 태블릿, 키보드 없음, 공용 사용>
 
-## Verdict
-- Overall: shippable / needs follow-up / blocking
-- One-line summary:
+## 종합 판정
+- 결론: 출시 가능 / 후속 개선 필요 / 차단
+- 한 줄 요약:
 
-## Findings
+## 발견 사항
 
-### 🚨 Blocking (target user cannot succeed)
-- **[lens]** <one-line evidence>. → Recommendation: <one-line>.
+### 🚨 차단 (타깃 사용자가 성공할 수 없음)
+- **[lens]** <한 줄 근거>. → 권장: <한 줄>.
 
-### ⚠️ Should-fix (degrades intended experience)
-- **[lens]** <evidence>. → <recommendation>.
+### ⚠️ 개선 필요 (의도된 경험을 약화)
+- **[lens]** <근거>. → <권장>.
 
-### 💡 Nice-to-have (polish)
-- **[lens]** <evidence>. → <recommendation>.
+### 💡 폴리시 (있으면 좋음)
+- **[lens]** <근거>. → <권장>.
 
-## Strengths worth keeping
-- <one-line>
+## 유지할 강점
+- <한 줄>
 
-## Spec acceptance-criteria coverage
-- ✅ <criterion that the implementation clearly meets>
-- ⚠️ <criterion that is partial or ambiguous>
-- ❌ <criterion not yet met> → <where to add>
+## 스펙 검증 기준 커버리지
+- ✅ <명확히 충족된 기준>
+- ⚠️ <부분 충족 또는 모호>
+- ❌ <미충족> → <보완 위치>
 
-## Suggested follow-up specs / KB entries
-- <if any pattern is reusable, propose a new LRN/ADR/spec>
+## 후속 스펙 / KB 후보
+- <재사용 가능한 패턴이 있다면 새 LRN/ADR/스펙 제안>
 ```
 
 ## Workflow
@@ -106,6 +106,7 @@ Produce a single Markdown report with this structure. Keep each entry tight — 
 - Keep the report focused: target ≤ 30 findings total. If more, group by spec.
 - Cite file:line for every finding so the author can navigate.
 - If the project lacks a persona doc, the report's first responsibility is to make the inferred persona explicit so the author can challenge it.
+- **Output language: Korean.** Section headings, findings, and recommendations are written in Korean. Keep technical identifiers (file paths, function names, CSS selectors, spec IDs) in their original form.
 
 ## Reject
 
