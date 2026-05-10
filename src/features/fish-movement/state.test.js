@@ -66,6 +66,34 @@ describe('stepFishMovement', () => {
     expect(resumedFish.wallPauseUntilMs).toBe(0);
   });
 
+  it('clamps fish back inside the elliptical bowl boundary', () => {
+    const { ellipse } = MOVEMENT_BOUNDS;
+    const cornerFish = stepFishMovement(
+      {
+        id: 'fish-corner',
+        x: MOVEMENT_BOUNDS.maxX - 1,
+        y: MOVEMENT_BOUNDS.maxY - 1,
+        vx: 5,
+        vy: 5,
+        speed: 6,
+        nextTargetAtMs: 5000,
+      },
+      16,
+      1000,
+      { random: () => 0.5, maxFrameMs: 1000 },
+    );
+
+    const dx = (cornerFish.x - ellipse.cx) / ellipse.rx;
+    const dy = (cornerFish.y - ellipse.cy) / ellipse.ry;
+
+    expect(dx * dx + dy * dy).toBeLessThanOrEqual(1.000001);
+    expect(cornerFish.vx).toBe(0);
+    expect(cornerFish.vy).toBe(0);
+    expect(cornerFish.wallPauseUntilMs).toBeGreaterThan(1000);
+    expect(cornerFish.wallResumeVx).toBeLessThan(0);
+    expect(cornerFish.wallResumeVy).toBeLessThan(0);
+  });
+
   it('keeps fish inside vertical bounds', () => {
     const fish = stepFishMovement(
       { id: 'fish-1', x: 50, y: MOVEMENT_BOUNDS.minY + 0.1, vx: 0, vy: -5, speed: 5, nextTargetAtMs: 5000 },
@@ -74,7 +102,8 @@ describe('stepFishMovement', () => {
       { random: () => 0.5, maxFrameMs: 1000 },
     );
 
-    expect(fish.y).toBe(MOVEMENT_BOUNDS.minY);
+    expect(fish.y).toBeGreaterThanOrEqual(MOVEMENT_BOUNDS.minY);
+    expect(fish.y).toBeLessThan(MOVEMENT_BOUNDS.minY + 1);
     expect(fish.vy).toBe(0);
     expect(fish.wallResumeVy).toBeGreaterThan(0);
   });

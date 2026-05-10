@@ -231,6 +231,14 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     state.movementEnabled = event.target.value !== 'off';
   });
 
+  root.querySelectorAll('[data-fish-prop-type]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset.fishPropType === 'deco' ? 'deco' : 'fish';
+      if (state.type === next) return;
+      updateState(state, { type: next }, render);
+    });
+  });
+
   fileInput?.addEventListener('change', async (event) => {
     const [file] = event.target.files;
 
@@ -297,11 +305,15 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     const draft = saveFishDraft(state);
 
     options.onRegister?.(draft);
+    const displayName = draft.name || DEFAULT_FISH_NAME;
+    const message = draft.type === 'deco'
+      ? `${displayName}이(가) 자리를 잡았어요!`
+      : `${displayName}이(가) 헤엄칠 준비를 마쳤어요!`;
     updateState(
       state,
       {
         status: 'preview',
-        message: `${draft.name || DEFAULT_FISH_NAME} is ready as a fish sprite.`,
+        message,
       },
       render,
     );

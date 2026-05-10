@@ -1,4 +1,4 @@
-﻿import './styles/index.css';
+import './styles/index.css';
 import {
   bindFishInputEvents,
   createFishInputState,
@@ -33,7 +33,7 @@ import {
   snapshotCanvas,
 } from './features/cleaning/index.js';
 import { renderDecoration } from './features/aquarium/decoration.js';
-import { addFishToAquarium } from './features/aquarium/fish-actions.js';
+import { addUserPropToAquarium } from './features/aquarium/fish-actions.js';
 import { loadAquarium, saveAquarium } from './features/aquarium/storage.js';
 import {
   createSoundController,
@@ -41,7 +41,7 @@ import {
   renderSoundModal,
 } from './features/sound/index.js';
 import { bindFishListEvents } from './features/fish-list/events.js';
-import { renderAquariumStatus } from './features/fish-list/view.js';
+import { renderAquariumStatus, renderUndoSnackbar } from './features/fish-list/view.js';
 import { captureFishListScroll, restoreFishListScroll } from './features/fish-list/scroll.js';
 import { bindFishSpriteDrag } from './features/fish-edit/drag.js';
 import { escapeHtml } from './lib/utils.js';
@@ -51,28 +51,32 @@ const SELECTORS = {
   app: '#app',
 };
 
-function renderEmptyState(fishCount) {
-  if (fishCount > 0) {
+function renderEmptyState(propCount) {
+  if (propCount > 0) {
     return '';
   }
 
-  return '<p class="aquarium-empty">?꾩쭅 臾쇨퀬湲곌? ?놁뒿?덈떎.</p>';
+  return '<p class="aquarium-empty">오른쪽 아래 ➕ 버튼을 눌러 첫 친구를 만들어 보세요!</p>';
 }
 
 
-function renderFishes(fishes, selectedFishId, editingFishId, fishEatingId) {
+function renderFishes(fishes, selectedFishId, editingPropId, fishEatingId) {
   return fishes
-    .filter((fish) => !fish.hidden)
+    .filter((fish) => !fish.hidden && !fish.pendingDelete)
     .map(
-      (fish) => `
+      (fish) => {
+        const isDeco = fish.type === 'deco';
+        return `
         <img
-          class="fish-sprite ${fish.id === selectedFishId ? 'is-selected' : ''} ${fish.id === editingFishId ? 'is-editing' : ''} ${fish.id === fishEatingId ? 'is-eating' : ''}"
+          class="fish-sprite ${isDeco ? 'is-deco' : ''} ${fish.id === selectedFishId ? 'is-selected' : ''} ${fish.id === editingPropId ? 'is-editing' : ''} ${fish.id === fishEatingId ? 'is-eating' : ''}"
           data-fish-sprite="${fish.id}"
+          data-prop-type="${isDeco ? 'deco' : 'fish'}"
           src="${fish.imageUrl}"
           alt="${escapeHtml(fish.name)}"
           style="${cssVarsToInlineStyle(getFishSpriteStyleVars(fish))}"
         >
-      `,
+      `;
+      },
     )
     .join('');
 }
@@ -99,6 +103,7 @@ function patchFoodLayer(root, foods) {
 
 function patchFishPositions(root, fishes, fishEatingId) {
   fishes.forEach((fish) => {
+    if (fish.type === 'deco') return;
     const sprite = root.querySelector(`[data-fish-sprite="${fish.id}"]`);
     if (!sprite) return;
     const vars = getFishSpriteStyleVars(fish);
@@ -160,6 +165,8 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   appState.bubbleController?.stop();
 
   const { cleaningState } = appState;
+  const visibleProps = aquarium.fishes.filter((p) => !p.pendingDelete);
+  const editingTargetId = appState.propPanel.editingTarget?.id ?? null;
 
   root.innerHTML = `
     <main class="fishbowl-page">
@@ -183,9 +190,9 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
               <div class="food-layer" data-food-layer aria-hidden="true">
                 ${renderFoods(feedingState.foods)}
               </div>
-              ${renderFishes(aquarium.fishes, appState.selectedFishId, appState.propPanel.editingTarget?.type === 'fish' ? appState.propPanel.editingTarget.id : null, feedingState.fishEating)}
+              ${renderFishes(aquarium.fishes, appState.selectedFishId, editingTargetId, feedingState.fishEating)}
             </div>
-            ${renderEmptyState(aquarium.fishes.length)}
+            ${renderEmptyState(visibleProps.length)}
             ${cleaningState.cleaningMode ? renderCleaningOverlay(cleaningState) : ''}
           </div>
         </div>
@@ -201,6 +208,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         propPanelState: appState.propPanel,
         cleaningState: appState.cleaningState,
       })}
+      ${renderUndoSnackbar(appState.undoDelete)}
       ${renderMuteToggle(appState.sound.getSettings().masterEnabled)}
       ${appState.sound.shouldShowModal() ? renderSoundModal() : ''}
     </main>
@@ -221,9 +229,9 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     () => renderApp(root, aquarium, fishInputState, feedingState, appState),
     {
       onRegister: (draft) => {
-        const fish = addFishToAquarium(aquarium, draft);
-        appState.selectedFishId = fish.id;
-        appState.propPanel.editingTarget = { id: fish.id, type: 'fish' };
+        const prop = addUserPropToAquarium(aquarium, draft);
+        appState.selectedFishId = prop.id;
+        appState.propPanel.editingTarget = { id: prop.id, type: prop.type };
       },
     },
   );
@@ -262,6 +270,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     appState,
     saveAquarium,
     () => renderApp(root, aquarium, fishInputState, feedingState, appState),
+    { feedingState },
   );
   bindCleaningEvents(root, aquarium, appState, {
     render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
@@ -273,7 +282,9 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       const t = appState.propPanel.editingTarget;
       if (t?.type === 'fish') paused.add(t.id);
       if (feedingState.foods.length > 0) {
-        aquarium.fishes.forEach((fish) => paused.add(fish.id));
+        aquarium.fishes.forEach((fish) => {
+          if (fish.type !== 'deco') paused.add(fish.id);
+        });
       }
       return paused;
     },
@@ -308,6 +319,7 @@ function initApp() {
     bubblesState: createBubblesState(),
     propPanel: createPropPanelState(),
     cleaningState: createCleaningState(),
+    undoDelete: { visible: false, propId: null, name: '', timerId: null },
     sound: createSoundController(),
   };
   appState.sound.bindVisibility();
@@ -340,4 +352,3 @@ function initApp() {
 }
 
 initApp();
-
