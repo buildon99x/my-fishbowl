@@ -70,6 +70,12 @@ export function createSoundController() {
     persist();
   }
 
+  async function resumeFromPersisted() {
+    if (!settings.masterEnabled) return;
+    await engine.resume();
+    if (settings.categories.ambient.enabled) engine.startAmbient();
+  }
+
   async function previewSound() {
     await engine.resume();
     // Force splash playback even before user accepts (master not on yet),
@@ -155,6 +161,7 @@ export function createSoundController() {
     setCategoryEnabled,
     acceptSoundOnboarding,
     declineSoundOnboarding,
+    resumeFromPersisted,
     bindModal,
     bindMuteToggle,
     bindVisibility,

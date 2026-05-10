@@ -328,7 +328,6 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     render: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
   });
 
-  document.addEventListener('pointerdown', () => appState.onboarding.activity(), { once: true, capture: true });
 
   appState.sound.bindModal(root, {
     onResolved: () => renderApp(root, aquarium, fishInputState, feedingState, appState),
@@ -366,15 +365,20 @@ function initApp() {
     onReset: () => renderApp(app, aquarium, fishInputState, feedingState, appState),
   });
   appState.onboarding.startIdleWatch();
+  // Install once at startup so the idle watchdog gets every pointerdown,
+  // not just the first one after each renderApp.
+  document.addEventListener('pointerdown', () => {
+    if (appState.onboarding.isActive()) appState.onboarding.activity();
+  }, { capture: true });
   appState.magicController = createMagicMomentController({
     getState: () => appState.magicMomentState,
     getRoot: () => app,
     getSound: () => appState.sound,
   });
   appState.sound.bindVisibility();
-  if (appState.sound.getSettings().masterEnabled && appState.sound.getSettings().categories.ambient.enabled) {
-    appState.sound.acceptSoundOnboarding();
-  }
+  // On reload, resume audio without overwriting the user's per-category opt-outs.
+  // (acceptSoundOnboarding is reserved for the first-time modal flow.)
+  appState.sound.resumeFromPersisted();
 
   normalizeAquariumFishMovement(aquarium, performance.now());
   restoreAlgaeState(aquarium);
