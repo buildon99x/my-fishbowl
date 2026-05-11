@@ -5,13 +5,7 @@ import { trackAquariumMouse } from './mouseInteraction.js';
 
 const SAVE_INTERVAL_MS = 2000;
 
-function applyFishMotion(root, fish) {
-  const sprite = root.querySelector(`[data-fish-sprite="${CSS.escape(fish.id)}"]`);
-
-  if (!sprite) {
-    return;
-  }
-
+function applyFishMotion(sprite, fish) {
   sprite.style.setProperty('--fish-x', `${fish.x}%`);
   sprite.style.setProperty('--fish-y', `${fish.y}%`);
   sprite.style.setProperty('--fish-bob-y', `${fish.waveOffset ?? 0}px`);
@@ -39,6 +33,10 @@ export function startFishMovement(root, aquarium, options = {}) {
     });
     lastFrameMs = nowMs;
 
+    const spriteMap = new Map(
+      [...root.querySelectorAll('[data-fish-sprite]')].map((el) => [el.dataset.fishSprite, el]),
+    );
+
     aquarium.fishes.forEach((fish) => {
       if (
         !fish.hidden &&
@@ -47,7 +45,8 @@ export function startFishMovement(root, aquarium, options = {}) {
         fish.movementEnabled !== false &&
         !pausedFishIds.has(fish.id)
       ) {
-        applyFishMotion(root, fish);
+        const sprite = spriteMap.get(fish.id);
+        if (sprite) applyFishMotion(sprite, fish);
       }
     });
 
@@ -68,4 +67,3 @@ export function startFishMovement(root, aquarium, options = {}) {
     },
   };
 }
-
