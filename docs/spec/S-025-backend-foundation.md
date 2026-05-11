@@ -82,11 +82,16 @@
 
 ### 2-1. OAuth(Google/Apple) 연동 — 선택 기능
 
-- **추천 라이브러리**: `@auth/core` (Auth.js의 프레임워크 비종속 코어)를 Vercel Functions에서 직접 호출. Google Provider + Apple Provider 두 개만 등록한다.
-- **근거**: NextAuth와 같은 코드베이스라 문서/예제가 풍부하고, Vanilla Vercel Functions에서도 동작한다. Vanilla JS 프론트엔드와의 결합도 라이브러리 종속이 아니라 표준 OAuth 흐름이라 교체가 쉽다.
-- **대안**: Lucia(직접 구현 가까운 가벼움) 또는 Clerk/Supabase Auth(완전 매니지드). Lucia는 Apple 통합을 직접 만들어야 하고, Clerk/Supabase는 벤더 락인이 크다.
-- **콜백 URL 전략**: Vercel `VERCEL_ENV`별로 `process.env.NEXTAUTH_URL`(또는 동등 환경변수)을 분기. `production` → 커스텀 도메인, `preview` → `vercel.app` 도메인 + Google/Apple 콘솔에 와일드카드 등록 불가하므로 **preview용 단일 콜백 도메인을 정해 그 환경변수만 다르게 주입**.
-- **시크릿 명세**: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`, `AUTH_SECRET`(JWT 서명용). 모두 Vercel Environment Variables.
+- **추천 라이브러리**: `arctic`(Lucia 제작자의 OAuth-only 라이브러리, 프레임워크 비종속) + 자체 발급 단명 JWT(`jose`). Google Provider + Apple Provider 두 개만 등록한다.
+- **근거**: 현재 스택은 Vanilla Vercel Functions로, Next.js/SvelteKit 같은 프레임워크 어댑터가 없다. `@auth/core`(Auth.js v5)는 어댑터 위에서 가장 잘 동작하고, 어댑터 없이 wiring하려면 내부 핸들러를 직접 호출해야 해 결합 비용이 늘어난다. `arctic`은 OAuth provider별 헬퍼만 제공해 세션/콜백 로직을 우리가 짧게 작성할 수 있고, 세션은 `jose`로 발급한 1시간 만료 JWT 하나로 충분하다.
+- **대안 1**: `@auth/core`를 어댑터 없이 직접 호출. → 문서/예제가 프레임워크 어댑터 위주라 학습 비용이 크고, 우리가 쓰지 않는 추상화(account/user/session 테이블 어댑터 등)가 끌려온다.
+- **대안 2**: Clerk/Supabase Auth(완전 매니지드). → 학습/통합 비용 작지만 벤더 락인이 크고, "OAuth는 선택 기능" 정책에 비해 인프라가 무겁다.
+- **콜백 URL 전략**:
+  - Google: 콘솔에서 production 도메인 + 단일 preview 도메인 + `http://localhost:5173`을 명시 등록. 와일드카드는 불가하지만 여러 URL 등록은 허용된다.
+  - **Apple**: 콘솔이 와일드카드 불가 + URL 변경 시 즉시 반영되지 않을 수 있음. **preview 환경에 Apple 로그인을 노출하지 않는다**(`VITE_APPLE_ENABLED=false`로 production에서만 활성). preview에서는 Google만 동작하면 OAuth 충돌 흐름 검증에 충분.
+  - `process.env.PUBLIC_BASE_URL`을 env별로 주입해 콜백 URL을 동적으로 구성. Apple은 production URL만 등록.
+  - Apple은 client secret이 영구 토큰이 아니라 **JWT를 6개월마다 재생성**해야 하므로, `apple-secret-rotate.md` 운영 노트를 후속 스펙(S-025d)에 포함한다.
+- **시크릿 명세**: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `APPLE_CLIENT_ID`(Services ID), `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`(P8 키 본문), `AUTH_JWT_SECRET`(자체 세션 JWT HMAC 키). 모두 Vercel Environment Variables, server-only(클라이언트 번들 노출 금지). Apple `client_secret`은 빌드/요청 시 위 4개 키로 JWT를 생성한다.
 - **매핑 스키마**:
   ```
   account: { id: string (provider+sub), provider: 'google'|'apple', sub: string, linkedAt: ISO8601 }
@@ -112,13 +117,19 @@
 
 ### 3. 데이터 저장소 선택
 
-- **추천**: 어항 메타데이터는 **Vercel KV(Upstash Redis)**, 이미지(sprite)는 **Vercel Blob**.
-  - KV 키 설계: `aquarium:<deviceId>` → JSON 직렬화된 `aquarium` 문서. `device:<deviceId>` → 메타(생성일, 마지막 활동, 어항 ID). `account:<accountId>` → 메타와 연결 디바이스 목록. `recovery:<code>` → `{ deviceId, expiresAt }`.
+- **추천**: 어항 메타데이터는 **Vercel KV(Upstash Redis 마켓플레이스 통합)**, 이미지(sprite)는 **Vercel Blob**.
+  - KV 키 설계(MVP, 디바이스당 어항 1개 가정):
+    - `aquarium:<aquariumId>` → JSON 직렬화된 `aquarium` 문서. 어항 ID는 UUID로 추측 불가.
+    - `owner:<aquariumId>` → `{ deviceId, accountId? }`. 모든 GET/PUT에서 ownership 검증의 단일 진실원.
+    - `device:<deviceId>` → `{ aquariumId, createdAt, lastSeenAt }`. 디바이스 → 어항 역인덱스.
+    - `account:<accountId>` → `{ aquariumId, linkedDeviceIds[] }` (S-025d).
+    - `recovery:<hash>` → `{ aquariumId, expiresAt }` (S-025c). **코드 평문 대신 SHA-256 해시를 키로 사용**한다.
+  - 직접 `aquarium:<deviceId>` 키잉 대신 어항 ID와 ownership을 분리한 이유: OAuth 연결/복구 코드 사용 시 owner를 교체하는 작업이 ownership 키 1개만 다시 쓰면 끝나기 때문이다. 어항 데이터를 재키잉할 필요가 없다.
 - **근거**: 현재 데이터 모델이 디바이스당 어항 1개의 단일 문서이고 부분 업데이트가 없다. Redis의 단일 GET/SET이 가장 단순하고 Vercel과 통합되어 cold start에 강하다. Blob은 sprite를 dataURL에서 분리해 KV 페이로드를 작게 유지한다.
 - **대안**: Vercel Postgres(Neon). → 스키마가 명확하고 관계 질의가 가능하지만, 현재 데이터 모델에는 과한 도구다. 마이그레이션이 필요할 때 KV→Postgres 이전 비용은 한 번이고, 그 비용은 사용량이 커진 시점에 정당화된다.
-- **벤더 락인**: KV는 Upstash Redis 표준 명령만 사용하면 다른 Upstash/Redis로 이전 가능. Blob은 Vercel 전용이지만 인터페이스가 단순(`@vercel/blob`의 `put`/`del`/URL)해 S3 호환 스토리지로 교체 시 어댑터 1개만 바꾸면 된다.
-- **쓰기 빈도 추정**: 분당 1회 저장 × MAU 1k × 동시 활성 비율 10% = 분당 100 writes. KV 무료 한도 안에서 충분.
-- **검증**: `GET/PUT /api/aquarium`이 KV에 기록되고, sprite 업로드 후 Blob URL이 어항 문서에 저장된다. 정전 시나리오(KV 일시 장애)에서 클라이언트는 localStorage-only로 계속 동작한다.
+- **벤더 락인**: Vercel KV는 사실상 Upstash Redis의 마켓플레이스 통합이라 동일 Upstash 계정/타 Redis로 이전 가능. Blob은 Vercel 전용이지만 인터페이스가 단순(`@vercel/blob`의 `put`/`del`/URL)해 S3 호환 스토리지로 교체 시 어댑터 1개만 바꾸면 된다.
+- **쓰기 빈도 추정(MVP 가정)**: 활성 사용자 100명 동시, debounce 60s push → 분당 100 writes 상한. 비활성 시간은 push 없음. KV 무료 한도 안에서 충분(상세 추정은 13).
+- **검증**: `GET/PUT /api/aquarium`이 KV에 기록되고, sprite 업로드 후 Blob URL이 어항 문서에 저장된다. 정전 시나리오(KV 일시 장애)에서 클라이언트는 localStorage-only로 계속 동작한다. ownership 교체(OAuth link, 복구 코드)는 어항 데이터 재기록 없이 1회 KV write로 완료된다.
 - **의존성**: 1(범위), 4(API), 7(이미지 파이프라인), 13(비용).
 
 ### 4. API 표면
@@ -128,6 +139,7 @@
   - `GET  /api/aquarium` — 현재 디바이스의 어항 문서. 304/200 + ETag.
   - `PUT  /api/aquarium` — 전체 어항 문서 upsert. `If-Match: <etag>` 필수, 불일치 시 412 + 서버 최신본 반환.
   - `POST /api/upload-url` — sprite 업로드용 서명 URL 발급. `{ contentType, size }` 검증, 디바이스당 빈도 제한.
+  - `POST /api/upload-commit` — 클라이언트 업로드 완료 통지. 서버가 Blob에서 magic byte 검증 후 어항에 URL을 반영. 검증 실패 시 즉시 Blob 삭제 + 400.
   - `POST /api/recovery-code` (S-025c) — 디바이스에 1회용 복구 코드 발급.
   - `POST /api/recovery-redeem` (S-025c) — 복구 코드 + 새 디바이스 ID 조합으로 owner 재매핑.
   - `GET  /api/auth/config` (S-025d) — 활성 OAuth provider 목록.
@@ -187,9 +199,13 @@
   - Content-Type: `image/png`, `image/jpeg`, `image/webp`만 허용.
   - 최대 크기: 1MB(현재 240×160 리사이즈 관행과 충분히 양립). 서명 URL 발급 시 명시.
   - 디바이스당 빈도: 10 uploads/min, 50 sprites total(어항당). 초과 시 429.
-  - 악성 파일: MIME만으로는 부족하므로 클라이언트 측 Canvas 디코딩 검증을 강제(`createImageBitmap` 성공 후에만 업로드 요청). 서버는 MIME과 크기만 재검증.
+  - 악성 파일 다층 검증:
+    1. **클라이언트**: `createImageBitmap` 성공 후에만 업로드 요청(잘못된 이미지 사전 차단).
+    2. **서명 URL 발급 단계**: MIME, 선언된 크기, 디바이스 owner 검사.
+    3. **업로드 완료 후 서버 검증**: 클라이언트가 `POST /api/upload-commit`을 호출하면 서버가 Blob에서 **첫 16바이트를 읽어 magic byte로 실제 MIME 재검증**(PNG `89 50 4E 47`, JPEG `FF D8 FF`, WebP `52 49 46 46 ... 57 45 42 50`). 불일치 시 Blob에서 즉시 삭제하고 어항 문서에 URL 기록하지 않는다.
+  - 클라이언트 검증만으로는 우회 가능(서명 URL을 받아 임의 PUT)하므로 서버 magic byte 검증이 신뢰원이다.
 - **URL 정책**: Blob URL은 공개 immutable URL을 사용한다(어항 ID/sprite ID가 충분히 추측 불가). 캐시는 1년(`Cache-Control: public, max-age=31536000, immutable`). 삭제는 어항 PUT에서 누락된 sprite를 background로 GC.
-- **위협 모델(보안 민감 경로)**: 디바이스 ID 위조 → 타인 어항 sprite URL 발급은 어항 소유권 검사로 차단. 무한 업로드로 비용 폭주 → 빈도/사이즈 한도 + Blob 전체 사용량 모니터링. 악성 파일 업로드 → 외부 노출 URL이라 XSS 표면이 됨, MIME/디코딩 검증과 `Content-Disposition: attachment` 비사용 정책으로 완화.
+- **위협 모델(보안 민감 경로)**: 디바이스 ID 위조 → 타인 어항 sprite URL 발급은 어항 소유권 검사로 차단. 무한 업로드로 비용 폭주 → 빈도/사이즈 한도 + Blob 전체 사용량 모니터링. 악성 파일 업로드 → 외부 노출 URL이라 XSS 표면이 됨, MIME/매직 바이트/`Content-Disposition: attachment` 비사용 정책으로 완화. SVG는 스크립트 임베드 가능성이 있어 **MIME 화이트리스트에서 제외**한다.
 - **의존성**: 3, 4, 8.
 
 ### 8. 레이트 리밋/남용 방지
@@ -266,13 +282,14 @@
 
 ### 13. 비용 모델
 
-- **가정**: MAU 1,000, 디바이스당 어항 1개, 평균 sprite 10개(개당 50KB), 사용자당 활성 시간 30분/일, 분당 1회 저장 동기화.
+- **가정**: MAU 1,000, DAU 100(10%), 활성 사용자 1인당 세션 30분/일, 편집 발생 시 debounce 60s push, 디바이스당 어항 1개, 평균 sprite 10개(개당 50KB).
+- **쓰기 빈도 추정**: 100 DAU × 30분 × 1 push/min(상한, 실제로는 편집 idle 동안 더 적음) = **~3,000 PUT/일 ≈ 90k PUT/월**. Vercel Hobby Functions 무료 100k invocations/월에 근접. 여기에 `GET /api/aquarium`(부팅당 1회) ~3k/일이 더해져 **총 ~180k invocations/월**.
 - **추정**:
-  - **Blob**: 1k × 10 × 50KB = 500MB 저장 + egress. Vercel Blob 무료 1GB 저장 / 10GB 전송 안에 들어옴. Hobby 한도 초과 시 약 $0.15/GB-mo 저장 + 전송 비용.
-  - **KV**: 1k devices × 1 doc × ~20KB(메타만) = 20MB. Upstash Free 256MB에 여유.
-  - **Functions**: 분당 100 writes × 활성 시간 = 약 90k invocations/일 = ~2.7M/월. Vercel Hobby 100k/월 한도 초과 → Pro 플랜 필요. 또는 활성 사용자 비율이 더 낮으면 Hobby 유지 가능.
+  - **Blob**: 1k × 10 × 50KB = 500MB 저장 + sprite GET은 CDN에서 처리되어 함수 호출 0. Vercel Blob Hobby 무료 1GB 저장 / 10GB 전송 안에 들어옴. 초과 시 약 $0.15/GB-mo 저장 + 전송 비용.
+  - **KV**: 1k devices × ~20KB(어항 평균 페이로드, sprite는 URL만) = 20MB. Upstash Free 256MB에 여유. 명령 수는 PUT 시 GET+SET 2회 + ownership 검사 1 GET = ~3 ops/PUT → ~270k ops/월. Upstash 무료 한도(10k/일) 초과 가능성 → 마켓플레이스 통합의 Hobby 한도 재확인 필요.
+  - **Functions**: 위 추정상 Hobby 100k invocations/월 한도를 초과한다(약 1.8배). 대응: ① debounce 간격을 120s로 늘리거나, ② 변경 없을 때 PUT을 보내지 않는 dirty flag를 엄격히 구현하면 절반 이하로 감소 가능. 그래도 Pro 플랜이 필요한 시점은 DAU 200~300 정도.
   - **이미지 GET**: Blob URL은 immutable + 1년 캐시 → CDN edge에서 처리, 함수 호출 없음.
-- **결론**: MVP는 Hobby 한도에서 가능하나 Functions 호출수가 임계. **debounce 동기화 간격을 60s로 두고**, 사용자가 능동적으로 편집하지 않는 동안은 push 하지 않으면 호출수가 1/10 수준으로 떨어진다.
+- **결론**: MVP는 Hobby 한도 임계. **debounce 60s + dirty flag**가 가장 효과적이며, KV ops 한도가 함수 한도보다 먼저 깨질 수 있으므로 출시 후 ops/일 모니터링 임계를 우선 설정한다.
 - **Hard cap**:
   - 디바이스당 Blob 저장: 5MB.
   - 디바이스당 KV 페이로드: 100KB.
@@ -299,6 +316,7 @@
 │   │   └── envGuard.js                 # assertNotProduction 등
 │   ├── aquarium.js                     # GET/PUT /api/aquarium
 │   ├── upload-url.js                   # POST /api/upload-url
+│   ├── upload-commit.js                # POST /api/upload-commit (magic byte 재검증)
 │   ├── recovery-code.js                # S-025c
 │   ├── recovery-redeem.js              # S-025c
 │   ├── auth/                           # S-025d
@@ -401,9 +419,11 @@
 ## Open Questions
 
 - 복구 코드(S-025c)를 MVP에 포함할지, OAuth(S-025d) 이후로 미룰지. → 권장: OAuth 의존성 없이 분실 위험을 낮추는 가장 작은 옵션이므로 S-025a 직후가 합리적.
-- `@auth/core`를 직접 wiring할지, 가벼운 자체 OAuth 구현으로 갈지. → MVP는 라이브러리 도입의 학습 비용이 자체 구현 + Apple 통합 비용보다 작다고 판단해 라이브러리 추천. 필요 시 대안 검토.
-- Vercel Hobby vs Pro 플랜. → 호출수 estimate가 임계라 debounce 60s 정책으로 Hobby 내 운영 시도. 1k MAU 도달 전에 재평가.
+- OAuth 라이브러리로 `arctic`을 갈지 `@auth/core`를 직접 호출할지. → 본 스펙은 Vanilla Vercel Functions 적합성을 근거로 `arctic`을 1순위로 추천. 후속 S-025d에서 콜백 핸들러 골격을 짠 뒤 최종 확정.
+- Apple 로그인을 preview/staging 환경에 노출하지 않기로 한 정책을 어디까지 적용할지(로컬 dev 포함?). → MVP는 production-only 권장. preview에서 Apple 흐름이 필요한 시점에 별도 Apple Services ID를 발급해 분리.
+- KV ops 한도(Upstash 무료/Hobby)와 Functions 한도 중 어느 쪽이 먼저 깨질지 출시 후 실측이 필요. → S-025e(관측)에서 ops/일 알람을 함수 호출수 알람과 동시에 둔다.
 - `BACKEND_ENABLED=false`를 첫 배포 기본값으로 둘지(점진 출시), true로 둘지. → 첫 배포에서는 기능 플래그를 false로 두고 일부 사용자에게만 켜는 방식 권장.
+- 어항 ID/ownership 분리 모델을 MVP부터 도입할지, 단순 `aquarium:<deviceId>` 키로 시작했다가 OAuth 단계에서 마이그레이션할지. → 본 스펙은 처음부터 분리 모델을 권장(마이그레이션 비용 회피). 분리 모델의 추가 KV ops 1회/요청이 비용 추정에 이미 반영됨.
 
 ## Next Step
 
