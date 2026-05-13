@@ -200,7 +200,7 @@
 ## Open Questions
 
 - 단어 풀 크기(200 vs 500)와 다국어 지원. → MVP는 영어 단어 풀 200개로 시작. 한국어 풀은 부모 가독성과 다국어 마찰을 고려해 별도 스펙으로.
-- 복구 코드 + OAuth 동시 사용 시나리오(예: OAuth로 백업 + 복구 코드도 발급). → 본 스펙은 단독 동작 보장. OAuth와의 통합은 S-025d done 이후 보강 스펙(또는 S-025d 본문)으로.
+- 복구 코드 + OAuth 동시 사용 시나리오(예: OAuth로 백업 + 복구 코드도 발급). → `docs/spec/S-025d-oauth-google-apple.md` (draft) “부모 흐름 — 복구 코드와 동시 사용” 절에서 닫음. redeem 시 `accountId` 유지 + `deviceAccountLink:<newDeviceId>` 자동 upsert.
 - 코드 표시 화면에서 “QR 코드” 보조 표시를 추가할지. → MVP 미포함. 부모 가독성과 보안 표면을 가중. 별도 스펙 후보.
 - 발급 후 부모 영역에서 “현재 활성 코드 있음” 인디케이터를 유지할지. → 평문 미저장 정책상 “있음/없음” 플래그만(예: `recovery-active:<aquariumId>` 존재 여부)으로 표시. 코드 자체는 다시 표시하지 않는다.
 - redeem 직후 기존 디바이스의 자동 sync가 “owner 없음” 상태로 폴백할 때 어떻게 안내할지. → 기존 디바이스는 다음 GET에서 빈 상태(404 또는 owner 불일치 403)를 받는다. 어린이 영역 무변화 + 부모 영역 sync indicator만 disabled로 전환(어차피 부모가 의도적으로 이전한 동작).
