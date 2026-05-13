@@ -56,6 +56,7 @@
 | S-023 | First-entry onboarding | draft | done | not-tested | `docs/spec/S-023-onboarding.md` |
 | S-025 | Backend Foundation (Vercel, 무인증 기본 + 선택적 OAuth) | ready | not-started | not-tested | `docs/spec/S-025-backend-foundation.md` |
 | S-025a | 디바이스 ID + 서버 저장소 어댑터 (MVP) | draft | not-started | not-tested | `docs/spec/S-025a-device-id-and-storage-adapter.md` |
+| S-026 | 부모 영역 진입 게이트 | draft | not-started | not-tested | `docs/spec/S-026-parent-area-gate.md` |
 
 ## 상태 값
 
