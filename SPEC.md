@@ -56,6 +56,8 @@
 | S-023 | First-entry onboarding | draft | done | not-tested | `docs/spec/S-023-onboarding.md` |
 | S-025 | Backend Foundation (Vercel, 무인증 기본 + 선택적 OAuth) | ready | not-started | not-tested | `docs/spec/S-025-backend-foundation.md` |
 | S-025a | 디바이스 ID + 서버 저장소 어댑터 (MVP) | draft | not-started | not-tested | `docs/spec/S-025a-device-id-and-storage-adapter.md` |
+| S-025b | 이미지 업로드 파이프라인 (Blob 분리) | draft | not-started | not-tested | `docs/spec/S-025b-image-pipeline.md` |
+| S-025c | 복구 코드 (Recovery Code) | draft | not-started | not-tested | `docs/spec/S-025c-recovery-code.md` |
 | S-026 | 부모 영역 진입 게이트 | draft | not-started | not-tested | `docs/spec/S-026-parent-area-gate.md` |
 
 ## 상태 값
