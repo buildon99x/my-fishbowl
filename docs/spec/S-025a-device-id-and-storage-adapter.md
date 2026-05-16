@@ -57,6 +57,17 @@
       - `appState.onboarding?.completed === true` (S-023 종료).
       - `appState.magicMoment.queue.length === 0 && phase === 'idle' | 'done'` (S-021 큐 비어있음).
     - 위 조건이 깨지면 동기화 시도를 보류하고, 조건 충족 시 1회 catch-up 시도.
+    - **안전 밸브**: `onboarding` 키가 손상/부재이고 `aquarium.fishes.length >= 1`이면 “onboarding 사실상 완료”로 간주해 gate를 통과시킨다. 어린이가 그림을 이미 그렸는데 sync가 영구 차단되는 상황을 막는다.
+- 빈 어항 PUT 스킵:
+    - 마이그레이션 첫 PUT은 `aquarium.fishes.length === 0 && aquarium.cleanliness === 100 && aquarium.algaeLevel === 0` (디폴트 `createAquarium()` 상태)일 때 보류한다. 어린이가 첫 등록을 한 직후 자동으로 다시 트리거된다.
+- 응답 코드 분기(부모 스펙 “표준 에러 코드” 표 상속):
+    - 클라이언트 `remote.js`/`sync.js`는 응답 헤더가 아니라 본문의 `error.code`로 분기한다.
+    - `etag_mismatch`(412): 부모 영역 충돌 카드 진입. 어린이 영역 무변화.
+    - `owner_changed`(403): 자동 안전 보존 모드 진입. `appState.sync.status = 'owner-changed'`. 부모 영역 단조 톤 안내(“이 태블릿은 더 이상 어항을 가지지 않습니다. 새 어항을 만들거나 부모 영역에서 어항을 가져오세요”). PUT 자동 재시도 중단.
+    - `aquarium_not_found`(404): 신규 디바이스 + 빈 서버 상태로 처리(마이그레이션 흐름 진입).
+    - `payload_too_large`(413) / `cap_exceeded`(422): 부모 영역 sync indicator만 갱신, 어린이 영역 무변화.
+    - `backend_unavailable`(503): exponential backoff(초기 2s, ×2, 최대 60s, jitter ±20%). 5회 누적 실패 후 자동 sync를 `disabled` 상태로 전환하고 새로고침 또는 다음 부팅 전까지 자동 재개하지 않는다(KV 토큰 미설정 등 영속 문제 시 무한 폭주 방지).
+    - `rate_limited`(429): 응답 `Retry-After`만큼 대기. 어떤 토스트도 띄우지 않는다(어린이 영역 무변화 정책).
   - 테스트:
     - `src/lib/deviceId.test.js`: 발급/유지/회전.
     - `src/features/aquarium/storage/local.test.js`: 기존 storage 테스트 이전.
@@ -107,7 +118,7 @@
   - 첫 PUT 안내 배지 1회.
   - 90KB 초과/계정 한도 초과 등 상태 메시지(텍스트 허용, 부모 가독성 기준).
 - 필요한 상태(클라이언트 메모리):
-  - `appState.sync = { status: 'disabled'|'idle'|'syncing'|'pending'|'error'|'conflict', lastSyncedAt?: ISO8601, lastError?: { code, message } }`.
+  - `appState.sync = { status: 'disabled'|'idle'|'syncing'|'pending'|'error'|'conflict'|'owner-changed', lastSyncedAt?: ISO8601, lastError?: { code, message }, backoffMs?: number, failureStreak?: number }`.
   - `appState.conflict = { serverAquarium, localAquarium, sourceEtag } | null` — **부모 영역 카드만 참조**.
   - `appState.deviceId: string`.
   - `appState.parentNoticeSeen: boolean` (localStorage 캐시).
@@ -168,7 +179,11 @@
 - [ ] `VITE_BACKEND_ENABLED=true` + KV 환경변수 설정 상태에서 부팅 시 한 번 `GET /api/aquarium`이 호출되고, 빈 서버 상태이면 자동 1회 PUT으로 마이그레이션된다(90KB 미만 페이로드 기준).
 - [ ] 자동 GET/PUT은 **S-023 온보딩 완료 + S-021 마법 모먼트 큐가 비어있을 때만** 트리거된다. 온보딩/마법 모먼트 진행 중에는 보류된다.
 - [ ] 같은 디바이스 ID로 다른 브라우저에서 부팅하면 서버 본이 복원된다.
-- [ ] 두 기기에서 같은 디바이스 ID로 동시 PUT을 시도하면 두 번째 PUT이 412를 받고 **어린이 영역은 무변화**, **부모 영역 충돌 카드**가 표시된다. 클라이언트는 자동 안전 보존 모드로 진입한다.
+- [ ] 두 기기에서 같은 디바이스 ID로 동시 PUT을 시도하면 두 번째 PUT이 412(`etag_mismatch`)를 받고 **어린이 영역은 무변화**, **부모 영역 충돌 카드**가 표시된다. 클라이언트는 자동 안전 보존 모드로 진입한다.
+- [ ] PUT이 403(`owner_changed`)를 받으면 클라이언트는 PUT 자동 재시도를 중단하고 부모 영역에 “이 태블릿은 더 이상 어항을 가지지 않습니다” 단조 톤 안내가 표시된다. 어린이 영역은 무변화.
+- [ ] 503(`backend_unavailable`)이 5회 연속 발생하면 자동 sync가 `disabled`로 전환되어 다음 부팅 전까지 자동 재개되지 않는다.
+- [ ] 첫 마이그레이션 PUT은 디폴트 빈 어항(`fishes.length === 0` + `cleanliness === 100` + `algaeLevel === 0`)에는 트리거되지 않는다.
+- [ ] `appState.onboarding`이 부재이거나 손상되었으나 `aquarium.fishes.length >= 1`이면 자동 sync 게이트가 통과된다(안전 밸브).
 - [ ] 부모 영역 충돌 카드에서 `overwrite`/`abandon` 선택이 의도대로 동작한다. `merge` 버튼은 **렌더링되지 않는다**.
 - [ ] 충돌 카드의 두 본 비교는 시각 미리보기(어항 일러스트 + 물고기 수)로 표시되고, timestamp/etag는 사용자에게 노출되지 않는다.
 - [ ] 부모 영역 결정 버튼은 최소 48×48 hit를 만족한다.

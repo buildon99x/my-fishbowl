@@ -36,8 +36,15 @@
     - `POST /api/auth/unlink` — 계정 ↔ 디바이스 매핑 해제. 어항은 디바이스 익명 소유로 복귀.
     - `DELETE /api/account` — 계정/매핑/Blob 자산/스냅샷 동기 삭제.
   - 세션:
-    - 발급: HMAC-SHA256 서명 JWT, 만료 1시간, `accountId` + `provider`만 클레임. 쿠키(`__Host-` prefix, `Secure`, `HttpOnly`, `SameSite=Lax`) 또는 클라이언트 보관 후 `Authorization: Bearer`.
+    - 발급: HMAC-SHA256 서명 JWT, 만료 1시간, `accountId` + `provider` + `deviceId`만 클레임. 쿠키(`__Host-` prefix, `Secure`, `HttpOnly`, `SameSite=Lax`) 또는 클라이언트 보관 후 `Authorization: Bearer`.
     - 미존재/만료 시 익명으로 자동 fallback(401로 막지 않음).
+    - **만료 UX**: 부모가 `parent.account`에서 작업 중 만료되면 다음 액션 시 자동으로 익명으로 fallback되고, `parent.account`는 “세션이 만료되었습니다 — 다시 백업으로 로그인하세요” 단조 톤 안내 + 재로그인 버튼으로 전환된다. 어린이 영역 무변화. 본 스펙 MVP에서는 refresh token을 도입하지 않는다.
+    - **dev 환경 쿠키**: `__Host-` prefix는 `Secure`(HTTPS)를 요구하므로 localhost http에서 동작하지 않는다. dev 빌드에서는 prefix 없이 `mf_session=...; Path=/; HttpOnly; SameSite=Lax`만 사용한다(`process.env.VERCEL_ENV !== 'production'` 분기). production/preview는 `__Host-` 필수.
+  - **콜백 deviceId 바인딩(중요)**:
+    - top-level 리다이렉트와 Apple POST form_post에는 `X-Device-Id` 헤더가 전달되지 않는다.
+    - `/api/auth/<provider>/start`에서 서버는 `X-Device-Id`를 1회 읽어 `__Host-mf_oauth_state` 쿠키(`code_verifier` + `state` + `deviceId`를 jose로 단명 서명, 만료 10분, `HttpOnly`, `Secure`, `SameSite=Lax`)에 동봉한다.
+    - 콜백(`GET /api/auth/google/callback`, `POST /api/auth/apple/callback`)에서 쿠키를 검증해 `state` 일치 + `deviceId` 복원 후 토큰 교환을 수행한다. 검증 실패 → 400 `code = 'oauth_state_invalid'`.
+    - 세션 JWT 발급 시 위에서 복원한 `deviceId`를 클레임에 포함, 동시에 `/api/auth/link`가 별도 호출 없이도 같은 흐름 안에서 매핑을 수행할 수 있게 한다(MVP는 명시 `/api/auth/link`를 유지하되 콜백 자체에서 임시 link 의도 토큰을 발급해 클라이언트가 즉시 호출).
   - 매핑 스키마(부모 스펙 결정 2-1 보강):
     - `account:<accountId>` → `{ provider, sub, linkedAt, aquariumId, linkedDeviceIds[] }`.
     - `deviceAccountLink:<deviceId>` → `accountId`.
@@ -45,10 +52,13 @@
   - 충돌 흐름(부모 영역 충돌 카드, S-025a 카드 보강):
     - 옵션 3개 활성: `merge` / `overwrite` / `abandon`. 어린이 영역 자동 안전 보존 모드는 그대로 유지.
     - `merge` 알고리즘:
-      - fish 단위 union by `fish.id`. 동일 id의 fish는 더 최근 `updatedAt` 본 채택.
+      - fish 단위 union by `fish.id`. 동일 id의 fish는 더 최근 `updatedAt` 본(runtime state 포함)을 통째 채택. 부분 머지는 도입하지 않는다.
       - 어항 메타(name/cleanliness/algaeLevel/lastCleanedAt/bounds) 결합은 부모가 두 본 중 하나를 선택(작은 토글 카드 2장).
       - 총 fish 수가 50개 초과면 더 최근 `createdAt` 50마리만 채택하고 부모에게 단조 톤으로 사실 안내.
+      - sprite는 `spriteUrl`이 있는 본을 우선(S-025b). 둘 다 dataURL이면 그대로 유지.
+    - **빈/동일 merge 케이스**: 두 본의 fish가 모두 비어 있거나 `local === server`(깊은 비교)인 경우 충돌 카드는 “두 어항이 같습니다”만 표시하고 세 버튼이 모두 비활성으로 렌더된다. 부모가 닫기 ✕로 종료. 카드 자동 사라짐은 없다(부모가 확인했다는 사실 자체가 중요).
     - 모든 결정은 **부모가 시각 미리보기 카드를 본 뒤 2s hold-to-confirm**. 어떤 자동 적용도 일어나지 않는다.
+    - **링크 직후 race**: 부모가 카드에서 결정하는 사이 다른 디바이스가 추가 PUT을 일으키면 결정 PUT이 412(`etag_mismatch`)를 받는다. 본 스펙은 자동 재시도 1회(서버 본을 다시 가져와 미리보기 갱신 후 부모에게 “계정 어항이 변경되어 새로 확인해주세요” 단조 톤 안내) → 부모는 다시 hold-to-confirm. 자동 재시도가 또 실패하면 카드를 닫고 부모에게 “나중에 다시 시도” 안내.
   - 콜백 URL/시크릿 정책(부모 스펙 결정 2-1 인용):
     - Google: production + 단일 preview 도메인 + `http://localhost:5173`을 콘솔에 명시 등록.
     - Apple: production-only. preview에는 “Apple로 백업” 버튼 자체를 노출하지 않는다(`VITE_APPLE_ENABLED=false`).
@@ -98,6 +108,12 @@
    - **abandon**: 계정의 어항으로 이 태블릿의 어항을 덮는다(어린이의 현재 그림이 손실될 수 있으므로 추가 2s hold-to-confirm + 미리보기 강조).
 3. 선택 후 적용은 단일 PUT으로 일어나며, 어린이 영역은 sprite-fallback을 거친 자연스러운 교체만 본다.
 4. merge 결과가 50 fish를 초과하면 “최근 50마리만 보존” 단조 톤 안내가 함께 표시된다.
+
+### 부모 흐름 — provider 전환(Google ↔ Apple)
+
+1. 본 스펙은 한 디바이스가 동시에 두 provider에 연결되는 것을 허용하지 않는다. 전환을 원하는 부모는 **먼저 언링크 → 새 provider로 다시 백업** 순서를 따른다.
+2. 언링크된 이전 provider의 `account:<oldAccountId>`는 `linkedDeviceIds`가 비면 **즉시 GC되지 않는다**(다른 기기에서 다시 로그인할 가능성 보존). 빈 계정은 30일 후 자동 GC되며, 부모는 `parent.account`의 “계정 삭제”로 즉시 정리할 수도 있다.
+3. 동일 사용자가 새 provider로 처음 로그인하면 새 계정 매핑이 생성된다. 이때 어항은 이미 디바이스 소유 상태였으므로 충돌 카드가 뜨지 않고 그대로 새 계정에 연결된다.
 
 ### 부모 흐름 — 언링크
 
@@ -214,7 +230,7 @@
 | 어린이 자가 OAuth 트리거 | 어린이가 부모 영역 진입 후 Google 로그인 | 부모 영역 게이트(1.5s) + 어린이는 Google 계정 없음. 추가 hold-to-confirm은 불필요(연결 자체는 비파괴적). |
 | 자동 머지로 어린이 그림 손실 | 부모가 실수로 merge 결과를 적용 | 모든 결정은 시각 미리보기 + 2s hold-to-confirm. abandon은 추가 hold + 미리보기 강조. |
 | 계정 삭제 우발 | 부모 실수로 데이터 영구 삭제 | 2s + 2s 이중 hold + 시각 미리보기 + 7일 스냅샷도 함께 삭제됨을 명시. |
-| PII 누출 | 이메일/이름/사진을 우리 시스템에 저장 | provider `sub`만 KV에 저장. 응답에 이메일/이름 포함 시 즉시 폐기, 로그 미출력. |
+| PII 누출 | 이메일/이름/사진을 우리 시스템에 저장 | provider `sub`만 KV에 저장. **콜백 핸들러에서 토큰 응답을 destructure할 때 `{ sub }`만 추출**, 나머지(`email`, `name`, `picture`, `email_verified`, Apple `email_relay`)는 변수에 묶지 않는다. 로그/관측 출력에 토큰 원문이나 sub 전체 문자열을 절대 포함하지 않는다(`accountId`만). |
 | Apple secret 만료 | 6개월 후 client_secret JWT 서명 실패 | 키 만료 D-30 알람(`AUTH_APPLE_KEY_EXPIRY` 환경변수 + 운영 노트 첨부). 만료 시 라우트는 503 + 부모 영역은 “일시 사용 불가” 안내. |
 | OAuth 비활성 환경 노출 | 시크릿 미설정인데 버튼 표시되어 404 좌절 | `/api/auth/config` 활성 provider 0개일 때 버튼 자체 미렌더 + 클라이언트 트리에서 `features/auth/` dead-code 제거. |
 | 복구 코드와 충돌 | OAuth + 복구 코드 동시 사용 시 ownership 불일치 | redeem 시 `accountId` 유지 + `deviceAccountLink:<newDeviceId>` 자동 upsert. 부모 영역 1회 안내. |
@@ -237,6 +253,12 @@
 - [ ] 인증 라우트가 IP 20 req/min을 초과하면 429 + `Retry-After`를 반환한다.
 - [ ] Apple `client_secret` 단명 JWT가 매 요청 시 새로 생성되고 만료 10분 이내 클레임을 가진다.
 - [ ] 만료/위조 세션 토큰은 401이 아니라 익명 fallback으로 처리되어 핵심 기능이 그대로 동작한다.
+- [ ] 세션 1시간 만료 시 `parent.account`는 “세션 만료 — 다시 로그인” 안내로 자동 전환되고 어린이 영역은 무변화이다.
+- [ ] OAuth 콜백은 `/start` 시점에 발급한 `__Host-mf_oauth_state` 쿠키로 `state`/`code_verifier`/`deviceId`를 복원한다. 쿠키 누락/위조 시 400(`oauth_state_invalid`)을 반환한다.
+- [ ] dev(`VERCEL_ENV !== 'production'`) 환경에서는 쿠키가 `__Host-` prefix 없이 발급되어 localhost http에서도 동작한다.
+- [ ] 두 본이 완전히 동일한 충돌 카드 케이스에서 세 버튼이 모두 비활성으로 표시된다.
+- [ ] 동일 디바이스가 동시에 두 provider에 연결되지 않는다. provider 전환은 “언링크 → 재로그인”만 허용된다.
+- [ ] 콜백 핸들러는 토큰 응답에서 `sub`만 추출하고 `email`/`name`/`picture` 등은 변수에 묶지 않는다(코드 inspection 검증).
 - [ ] 어떤 로그 라인에도 이메일/이름/sub 전체 문자열이 출력되지 않는다(`accountId`만 출력).
 - [ ] `npm test`(arctic mock + jose 발급/검증 + merge 알고리즘 + state machine 단위 테스트 포함)가 통과한다.
 - [ ] `npm run lint`, `npm run build`, `npm run cleanup` 모두 통과한다.
@@ -281,6 +303,8 @@
 - 세션 발급을 쿠키만 쓸지, Authorization Bearer 옵션도 노출할지. → MVP는 쿠키 단일 경로 권장. Bearer는 API 클라이언트가 필요해질 때 별도.
 - merge 결과에서 어항 메타(이끼/청결)도 추가로 fish 단위로 합칠 수 있게 할지. → MVP는 부모 토글로 한쪽 본 통째 선택. 부분 머지는 인지 부담이 큼.
 - 같은 계정에 어항이 “있을 수 있는 최대 개수”를 유지할지(현재 1개) 확장할지. → 멀티 어항은 본 스펙 범위 밖. 형제 시나리오는 S-025f 후보.
+- 빈 계정(linkedDeviceIds 0) GC 주기 30일이 적절한지. → 보수적 시작 값. 텔레메트리(빈 계정 비율)로 조정.
+- 계정 삭제 시 다른 탭/디바이스의 활성 JWT 무효화 여부. → MVP는 1시간 만료에 의존(취약 윈도). 즉시 무효화가 필요하면 `session-revocation:<accountId>` TTL=1h 키 + 매 요청 검사를 후속 스펙으로.
 
 ## Next Step
 

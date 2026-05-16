@@ -199,7 +199,21 @@
 - **멱등성/동시성**:
   - 어항 PUT은 `updatedAt`을 ETag로 사용. `If-Match` 불일치 시 412 + 서버 본문 반환.
   - 이미지 업로드는 클라이언트가 생성한 `uploadId`(UUID)를 `Idempotency-Key`로 사용해 동일 업로드 재시도 시 같은 URL을 반환.
-- **응답 표준**: `200/201/204/304/400/401/403/404/409/412/429/500`. 오류는 `{ error: { code, message } }` 일관 구조.
+- **응답 표준**: `200/201/204/304/400/401/403/404/409/412/413/422/429/500/503`. 오류는 `{ error: { code, message } }` 일관 구조.
+- **표준 에러 코드(모든 하위 스펙 공통)**:
+  | code | HTTP | 의미 | 트리거 |
+  | --- | --- | --- | --- |
+  | `missing_device_id` | 400 | `X-Device-Id` 부재/형식 오류 | 모든 라우트 진입 시 |
+  | `etag_mismatch` | 412 | `If-Match` 불일치(같은 owner 안에서의 동시 편집) | PUT 충돌 |
+  | `owner_changed` | 403 | 현재 디바이스가 더 이상 이 어항의 owner가 아님 | 복구 코드 redeem/OAuth merge 이후의 이전 디바이스 |
+  | `aquarium_not_found` | 404 | KV에 어항/owner 키가 없음 | 신규 디바이스의 첫 GET 또는 계정 삭제 직후 |
+  | `payload_too_large` | 413 | KV 페이로드 한도(100KB) 또는 Blob 1MB 초과 | PUT/upload-url |
+  | `cap_exceeded` | 422 | 어항/물고기/sprite 상한 초과 | PUT/upload-url |
+  | `rate_limited` | 429 | 디바이스/IP 단위 빈도 초과 | 모든 라우트 |
+  | `backend_unavailable` | 503 | KV/Blob/OAuth 시크릿 미설정 또는 일시 장애 | 모든 라우트 |
+  | `expired` | 400 | 복구 코드 만료 | S-025c redeem |
+  | `cooldown` | 429 | 인증/redeem 누적 실패 cooldown 적용 중 | S-025c redeem, S-025d auth |
+  - 클라이언트는 `owner_changed`(403)를 받으면 자동 안전 보존 모드 + 부모 영역 “이 태블릿은 더 이상 어항을 가지지 않습니다” 단조 톤 안내로 분기한다(어린이 영역 무변화).
 - **검증**: 각 라우트가 zod 스키마와 1:1로 매핑되고, 모든 4xx에는 `error.code`가 채워진다. 익명/OAuth 두 컨텍스트가 같은 라우트에서 모두 동작한다.
 - **의존성**: 2, 2-1, 5, 7, 8.
 
@@ -439,6 +453,8 @@
 | 비용 폭주 | 한 디바이스/계정의 과도한 요청 | 어항/물고기 cap, KV 페이로드 cap, 일일 PUT cap, Blob 저장 cap. |
 | 부모 부재 + 디바이스 분실 | 어린이 자가 회복 불가 = 어항 사라짐 정서 손상 | 서버 측에 **마지막 7일 자동 스냅샷** 보존(`snapshot:<aquariumId>:<yyyy-mm-dd>`). 부모 OAuth 연결 후 부모 영역에서 “이전 어항 복원” 가능. 본 스펙은 hook만 정의, 구체 구현은 후속 스펙(S-025e 확장 또는 별도). |
 | 어린이 영역 어른 UI 침입 | 충돌/오류/계정 UI가 어린이 영역에 뜨면 워크플로 중단/정서 손상 | 본 스펙 "어린이/부모 영역 분리 정책"으로 차단. 모든 하위 스펙은 매핑 표를 상속. |
+| OAuth 계정 보유자 연령(COPPA) | 어린이가 직접 Google/Apple 계정을 만들고 OAuth 흐름을 사용 | 부모 영역 게이트(S-026) + OAuth 흐름이 부모만 트리거 가능. 본 스펙은 “OAuth 계정 보유자는 부모/성인” 전제를 명시. PII는 `sub`만 저장하며 어린이로부터 직접 어떤 식별자도 수집하지 않음. |
+| 4가지 키 일관성 깨짐 | `aquarium:<id>`, `owner:<id>`, `device:<id>`, `account:<id>` 중 일부 키만 갱신되어 stale | 모든 ownership 변경 동작(첫 PUT 등록, OAuth link/unlink, 복구 코드 redeem, 계정 삭제)은 **순서 표준**을 따른다. 각 하위 스펙이 자기 흐름의 순서를 정의하고, 실패 시 마지막 작업까지의 부분 상태가 다음 요청에서 self-heal 가능하도록 멱등성을 보장. |
 
 ## 검증 기준
 

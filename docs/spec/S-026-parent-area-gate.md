@@ -153,7 +153,11 @@ appState.parentMode = {
 - [ ] 1.5s 도달 시 30ms 햅틱이 발생하고(지원 디바이스) 부모 영역이 슬라이드-인된다.
 - [ ] 1.5s 도달 전 손을 떼면 ring이 즉시 0%로 리셋되며 다른 어떤 표시도 남지 않는다.
 - [ ] `prefers-reduced-motion` 활성 시 ring은 단조 fade-fill이고 슬라이드-인은 0.2s fade로 대체된다.
-- [ ] Space 1.5s long-press(키보드)도 동일하게 동작한다.
+- [ ] Space 1.5s long-press(키보드)도 동일하게 동작한다. 브라우저 OS 자동 반복(`keydown` 반복 이벤트)은 무시된다.
+- [ ] ⚙️ 버튼이 `role="button"` + `aria-label="설정(부모용)"`를 가지며, hold 중에는 `aria-pressed="true"`.
+- [ ] ring 요소가 `role="progressbar"` + `aria-valuemin="0"` + `aria-valuemax="1500"`를 가지며 진행에 따라 `aria-valuenow`가 갱신된다(200ms 디바운스).
+- [ ] hold 시작 시 스크린리더에 “1.5초 동안 누르세요”, 완료 시 “부모 영역 열림”이 1회 announce된다.
+- [ ] pointermove 취소 임계가 touch에서 16px, mouse에서 8px로 차등 적용된다.
 - [ ] 부모 영역이 열려 있는 동안 어린이 영역 인터랙션은 차단된다(어항/물고기 탭 무반응).
 - [ ] 부모 영역에서 5분 동안 입력이 없으면 자동 잠금되어 부모 영역이 닫힌다.
 - [ ] 새로고침 후 항상 잠금 상태로 시작한다(`appState.parentMode.unlocked === false`).
@@ -178,9 +182,16 @@ appState.parentMode = {
   ```
   idle → holding(at: ms) → completed | cancelled
     holding 중 pointerup/keyup before 1500ms → cancelled
-    holding 중 pointermove > 8px → cancelled(스크롤 의도와 분리)
+    holding 중 pointermove > 16px(touch) / 8px(mouse) → cancelled(스크롤 의도와 분리)
     holding 1500ms 경과 → completed (haptic + slide-in)
   ```
+  - **pointermove 임계 트레이드오프**: 부모가 떨림(가벼운 손떨림/한 손으로 디바이스 잡은 상태)으로 5~10px 미세 이동이 발생하는 케이스가 보고된다. 터치는 16px, 마우스는 8px로 차등 적용해 부모 의도 vs 스크롤 의도를 분리. 본 임계는 첫 베타 텔레메트리(중도 취소율)로 조정.
+- 접근성 보강:
+  - ⚙️ 버튼은 `role="button"` + `aria-label="설정(부모용)"` + `aria-describedby="parent-gate-hint"` + `aria-pressed`(holding 중 `true`).
+  - hold 진행률을 스크린리더가 인지할 수 있도록 `aria-valuemin="0"` `aria-valuemax="1500"` `aria-valuenow="<ms>"` `role="progressbar"`를 ring 요소에 추가. 단, 200ms 디바운스(매 ms마다 announce 폭주 방지).
+  - hold 시작 시 스크린리더에 “1.5초 동안 누르세요” 1회 announcement(`aria-live="polite"`).
+  - hold 완료 시 “부모 영역 열림” 1회 announcement.
+  - 키보드 hold(Space)는 `keydown` 시작/`keyup` 종료. `keydown` 자동 반복(브라우저 OS key repeat)은 무시(첫 `keydown`만 카운트).
 - ⚙️ 아이콘 디자인 정책: 단색, 점멸 없음, hover 효과 없음(어린이 시각 신호 최소화).
 
 ## SP

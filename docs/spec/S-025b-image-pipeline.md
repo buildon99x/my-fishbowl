@@ -90,7 +90,7 @@
     - `fish.spriteUrl?: string` — Blob 공개 immutable URL. 신규 우선 필드.
     - `fish.sprite?: string` — dataURL. 마이그레이션 중에만 함께 존재. 둘 다 있으면 `spriteUrl` 우선.
   - 클라이언트 메모리:
-    - `appState.imagePipeline = { pending: number, failing: number, atCap: boolean, lastError?: { code, message } }`.
+    - `appState.imagePipeline = { pending: number, failing: number, failingPermanent: number, atCap: boolean, oversize: number, lastError?: { code, message } }`.
   - localStorage 추가 없음.
 - 모션/접근성:
   - 어린이 영역 fallback의 거품 burst는 S-011 가드(채도 60% 이하, 3Hz 미만)를 따른다.
@@ -129,7 +129,12 @@
   - 한 항목 업로드 성공 → 어항 문서의 해당 fish에서 `sprite` 제거 + `spriteUrl` 세팅 → 다음 debounce PUT에 반영.
   - 실패 시 다음 부팅에서 재시도. dataURL은 그대로 두어 어린이는 영향 없음.
 - 자동 sync 게이트:
-  - 본 스펙도 S-025a 게이트(`onboarding.completed === true` + 마법 모먼트 큐 비어있음)를 그대로 상속. 업로드/마이그레이션 모두 같은 조건.
+  - 본 스펙도 S-025a 게이트(`onboarding.completed === true` + 마법 모먼트 큐 비어있음)를 그대로 상속. 업로드/마이그레이션 모두 같은 조건. 안전 밸브(onboarding 부재 + fishes ≥ 1)도 동일.
+- 업로드 영구 실패 분기:
+  - 단일 sprite 업로드 시도 누적 5회 실패(서버 4xx 거절, magic byte 불일치, 디코딩 실패 등) 시 해당 fish의 `spriteUrl` 채움을 영구 포기하고 `imagePipeline.failingPermanent`에 카운트. dataURL은 그대로 두어 현재 디바이스에서는 정상 렌더.
+  - 부모 영역 `parent.sync` 슬롯에 “저장 실패 N(영구)” 단조 톤 안내를 추가 노출. 어린이 영역은 무변화.
+  - 영구 실패 카운트는 메모리 전용. 다음 부팅에서 재시도(영속 차단 시 무한 재시도 폭주 방지를 위해 부팅당 1회만 리셋).
+  - `payload_too_large`(413) / `cap_exceeded`(422)는 영구 실패와 별도 카운트(`atCap`, `oversize`)로 표시.
 - 환경변수:
   - Vercel Blob 통합 시 자동 주입되는 `BLOB_READ_WRITE_TOKEN`. 미설정 시 라우트가 503 + 클라이언트는 업로드 파이프라인 disabled로 fallback(dataURL 유지).
 - 의존성(외부 패키지):
@@ -156,7 +161,8 @@
 - [ ] `image/png`, `image/jpeg`, `image/webp` 외 MIME 업로드 시도는 클라이언트 단계에서 차단되고, 서명 URL 단계도 거절한다.
 - [ ] `image/svg+xml`는 어떤 단계에서도 허용되지 않는다.
 - [ ] 서버 `upload-commit`이 첫 16바이트 magic byte 검증을 수행하고, 불일치 시 Blob을 삭제하고 400을 반환한다.
-- [ ] 디바이스당 10 uploads/min 초과 시 429 + `Retry-After`. 어항당 51번째 sprite 업로드 요청은 422.
+- [ ] 디바이스당 10 uploads/min 초과 시 429 + `Retry-After`. 어항당 51번째 sprite 업로드 요청은 422(`cap_exceeded`).
+- [ ] 단일 sprite 업로드 시도가 5회 누적 실패하면 해당 fish의 `spriteUrl` 채움을 영구 포기하고 부모 영역 `parent.sync`에 “저장 실패 N(영구)”가 추가된다. 어린이 영역은 무변화이며 dataURL로 정상 렌더된다.
 - [ ] 어린이 영역에는 업로드 진행/성공/실패/한도 안내가 **하나도 노출되지 않는다**.
 - [ ] 부모 영역 `parent.sync` 슬롯에는 “이미지 저장 N/M”, “저장 실패 N”, “저장 한도 N/50”이 단조 색으로 표시된다.
 - [ ] sprite GET이 200ms 이상 지연되면 회색 실루엣 + 거품 burst placeholder가 어린이 영역에 표시되고, 로드 성공 시 자연스럽게 교체된다.

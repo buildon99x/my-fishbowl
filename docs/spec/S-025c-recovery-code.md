@@ -137,8 +137,19 @@
     - redeem: 5회/분/IP + 5회 실패 누적 시 30분 cooldown(`recovery-cooldown:<ip>` 키).
 - redeem 흐름:
   - 클라이언트가 `{ code, newDeviceId }`로 요청.
-  - 서버: 코드 해시 → `recovery:<hash>` 조회 → owner 키(`owner:<aquariumId>`) 갱신(`deviceId = newDeviceId`) + `device:<newDeviceId>.aquariumId` 갱신 + `recovery:<hash>` 및 `recovery-active:<aquariumId>` 삭제.
-  - 응답: 성공 + 새 ETag. 클라이언트는 어항 GET을 트리거해 어린이 영역에 반영.
+  - 서버 원자성: KV는 다중 키 트랜잭션을 보장하지 않으므로 다음 패턴으로 race를 차단한다.
+    1. `recovery-lock:<hash> = newDeviceId, NX, EX=10s` (SETNX 락 획득). 실패(이미 잠금) → 409 `code = 'in_progress'`.
+    2. `recovery:<hash>` GET → 부재면 락 해제 후 400 `code = 'not_found'`. 만료면 락 해제 후 400 `code = 'expired'`.
+    3. 다음 키들을 차례로 갱신(부모 스펙 “4가지 키 일관성” 정책의 표준 순서):
+       - 기존 owner의 `oldDeviceId`를 알기 위해 `owner:<aquariumId>` GET.
+       - `owner:<aquariumId> = { deviceId: newDeviceId, accountId? }`(기존 `accountId` 그대로 유지 — S-025d 통합 항목).
+       - `device:<newDeviceId> = { aquariumId, createdAt, lastSeenAt }` upsert.
+       - `device:<oldDeviceId>` 삭제(이전 디바이스는 더 이상 이 어항을 소유하지 않음).
+       - **이전 디바이스 OAuth link도 정리**: `deviceAccountLink:<oldDeviceId>` 삭제(stale 매핑 제거). `accountId`가 있었다면 `account:<accountId>.linkedDeviceIds`에서 `oldDeviceId` 제거 + `newDeviceId` 추가.
+       - `recovery:<hash>` 및 `recovery-active:<aquariumId>` 삭제.
+    4. 락 해제(키 자체는 EX=10s로 자연 만료되나 명시 삭제 권장).
+  - 응답: 성공 + 새 ETag. 클라이언트는 어항 GET을 트리거해 어린이 영역에 반영. `accountId`가 유지되었다면 부모 영역에 1회 안내(S-025d 통합).
+  - 이전 디바이스 거동: 다음 GET에서 `aquarium_not_found`(404) 또는 `owner_changed`(403)를 받는다(`owner:<aquariumId>`는 존재하나 `device:<oldDeviceId>`가 비어 owner 검증 시 deviceId 불일치 → 403). 어린이 영역 무변화 + 부모 영역 sync indicator만 `owner-changed` 상태(S-025a 정의).
 - 어린이 영역 교체:
   - 새 기기에 이미 그린 어항이 있을 때 덮어쓰기 확인은 **부모 영역에서만** 일어난다. 어린이 영역에는 다이얼로그가 뜨지 않는다.
   - 교체 시 `appState.imagePipeline`의 진행/실패 카운터(S-025b)는 새 어항 기준으로 리셋.
@@ -155,7 +166,7 @@
 | 어린이 우발 발급 | 어린이가 부모 영역 진입 + 발급 트리거 | 부모 영역 게이트(1.5s) + 발급/재발급 2s hold-to-confirm 이중 차단. |
 | 어린이 우발 사용 | 어린이가 redeem 시도 | 코드를 모름 + 부모 영역 입력 + 2s hold + 덮어쓰기 추가 2s hold. |
 | 부모가 새 기기에서 어린이의 새 그림 덮어쓰기 | 부모 실수로 어린이 작품 손실 | 덮어쓰기 confirm을 시각 미리보기 + 2s hold-to-confirm로 분리. |
-| 동시 redeem(같은 코드 여러 기기) | 두 기기에서 같은 코드를 동시 사용 | redeem 시 코드 해시 조회 → 즉시 삭제(atomic). 두 번째 요청은 코드 없음 → 400. |
+| 동시 redeem(같은 코드 여러 기기) | 두 기기에서 같은 코드를 동시 사용 | `recovery-lock:<hash>` SETNX(EX=10s)로 진입 직렬화. 락 획득 실패 시 409 `in_progress`. 본 redeem 완료 시 `recovery:<hash>` 삭제로 두 번째 요청은 400 `not_found`. |
 | OAuth 흐름과의 충돌 | OAuth 연결된 어항을 복구 코드로 옮길 때 ownership 일관성 | redeem 성공 시 owner의 `deviceId`만 갱신. `accountId`는 유지. OAuth 사용자에게 “복구 코드로 옮긴 디바이스도 계정에 연결됩니다” 부모 영역 안내. (구현은 S-025d done 이후 보강) |
 
 ## 검증 기준
@@ -166,7 +177,8 @@
 - [ ] 어린이 영역에는 발급/입력/표시/만료/실패 UI가 **하나도 노출되지 않는다**.
 - [ ] 부모 영역 발급/재발급은 2s hold-to-confirm을 만족해야만 실행된다.
 - [ ] 재발급 시 이전 활성 코드의 KV 엔트리가 즉시 삭제되고, 이전 코드로 redeem 시 400을 받는다.
-- [ ] redeem 성공 시 어항 owner의 `deviceId`가 새 디바이스 ID로 교체되고, `recovery:<hash>`와 `recovery-active:<aquariumId>` 키가 삭제된다.
+- [ ] redeem 성공 시 어항 owner의 `deviceId`가 새 디바이스 ID로 교체되고, `recovery:<hash>`와 `recovery-active:<aquariumId>` 키가 삭제되며, 이전 디바이스의 `device:<oldDeviceId>`와 `deviceAccountLink:<oldDeviceId>`(존재 시)도 함께 정리된다.
+- [ ] 동일 코드로 동시에 두 번 redeem을 시도하면 첫 번째는 성공, 두 번째는 409(`in_progress`) 또는 400(`not_found`)을 받는다. 어항 owner는 한 번만 갱신된다.
 - [ ] 만료된 코드(30일 경과)로 redeem 시도는 400 + `error.code = 'expired'`를 받는다.
 - [ ] 디바이스당 발급 빈도가 1회/시간을 초과하면 429를 받는다.
 - [ ] redeem 시도가 5회/분/IP를 초과하면 429를 받고, 5회 실패 누적 시 30분 cooldown이 적용된다.
