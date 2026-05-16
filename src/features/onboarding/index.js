@@ -44,8 +44,11 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
 
   function startIdleWatch() {
     if (typeof window === 'undefined') return;
-    setInterval(() => {
-      if (!isOnboardingActive(state)) return;
+    const timerId = setInterval(() => {
+      if (!isOnboardingActive(state)) {
+        clearInterval(timerId);
+        return;
+      }
       if (idleNotified) return;
       const elapsed = performance.now() - lastUserActivityAt;
       if (elapsed >= IDLE_NOTIFY_MS) {
