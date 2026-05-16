@@ -1,6 +1,6 @@
 export const ONBOARDING_STORAGE_KEY = 'fishbowl.onboarding.v1';
 
-const ONBOARDING_SEQUENCES = [1, 2, 3, 4, 5];
+const ONBOARDING_SEQUENCES = new Set([1, 2, 3, 4, 5, 'done']);
 
 export function createDefaultOnboardingState() {
   return {
@@ -27,7 +27,7 @@ export function normalizeOnboardingState(raw) {
   if (!raw || typeof raw !== 'object') return defaults;
   return {
     completed: Boolean(raw.completed),
-    sequence: ONBOARDING_SEQUENCES.includes(raw.sequence) ? raw.sequence : (raw.completed ? 'done' : 1),
+    sequence: ONBOARDING_SEQUENCES.has(raw.sequence) ? raw.sequence : (raw.completed ? 'done' : 1),
     completedAt: raw.completedAt,
     voiceGuideEnabled: Boolean(raw.voiceGuideEnabled),
   };

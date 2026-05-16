@@ -130,10 +130,14 @@ function patchFishPositions(root, fishes, fishEatingId) {
   });
 }
 
+const FEEDING_SAVE_INTERVAL_MS = 2000;
+
 function startFeedingAnimation(root, aquarium, fishInputState, feedingState, appState) {
   if (appState.feedingAnimationId) {
     return;
   }
+
+  let lastFeedingSavedMs = 0;
 
   const runFrame = (now) => {
     const result = tickFeeding(feedingState, aquarium.fishes, now);
@@ -141,9 +145,10 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
 
     aquarium.fishes = result.fishes;
 
-    if (fishChanged || result.didEat) {
+    if ((fishChanged || result.didEat) && now - lastFeedingSavedMs >= FEEDING_SAVE_INTERVAL_MS) {
       aquarium.updatedAt = new Date().toISOString();
       saveAquarium(aquarium);
+      lastFeedingSavedMs = now;
     }
 
     if (result.didEat) {
@@ -160,6 +165,11 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
     }
 
     appState.feedingAnimationId = null;
+
+    if (fishChanged || result.didEat) {
+      aquarium.updatedAt = new Date().toISOString();
+      saveAquarium(aquarium);
+    }
 
     if (feedingState.fishEating) {
       window.setTimeout(() => {

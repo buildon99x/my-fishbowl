@@ -1,7 +1,7 @@
 const SPRITE_WIDTH = 240;
 const SPRITE_HEIGHT = 160;
 
-function loadImage(src) {
+export function loadImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.addEventListener('load', () => resolve(image));

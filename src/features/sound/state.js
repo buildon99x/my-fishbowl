@@ -1,3 +1,5 @@
+import { clamp } from '../../lib/utils.js';
+
 export const SOUND_STORAGE_KEY = 'fishbowl.sound.v1';
 export const SOUND_CATEGORIES = ['ambient', 'ui', 'interaction', 'magic'];
 export const MASTER_VOLUME_CAP = 0.7;
@@ -22,10 +24,6 @@ export function createDefaultSoundSettings() {
   };
 }
 
-function clamp(value, min, max) {
-  if (Number.isNaN(value)) return min;
-  return Math.max(min, Math.min(max, value));
-}
 
 export function normalizeSoundSettings(raw) {
   const defaults = createDefaultSoundSettings();

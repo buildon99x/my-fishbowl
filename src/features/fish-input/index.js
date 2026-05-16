@@ -1,49 +1,7 @@
 import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft, saveFishInputPosition } from './state.js';
 import { clamp } from '../../lib/utils.js';
-
-function bindFishInputDrag(panel, state) {
-  const header = panel.querySelector('[data-fish-input-drag-handle]');
-  if (!header) return;
-
-  header.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('[data-toggle-fish-input]')) return;
-    e.preventDefault();
-
-    const rect = panel.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-
-    panel.style.right = 'auto';
-    panel.style.bottom = 'auto';
-    panel.style.left = `${rect.left}px`;
-    panel.style.top = `${rect.top}px`;
-    header.style.cursor = 'grabbing';
-    header.setPointerCapture(e.pointerId);
-
-    function onMove(moveEvent) {
-      const x = clamp(moveEvent.clientX - offsetX, 0, window.innerWidth - panel.offsetWidth);
-      const y = clamp(moveEvent.clientY - offsetY, 0, window.innerHeight - panel.offsetHeight);
-      panel.style.left = `${x}px`;
-      panel.style.top = `${y}px`;
-    }
-
-    function onUp() {
-      header.releasePointerCapture(e.pointerId);
-      header.removeEventListener('pointermove', onMove);
-      header.removeEventListener('pointerup', onUp);
-      header.style.cursor = '';
-
-      const pos = { x: parseFloat(panel.style.left), y: parseFloat(panel.style.top) };
-      state.position = pos;
-      saveFishInputPosition(pos);
-    }
-
-    header.addEventListener('pointermove', onMove);
-    header.addEventListener('pointerup', onUp);
-  });
-}
 import { renderFishInputPanel } from './view.js';
-import { resizeImageToSprite } from '../../lib/spriteResize.js';
+import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
@@ -62,16 +20,6 @@ function readFileAsDataUrl(file) {
     reader.addEventListener('load', () => resolve(reader.result));
     reader.addEventListener('error', () => reject(reader.error));
     reader.readAsDataURL(file);
-  });
-}
-
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-
-    image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', reject);
-    image.src = src;
   });
 }
 
@@ -161,7 +109,7 @@ function setupDrawingCanvas(root, state, render) {
       {
         spriteDataUrl: canvas.toDataURL('image/png'),
         status: 'preview',
-        message: 'Drawing preview is ready.',
+        message: '그림 미리보기가 준비됐어요.',
         source: 'drawing',
       },
       render,
@@ -183,6 +131,48 @@ function setupDrawingCanvas(root, state, render) {
       },
       render,
     );
+  });
+}
+
+function bindFishInputDrag(panel, state) {
+  const header = panel.querySelector('[data-fish-input-drag-handle]');
+  if (!header) return;
+
+  header.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('[data-toggle-fish-input]')) return;
+    e.preventDefault();
+
+    const rect = panel.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+    panel.style.left = `${rect.left}px`;
+    panel.style.top = `${rect.top}px`;
+    header.style.cursor = 'grabbing';
+    header.setPointerCapture(e.pointerId);
+
+    function onMove(moveEvent) {
+      const x = clamp(moveEvent.clientX - offsetX, 0, window.innerWidth - panel.offsetWidth);
+      const y = clamp(moveEvent.clientY - offsetY, 0, window.innerHeight - panel.offsetHeight);
+      panel.style.left = `${x}px`;
+      panel.style.top = `${y}px`;
+    }
+
+    function onUp() {
+      header.releasePointerCapture(e.pointerId);
+      header.removeEventListener('pointermove', onMove);
+      header.removeEventListener('pointerup', onUp);
+      header.style.cursor = '';
+
+      const pos = { x: parseFloat(panel.style.left), y: parseFloat(panel.style.top) };
+      state.position = pos;
+      saveFishInputPosition(pos);
+    }
+
+    header.addEventListener('pointermove', onMove);
+    header.addEventListener('pointerup', onUp);
   });
 }
 
@@ -231,7 +221,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: 'Only PNG, JPG, JPEG, and WEBP files can be registered.',
+          message: 'PNG, JPG, JPEG, WEBP 파일만 등록할 수 있어요.',
           source: '',
         },
         render,
@@ -248,7 +238,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl,
           status: 'preview',
-          message: 'Uploaded image preview is ready.',
+          message: '업로드한 이미지 미리보기가 준비됐어요.',
           source: 'upload',
         },
         render,
@@ -260,7 +250,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: 'The selected image could not be processed.',
+          message: '이미지를 처리할 수 없어요. 다른 파일을 선택해 주세요.',
           source: '',
         },
         render,
@@ -274,7 +264,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         state,
         {
           status: state.status === 'invalid' ? 'invalid' : 'idle',
-          message: 'Add an image before registering.',
+          message: '먼저 이미지를 추가해 주세요.',
         },
         render,
       );
