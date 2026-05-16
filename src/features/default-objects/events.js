@@ -5,11 +5,7 @@ import {
   prefetchAll,
 } from './catalog.js';
 import { checkDebounce, markCtaSeen } from './state.js';
-
-function prefersReducedMotion() {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
+import { prefersReducedMotion } from '../../lib/utils.js';
 
 function pulseCard(card, className, durationMs) {
   if (!card) return;

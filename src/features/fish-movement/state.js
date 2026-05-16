@@ -7,7 +7,7 @@ import {
   getMovementTiltDegrees,
   shouldStartTurn,
 } from './fishPhysics.js';
-import { clamp } from '../../lib/utils.js';
+import { clamp, randomInRange } from '../../lib/utils.js';
 
 export const MOVEMENT_BOUNDS = {
   minX: 4,
@@ -35,12 +35,8 @@ function normalizeHeadDirection(value) {
   return value === 'left' ? 'left' : 'right';
 }
 
-function getRandomInRange(random, min, max) {
-  return min + random() * (max - min);
-}
-
 function createMovementVector(random, directionX = 1, speed = DEFAULT_SPEED) {
-  const angle = getRandomInRange(random, -0.28, 0.28);
+  const angle = randomInRange(random, -0.28, 0.28);
   const normalizedSpeed = clamp(speed, MIN_SPEED, MAX_SPEED);
 
   return {
@@ -78,7 +74,7 @@ function createFishMovementState(fish, index = 0, nowMs = 0, random = Math.rando
     wallResumeVy: Number.isFinite(fish?.wallResumeVy) ? fish.wallResumeVy : 0,
     nextTargetAtMs: Number.isFinite(fish?.nextTargetAtMs)
       ? fish.nextTargetAtMs
-      : nowMs + getRandomInRange(random, MIN_TARGET_INTERVAL_MS, MAX_TARGET_INTERVAL_MS),
+      : nowMs + randomInRange(random, MIN_TARGET_INTERVAL_MS, MAX_TARGET_INTERVAL_MS),
     bobPhase: Number.isFinite(fish?.bobPhase) ? fish.bobPhase : random() * Math.PI * 2,
     waveOffset: Number.isFinite(fish?.waveOffset) ? fish.waveOffset : 0,
     movementTilt: Number.isFinite(fish?.movementTilt) ? fish.movementTilt : 0,
@@ -144,7 +140,7 @@ export function stepFishMovement(fish, elapsedMs, nowMs, options = {}) {
       wallPauseUntilMs: 0,
       wallResumeVx: 0,
       wallResumeVy: 0,
-      nextTargetAtMs: nowMs + getRandomInRange(random, MIN_TARGET_INTERVAL_MS, MAX_TARGET_INTERVAL_MS),
+      nextTargetAtMs: nowMs + randomInRange(random, MIN_TARGET_INTERVAL_MS, MAX_TARGET_INTERVAL_MS),
     };
     nextTargetAtMs = movement.nextTargetAtMs;
     didResumeFromWallPause = true;
@@ -158,54 +154,47 @@ export function stepFishMovement(fish, elapsedMs, nowMs, options = {}) {
   const justEnteredWander = behaviorStatus === 'wander' && previousBehaviorStatus !== 'wander';
   const shouldRefreshTarget = nowMs >= nextTargetAtMs || behaviorStatus === 'idle' || justEnteredWander;
 
-  if (!didResumeFromWallPause && movement.avoidMouse) {
-    const dartVector = createDartVectorAwayFromMouse(movement, movement.avoidMouse);
+  if (!didResumeFromWallPause) {
+    if (movement.avoidMouse) {
+      const dartVector = createDartVectorAwayFromMouse(movement, movement.avoidMouse);
 
-    vx = dartVector.vx;
-    vy = dartVector.vy;
-    speed = dartVector.speed;
-    movementStatus = 'dart';
-  } else if (!didResumeFromWallPause && behaviorStatus === 'dart') {
-    const length = Math.hypot(vx, vy) || 1;
-    const dartSpeed = speed * movement.speedMultiplier * 2.1;
+      vx = dartVector.vx;
+      vy = dartVector.vy;
+      speed = dartVector.speed;
+      movementStatus = 'dart';
+    } else if (behaviorStatus === 'dart') {
+      const length = Math.hypot(vx, vy) || 1;
+      const dartSpeed = speed * movement.speedMultiplier * 2.1;
 
-    vx = (vx / length) * dartSpeed;
-    vy = (vy / length) * dartSpeed;
-    speed = dartSpeed;
-    movementStatus = 'dart';
-  } else if (!didResumeFromWallPause && behaviorStatus === 'turning') {
-    movement = applyTurn({ ...movement, x, y, vx, vy, speed }, nowMs);
-    vx = movement.vx;
-    vy = movement.vy;
-    behaviorStatus = movement.behaviorStatus;
-    movementStatus = movement.movementStatus;
-  } else if (!didResumeFromWallPause && shouldRefreshTarget) {
-    const nextVector = behaviorStatus === 'idle'
-      ? createTargetVector({ ...movement, x, y, vx, vy, speed, behaviorStatus }, random)
-      : createTargetVector({
-          ...movement,
-          x,
-          y,
-          vx,
-          vy,
-          speed: getRandomInRange(random, MIN_SPEED, MAX_SPEED),
-          behaviorStatus,
-        }, random);
-
-    if (behaviorStatus !== 'idle' && shouldStartTurn({ ...movement, vx, vy }, nextVector)) {
-      movement = beginTurn({ ...movement, x, y, vx, vy, speed, behaviorStatus }, nextVector, nowMs, behaviorStatus);
-      movement = applyTurn(movement, nowMs);
+      vx = (vx / length) * dartSpeed;
+      vy = (vy / length) * dartSpeed;
+      speed = dartSpeed;
+      movementStatus = 'dart';
+    } else if (behaviorStatus === 'turning') {
+      movement = applyTurn({ ...movement, x, y, vx, vy, speed }, nowMs);
       vx = movement.vx;
       vy = movement.vy;
       behaviorStatus = movement.behaviorStatus;
       movementStatus = movement.movementStatus;
-    } else {
-      vx = nextVector.vx;
-      vy = nextVector.vy;
-      speed = nextVector.speed;
-    }
+    } else if (shouldRefreshTarget) {
+      const nextSpeed = behaviorStatus === 'idle' ? speed : randomInRange(random, MIN_SPEED, MAX_SPEED);
+      const nextVector = createTargetVector({ ...movement, x, y, vx, vy, speed: nextSpeed, behaviorStatus }, random);
 
-    nextTargetAtMs = nowMs + getRandomInRange(random, MIN_TARGET_INTERVAL_MS, MAX_TARGET_INTERVAL_MS);
+      if (behaviorStatus !== 'idle' && shouldStartTurn({ ...movement, vx, vy }, nextVector)) {
+        movement = beginTurn({ ...movement, x, y, vx, vy, speed, behaviorStatus }, nextVector, nowMs, behaviorStatus);
+        movement = applyTurn(movement, nowMs);
+        vx = movement.vx;
+        vy = movement.vy;
+        behaviorStatus = movement.behaviorStatus;
+        movementStatus = movement.movementStatus;
+      } else {
+        vx = nextVector.vx;
+        vy = nextVector.vy;
+        speed = nextVector.speed;
+      }
+
+      nextTargetAtMs = nowMs + randomInRange(random, MIN_TARGET_INTERVAL_MS, MAX_TARGET_INTERVAL_MS);
+    }
   }
 
   x += vx * dt;
@@ -219,9 +208,9 @@ export function stepFishMovement(fish, elapsedMs, nowMs, options = {}) {
     movementStatus = 'idle';
     movement = {
       ...movement,
-      wallPauseUntilMs: nowMs + getRandomInRange(random, MIN_WALL_PAUSE_MS, MAX_WALL_PAUSE_MS),
+      wallPauseUntilMs: nowMs + randomInRange(random, MIN_WALL_PAUSE_MS, MAX_WALL_PAUSE_MS),
       wallResumeVx: x <= bounds.minX ? Math.abs(speed) : -Math.abs(speed),
-      wallResumeVy: getRandomInRange(random, -speed * 0.28, speed * 0.28),
+      wallResumeVy: randomInRange(random, -speed * 0.28, speed * 0.28),
     };
   }
 
@@ -233,8 +222,8 @@ export function stepFishMovement(fish, elapsedMs, nowMs, options = {}) {
     movementStatus = 'idle';
     movement = {
       ...movement,
-      wallPauseUntilMs: nowMs + getRandomInRange(random, MIN_WALL_PAUSE_MS, MAX_WALL_PAUSE_MS),
-      wallResumeVx: getRandomInRange(random, -speed, speed) || speed,
+      wallPauseUntilMs: nowMs + randomInRange(random, MIN_WALL_PAUSE_MS, MAX_WALL_PAUSE_MS),
+      wallResumeVx: randomInRange(random, -speed, speed) || speed,
       wallResumeVy: y <= bounds.minY ? Math.abs(speed * 0.55) : -Math.abs(speed * 0.55),
     };
   }
@@ -260,7 +249,7 @@ export function stepFishMovement(fish, elapsedMs, nowMs, options = {}) {
       movementStatus = 'idle';
       movement = {
         ...movement,
-        wallPauseUntilMs: nowMs + getRandomInRange(random, MIN_WALL_PAUSE_MS, MAX_WALL_PAUSE_MS),
+        wallPauseUntilMs: nowMs + randomInRange(random, MIN_WALL_PAUSE_MS, MAX_WALL_PAUSE_MS),
         wallResumeVx: inwardX * resumeSpeed,
         wallResumeVy: inwardY * resumeSpeed * 0.6,
       };

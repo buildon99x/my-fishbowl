@@ -1,11 +1,7 @@
-import { clamp } from '../../lib/utils.js';
+import { clamp, randomInRange } from '../../lib/utils.js';
 
 const TURN_DURATION_MS = 500;
 const MAX_TILT_DEGREES = 15;
-
-function getRandomInRange(random, min, max) {
-  return min + random() * (max - min);
-}
 
 function getVectorLength(vx, vy) {
   return Math.hypot(vx, vy);
@@ -50,7 +46,7 @@ export function createTargetVector(fish, random = Math.random) {
   }
 
   if (fish.behaviorStatus === 'wander') {
-    const angle = getRandomInRange(random, -1.05, 1.05);
+    const angle = randomInRange(random, -1.05, 1.05);
 
     return {
       vx: Math.cos(angle) * direction * speed * 0.72,
@@ -59,7 +55,7 @@ export function createTargetVector(fish, random = Math.random) {
     };
   }
 
-  const angle = getRandomInRange(random, -0.32, 0.32);
+  const angle = randomInRange(random, -0.32, 0.32);
 
   return {
     vx: Math.cos(angle) * direction * speed,

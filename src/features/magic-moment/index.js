@@ -6,13 +6,9 @@ import {
   MAGIC_PHASE_DURATIONS,
   MAGIC_QUEUE_MAX,
 } from './state.js';
+import { prefersReducedMotion } from '../../lib/utils.js';
 
 export { createMagicMomentState };
-
-function prefersReducedMotion() {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 function ensureOverlay() {
   // Attach to document.body so the overlay survives parent re-renders

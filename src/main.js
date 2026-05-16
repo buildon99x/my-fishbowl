@@ -141,11 +141,10 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
 
   const runFrame = (now) => {
     const result = tickFeeding(feedingState, aquarium.fishes, now);
-    const fishChanged = result.fishes !== aquarium.fishes;
 
     aquarium.fishes = result.fishes;
 
-    if ((fishChanged || result.didEat) && now - lastFeedingSavedMs >= FEEDING_SAVE_INTERVAL_MS) {
+    if (result.didEat || now - lastFeedingSavedMs >= FEEDING_SAVE_INTERVAL_MS) {
       aquarium.updatedAt = new Date().toISOString();
       saveAquarium(aquarium);
       lastFeedingSavedMs = now;
@@ -165,11 +164,6 @@ function startFeedingAnimation(root, aquarium, fishInputState, feedingState, app
     }
 
     appState.feedingAnimationId = null;
-
-    if (fishChanged || result.didEat) {
-      aquarium.updatedAt = new Date().toISOString();
-      saveAquarium(aquarium);
-    }
 
     if (feedingState.fishEating) {
       window.setTimeout(() => {

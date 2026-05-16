@@ -18,10 +18,6 @@ function getFishByTarget(aquarium, target) {
   return aquarium.fishes.find((f) => f.id === target.id) ?? null;
 }
 
-function updateFish(aquarium, target, patch) {
-  updateFishAppearance(aquarium, target.id, patch);
-}
-
 function thresholdsToAlgaeParams(thresholds) {
   const heavy = Math.max(1, thresholds.heavy);
   const maxLevel = Math.round((DEFAULT_ALGAE_THRESHOLDS.maxHours * 60) / DEFAULT_ALGAE_THRESHOLDS.intervalMinutes);
@@ -34,13 +30,13 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
   const onTransformChange = options.onTransformChange ?? null;
 
   panel.querySelector('[data-edit-prop-name]')?.addEventListener('input', (e) => {
-    updateFish(aquarium, target, { name: e.target.value });
+    updateFishAppearance(aquarium, target.id, { name: e.target.value });
   });
 
   panel.querySelector('[data-edit-prop-name]')?.addEventListener('change', (e) => {
     const trimmed = e.target.value.trim();
     if (!trimmed) {
-      updateFish(aquarium, target, { name: defaultName });
+      updateFishAppearance(aquarium, target.id, { name: defaultName });
       e.target.value = defaultName;
     }
     render();
@@ -48,7 +44,7 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
 
   panel.querySelector('[data-edit-prop-size]')?.addEventListener('input', (e) => {
     const size = Number(e.target.value);
-    updateFish(aquarium, target, { size });
+    updateFishAppearance(aquarium, target.id, { size });
     const display = panel.querySelector('[data-prop-size-value]');
     if (display) display.textContent = `${size}px`;
     const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
@@ -57,7 +53,7 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
 
   panel.querySelector('[data-edit-prop-rotation]')?.addEventListener('input', (e) => {
     const rotation = Number(e.target.value);
-    updateFish(aquarium, target, { rotation });
+    updateFishAppearance(aquarium, target.id, { rotation });
     const display = panel.querySelector('[data-prop-rotation-value]');
     if (display) display.textContent = `${rotation}°`;
     const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
@@ -67,7 +63,7 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
 
   panel.querySelector('[data-edit-prop-scale-x]')?.addEventListener('input', (e) => {
     const scaleX = Number(e.target.value);
-    updateFish(aquarium, target, { scaleX });
+    updateFishAppearance(aquarium, target.id, { scaleX });
     const display = panel.querySelector('[data-prop-scale-x-value]');
     if (display) display.textContent = scaleX.toFixed(2);
     const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
@@ -77,7 +73,7 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
 
   panel.querySelector('[data-edit-prop-scale-y]')?.addEventListener('input', (e) => {
     const scaleY = Number(e.target.value);
-    updateFish(aquarium, target, { scaleY });
+    updateFishAppearance(aquarium, target.id, { scaleY });
     const display = panel.querySelector('[data-prop-scale-y-value]');
     if (display) display.textContent = scaleY.toFixed(2);
     const sprite = root.querySelector(`[data-fish-sprite="${target.id}"]`);
@@ -88,20 +84,20 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
   panel.querySelector('[data-flip-prop]')?.addEventListener('click', () => {
     const item = getFishByTarget(aquarium, target);
     if (!item) return;
-    updateFish(aquarium, target, { flipped: !item.flipped });
+    updateFishAppearance(aquarium, target.id, { flipped: !item.flipped });
     render();
   });
 
   panel.querySelector('[data-flip-prop-y]')?.addEventListener('click', () => {
     const item = getFishByTarget(aquarium, target);
     if (!item) return;
-    updateFish(aquarium, target, { flippedY: !item.flippedY });
+    updateFishAppearance(aquarium, target.id, { flippedY: !item.flippedY });
     render();
   });
 
   panel.querySelector('[data-reset-prop-transform]')?.addEventListener('click', () => {
     const defaultSize = target.type === 'deco' ? DEFAULT_DECO_DEFAULTS.size : DEFAULT_FISH_DEFAULTS.size;
-    updateFish(aquarium, target, {
+    updateFishAppearance(aquarium, target.id, {
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
@@ -164,13 +160,13 @@ export function bindFishPropsEvents(root, aquarium, appState, saveAquarium, rend
   panel.querySelectorAll('[data-edit-prop-head-direction]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const direction = btn.dataset.editPropHeadDirection;
-      updateFish(aquarium, editingTarget, { headDirection: direction });
+      updateFishAppearance(aquarium, editingTarget.id, { headDirection: direction });
       render();
     });
   });
 
   panel.querySelector('[data-edit-prop-movement]')?.addEventListener('change', (e) => {
-    updateFish(aquarium, editingTarget, { movementEnabled: e.target.checked });
+    updateFishAppearance(aquarium, editingTarget.id, { movementEnabled: e.target.checked });
     render();
   });
 }
