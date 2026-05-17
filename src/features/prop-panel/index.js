@@ -25,6 +25,7 @@ export function bindActionClusterEvents(root, { fishInputState, propPanelState }
     const next = !fishInputState.isExpanded;
     fishInputState.isExpanded = next;
     fishInputState.sheetStage = next ? 'peek' : 'closed';
+    if (next) fishInputState.activeTab = 'catalog';
     render();
   });
 

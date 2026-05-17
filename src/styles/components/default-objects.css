@@ -4,7 +4,7 @@
   position: relative;
 }
 
-.prop-btn--default-objects.is-cta-pulse {
+.prop-btn.is-cta-pulse {
   animation: default-objects-cta-pulse 1s ease-in-out 1;
 }
 
@@ -32,7 +32,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .prop-btn--default-objects.is-cta-pulse {
+  .prop-btn.is-cta-pulse {
     animation: none;
     outline: 3px solid var(--color-primary);
     outline-offset: 4px;

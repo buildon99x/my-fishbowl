@@ -214,7 +214,11 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     const next = !state.isExpanded;
     updateState(
       state,
-      { isExpanded: next, sheetStage: next ? 'peek' : 'closed' },
+      {
+        isExpanded: next,
+        sheetStage: next ? 'peek' : 'closed',
+        activeTab: next ? 'catalog' : state.activeTab,
+      },
       render,
     );
   });
