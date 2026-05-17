@@ -2,7 +2,7 @@
 
 ## 상태
 
-- 상태: draft
+- 상태: ready
 - 구현 여부: not-started
 - 검증 여부: not-tested
 
