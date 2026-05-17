@@ -6,6 +6,8 @@
 - 구현 여부: not-started
 - 검증 여부: not-tested
 
+> **MVP 범위 = Google only**: 본 스펙은 설계상 Google과 Apple을 함께 다루지만, **Phase 2 구현은 Google 흐름만**을 대상으로 한다. Apple Sign-In(P8 키, ES256 client_secret 동적 생성, production-only 콜백, 6개월 키 rotation 운영 노트)은 **Phase 2 부록 — deferred**로 둔다. 본문에서 “Apple”로 표기된 모든 구현 항목은 iOS 사용 비중이 임계치를 넘어 별도 ready 판단이 떨어진 시점에 활성화한다. Google 단독 구현 시점에는 `VITE_APPLE_ENABLED=false`로 고정하고 라우트/시크릿/UI 어디에도 Apple 분기를 마운트하지 않는다.
+
 ## 부모 / 의존 스펙
 
 - 부모: `docs/spec/S-025-backend-foundation.md` (ready) — 결정 항목 2-1(OAuth), 4(API 표면), 9(관측), 10(환경 분리).

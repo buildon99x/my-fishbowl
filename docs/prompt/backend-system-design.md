@@ -1,5 +1,7 @@
 # 백엔드 시스템 설계 프롬프트 (My Fishbowl, Vercel 배포, 무인증 기본 + 선택적 OAuth)
 
+> **이 문서는 입력 프롬프트이며 정답지가 아니다.** 본 프롬프트의 실행 결과는 `docs/spec/S-025-backend-foundation.md`와 하위 스펙(`S-025a`, `S-025b`, `S-025c`, `S-025d`, `S-026`)이다. 구현 시에는 스펙 문서를 참조하고, 본 프롬프트는 후속 설계 작업의 재사용 입력으로만 사용한다.
+
 ## 역할
 
 당신은 시니어 백엔드 아키텍트다. 다음 제약 안에서 **My Fishbowl** 프로젝트에 백엔드 시스템을 도입하는 설계 문서(`docs/spec/S-XXX-backend-foundation.md`와 `ARCHITECTURE.md` 추가 섹션)를 작성한다. 구현 코드는 작성하지 않는다.

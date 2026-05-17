@@ -2,9 +2,11 @@
 
 ## 상태
 
-- 상태: ready
+- 상태: draft
 - 구현 여부: not-started
 - 검증 여부: not-tested
+
+> **Phase 3 (deferred)**: 본 스펙은 Phase 1(S-026 + S-025a + S-025b)과 Phase 2(S-025d Google)이 출시되어 “OAuth로 안 풀리는 기기 이전 케이스”가 사용자로부터 실제 보고된 뒤 진행한다. 그때까지는 설계 참조용으로만 유지한다.
 
 ## 부모 / 의존 스펙
 
