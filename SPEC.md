@@ -54,6 +54,13 @@
 | S-021 | Draw-to-Life Magic Moment | draft | done | not-tested | `docs/spec/S-021-magic-moment.md` |
 | S-022 | Sound system | draft | done | not-tested | `docs/spec/S-022-sound-system.md` |
 | S-023 | First-entry onboarding | draft | done | not-tested | `docs/spec/S-023-onboarding.md` |
+| S-025 | Backend Foundation (Vercel, 무인증 기본 + 선택적 OAuth) | ready | not-started | not-tested | `docs/spec/S-025-backend-foundation.md` |
+| S-025a | 디바이스 ID + 서버 저장소 어댑터 (MVP) | ready | not-started | not-tested | `docs/spec/S-025a-device-id-and-storage-adapter.md` |
+| S-025b | 이미지 업로드 파이프라인 (Blob 분리) | ready | not-started | not-tested | `docs/spec/S-025b-image-pipeline.md` |
+| S-025c | 복구 코드 (Recovery Code) | draft | not-started | not-tested | `docs/spec/S-025c-recovery-code.md` |
+| S-025d | OAuth (Google MVP, Apple Phase 2) | ready | not-started | not-tested | `docs/spec/S-025d-oauth-google-apple.md` |
+| S-026 | 부모 영역 진입 게이트 | ready | not-started | not-tested | `docs/spec/S-026-parent-area-gate.md` |
+| S-027 | 어항 JSON 내보내기/불러오기 | ready | not-started | not-tested | `docs/spec/S-027-aquarium-json-export-import.md` |
 
 ## 상태 값
 
@@ -69,6 +76,16 @@
   - `docs/spec/S-007-algae-system.md`
   - `docs/spec/S-008-aquarium-cleaning.md`
   - `docs/spec/S-011-fish-list-scroll-preservation.md`
+
+## 백엔드 시리즈(S-025~S-027) 권장 구현 순서
+
+5개 백엔드 스펙은 동시에 ready 상태이지만 **단일 가치 도달을 우선**하여 다음 단계로 분할 구현한다.
+
+- **Phase 0 (사전 단계, 백엔드 무관)**: `S-027` 어항 JSON 내보내기/불러오기. 1~2 PR로 부모 사용자의 즉시 백업 욕구를 충족하며, 본 백엔드 시리즈 검증 기간의 안전망을 제공한다.
+- **Phase 1 (인프라 + 진짜 백업)**: `S-026` → `S-025a` → `S-025b`. 출시 시점에 “이 어항이 서버에 저장된다”가 의미를 갖는 최소 묶음. Phase 1 종료 후 텔레메트리로 멀티 디바이스 수요를 측정.
+- **Phase 2 (Google OAuth)**: `S-025d` (Google 흐름만). Apple Sign-In은 본 스펙 안에서 Phase 2 부록(deferred)으로 분리됨. iOS 사용 비중이 임계치를 넘으면 별도 ready 판단.
+- **Phase 3 (복구 코드)**: `S-025c`. Phase 1~2 출시 후 OAuth로 풀리지 않는 “종이 코드 기반 기기 이전” 케이스가 실제 보고된 뒤 ready로 전환.
+- **Phase 후속**: `S-025e`(관측), `S-025f`(가정 내 형제 멀티 프로필) — 본 시리즈가 안정화된 뒤 별도 스펙 작성.
 
 ## 스펙 상세 문서 규칙
 
