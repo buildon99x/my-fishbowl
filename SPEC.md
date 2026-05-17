@@ -62,7 +62,7 @@
 | S-026 | 부모 영역 진입 게이트 | ready | not-started | not-tested | `docs/spec/S-026-parent-area-gate.md` |
 | S-027 | 어항 JSON 내보내기/불러오기 | ready | not-started | not-tested | `docs/spec/S-027-aquarium-json-export-import.md` |
 | S-028 | Layout Grid 토큰화 + Dock/Drawer 골격 | done | done | tested | `docs/spec/S-028-layout-grid-tokens.md` |
-| S-029 | Bottom Sheet 등록 UI + 키보드 인셋 처리 | ready | not-started | not-tested | `docs/spec/S-029-bottom-sheet-fish-input.md` |
+| S-029 | Bottom Sheet 등록 UI + 키보드 인셋 처리 | done | done | tested | `docs/spec/S-029-bottom-sheet-fish-input.md` |
 | S-030 | 단일 탭 → prop-panel 자동 + Long-press 드래그 | ready | not-started | not-tested | `docs/spec/S-030-tap-gesture-simplification.md` |
 | S-031 | ➕ 추가 시트 통합 + 청소 모드 끝내기 버튼 | ready | not-started | not-tested | `docs/spec/S-031-unified-add-sheet-cleaning-exit.md` |
 | S-032 | 토큰 축소 + Chrome Idle Auto-fade + Focus-visible | ready | not-started | not-tested | `docs/spec/S-032-tokens-and-polish.md` |

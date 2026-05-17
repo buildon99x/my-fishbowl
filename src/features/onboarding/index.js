@@ -123,7 +123,10 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
       const cta = overlay.querySelector('[data-onboarding-cta]');
       cta?.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (fishInputState) fishInputState.isExpanded = true;
+        if (fishInputState) {
+          fishInputState.isExpanded = true;
+          fishInputState.sheetStage = 'peek';
+        }
         onSeq1Plus?.();
         activity();
         advance(2);

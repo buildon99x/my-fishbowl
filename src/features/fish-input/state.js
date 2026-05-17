@@ -1,33 +1,6 @@
 export const FISH_DRAFT_STORAGE_KEY = 'my-fishbowl:fish-draft';
 export const DEFAULT_FISH_NAME = '이름 없는 친구';
 
-const POSITION_KEY = 'my-fishbowl:fish-input-pos';
-
-function loadSavedPosition() {
-  try {
-    const raw = localStorage.getItem(POSITION_KEY);
-    if (!raw) return null;
-    const pos = JSON.parse(raw);
-    if (typeof pos.x === 'number' && typeof pos.y === 'number') {
-      return {
-        x: Math.max(0, Math.min(pos.x, window.innerWidth - 200)),
-        y: Math.max(0, Math.min(pos.y, window.innerHeight - 80)),
-      };
-    }
-  } catch {
-    return null;
-  }
-  return null;
-}
-
-export function saveFishInputPosition(pos) {
-  try {
-    localStorage.setItem(POSITION_KEY, JSON.stringify(pos));
-  } catch {
-    // storage unavailable
-  }
-}
-
 function normalizeType(value) {
   return value === 'deco' ? 'deco' : 'fish';
 }
@@ -44,7 +17,7 @@ export function createFishInputState() {
     type: normalizeType(draft?.type),
     movementEnabled: draft?.movementEnabled !== false,
     isExpanded: false,
-    position: loadSavedPosition(),
+    sheetStage: 'closed',
   };
 }
 

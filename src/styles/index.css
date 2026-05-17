@@ -11,4 +11,5 @@
 @import './components/onboarding.css';
 @import './components/default-objects.css';
 @import './components/drawer.css';
+@import './components/bottom-sheet.css';
 @import './utilities.css';

@@ -6,16 +6,12 @@ const STATUS_TEXT = {
   invalid: '이 파일은 등록할 수 없어요.',
 };
 
-function positionStyle(pos) {
-  if (!pos) return '';
-  return ` style="left:${pos.x}px;top:${pos.y}px;right:auto;bottom:auto;"`;
-}
-
 export function renderFishInputPanel(state) {
   if (!state.isExpanded) {
     return '';
   }
 
+  const stage = state.sheetStage === 'full' ? 'full' : 'peek';
   const hasSprite = Boolean(state.spriteDataUrl);
   const canRegister = hasSprite && state.status !== 'invalid';
   const statusMessage = state.message || STATUS_TEXT[state.status] || STATUS_TEXT.idle;
@@ -30,8 +26,24 @@ export function renderFishInputPanel(state) {
     : '가만히 있어요. 배경을 꾸며요';
 
   return `
-    <section class="fish-input-widget" aria-labelledby="fish-input-title"${positionStyle(state.position)}>
-      <div class="prop-panel-header" data-fish-input-drag-handle>
+    <div class="fish-input-backdrop" data-fish-input-backdrop aria-hidden="true"></div>
+    <section
+      class="fish-input-widget bottom-sheet"
+      data-sheet-stage="${stage}"
+      aria-labelledby="fish-input-title"
+      role="dialog"
+      aria-modal="false"
+    >
+      <button
+        type="button"
+        class="bottom-sheet-grabber"
+        data-fish-input-grabber
+        aria-label="시트 펼치기/접기"
+      >
+        <span class="bottom-sheet-grabber-bar" aria-hidden="true"></span>
+      </button>
+
+      <header class="bottom-sheet-header">
         <div class="prop-panel-identity">
           <span class="prop-panel-thumb-icon" aria-hidden="true">➕</span>
           <div class="prop-panel-title-group">
@@ -39,9 +51,9 @@ export function renderFishInputPanel(state) {
           </div>
         </div>
         <button class="prop-action-btn" type="button" data-toggle-fish-input aria-label="닫기" title="닫기">×</button>
-      </div>
+      </header>
 
-      <div class="fish-input-panel">
+      <div class="bottom-sheet-body fish-input-panel">
         <div class="fish-input-status" aria-live="polite">
           <p>${escapeHtml(statusMessage)}</p>
         </div>
@@ -107,16 +119,13 @@ export function renderFishInputPanel(state) {
             <div class="draw-toolbar">
               <span>그리기</span>
               <div class="draw-toolbar-actions">
-                <button class="button button-primary fish-input-register-btn" type="button" data-register-fish-image ${canRegister ? '' : 'disabled'}>
-                  등록
-                </button>
                 <button class="button button-secondary" type="button" data-clear-drawing>지우기</button>
               </div>
             </div>
             <canvas
               class="fish-drawing-canvas"
-              width="480"
-              height="320"
+              width="720"
+              height="480"
               data-fish-canvas
               aria-label="오브젝트 그리기"
             ></canvas>
@@ -133,6 +142,15 @@ export function renderFishInputPanel(state) {
           </div>
         </div>
       </div>
+
+      <footer class="bottom-sheet-footer">
+        <button
+          class="button button-primary fish-input-register-btn"
+          type="button"
+          data-register-fish-image
+          ${canRegister ? '' : 'disabled'}
+        >등록</button>
+      </footer>
     </section>
   `;
 }
