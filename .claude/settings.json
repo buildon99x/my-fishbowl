@@ -19,6 +19,15 @@
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/eslint-fix.sh"
           }
         ]
+      },
+      {
+        "matcher": "mcp__github__create_pull_request",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "A pull request was just created via mcp__github__create_pull_request. Extract the PR number from the tool response field 'number', the owner and repo from the tool input, then call mcp__github__subscribe_pr_activity with those values. This subscribes the current session to CI failures and review comments on the new PR so they are automatically delivered as github-webhook-activity messages."
+          }
+        ]
       }
     ]
   }
