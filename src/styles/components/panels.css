@@ -161,7 +161,7 @@
 .prop-control-value {
   font-size: var(--text-caption-uc);
   font-weight: 600;
-  color: var(--color-brand-pink);
+  color: var(--color-brand-teal);
 }
 
 .prop-control-input {
@@ -178,7 +178,7 @@
 }
 
 .prop-control-input:focus {
-  outline: 2px solid var(--color-brand-pink);
+  outline: 2px solid var(--color-brand-teal);
   outline-offset: -1px;
 }
 
@@ -196,7 +196,7 @@
 }
 
 .prop-control-number:focus {
-  outline: 2px solid var(--color-brand-pink);
+  outline: 2px solid var(--color-brand-teal);
   outline-offset: -1px;
 }
 
@@ -220,7 +220,7 @@
   width: 100%;
   height: 28px;
   cursor: pointer;
-  accent-color: var(--color-brand-pink);
+  accent-color: var(--color-brand-teal);
 }
 
 .prop-size-row .prop-control-range {
@@ -255,8 +255,8 @@
 }
 
 .prop-toggle-btn.is-active {
-  background: var(--color-brand-pink);
-  border-color: var(--color-brand-pink);
+  background: var(--color-brand-teal);
+  border-color: var(--color-brand-teal);
   color: #fff;
 }
 
@@ -274,7 +274,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: var(--color-brand-pink);
+  accent-color: var(--color-brand-teal);
 }
 
 /* Action buttons */
