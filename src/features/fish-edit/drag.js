@@ -74,11 +74,12 @@ function bindPinchResize(sprite, aquarium, fishId, appState, render) {
     const pts = [...activePointers.values()];
     const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
     const scale = dist / initialDistance;
-    const nextSize = clamp(initialSize * scale, 0.4, 2.5);
+    // fish.size is stored in pixels; the panel slider range is 60..220.
+    const nextSize = clamp(initialSize * scale, 60, 220);
     const fish = getFishById(aquarium, fishId);
     if (!fish) return;
     fish.size = nextSize;
-    sprite.style.setProperty('--fish-size', String(nextSize));
+    sprite.style.setProperty('--fish-size', `${nextSize}px`);
     const slider = document.querySelector('.prop-panel input[type="range"][data-prop-size]');
     if (slider) slider.value = String(nextSize);
   });
