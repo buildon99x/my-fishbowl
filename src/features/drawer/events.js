@@ -18,4 +18,11 @@ export function bindDrawerEvents(root, appState, { render }) {
   openBtn?.addEventListener('click', open);
   closeBtn?.addEventListener('click', close);
   backdrop?.addEventListener('click', close);
+
+  // Help link sits inside the drawer body. When the user taps it, the
+  // onboarding resets — but the drawer would still cover the restarted
+  // onboarding step. Close the drawer first so the overlay is visible.
+  root.querySelector('[data-onboarding-help]')?.addEventListener('click', () => {
+    appState.drawerOpen = false;
+  });
 }
