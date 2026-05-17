@@ -82,7 +82,7 @@ export function clearAlgaeCanvas(canvas) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-export { renderCleaningProgressBar, renderCleaningOverlay } from './view.js';
+export { renderCleaningProgressBar, renderCleaningOverlay, renderCleaningExitButton } from './view.js';
 
 export function exitCleaningMode(cleaningState) {
   if (cleaningState.completionTimer) {
@@ -110,6 +110,13 @@ function addTouchRipple(overlay, clientX, clientY) {
 
 export function bindCleaningEvents(root, aquarium, appState, { render, save }) {
   const { cleaningState } = appState;
+
+  // Sticky exit button is rendered even when the overlay is gone (e.g. between
+  // ticks); bind it before the overlay early-return.
+  root.querySelector('[data-cleaning-exit]')?.addEventListener('click', () => {
+    exitCleaningMode(cleaningState);
+    render();
+  });
 
   const overlay = root.querySelector('[data-cleaning-overlay]');
   if (!overlay) return;

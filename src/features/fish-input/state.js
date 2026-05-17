@@ -18,6 +18,7 @@ export function createFishInputState() {
     movementEnabled: draft?.movementEnabled !== false,
     isExpanded: false,
     sheetStage: 'closed',
+    activeTab: 'catalog',
   };
 }
 

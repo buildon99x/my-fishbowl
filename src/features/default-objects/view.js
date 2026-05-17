@@ -41,45 +41,22 @@ function renderGroup(type, entries) {
   `;
 }
 
-export function renderDefaultObjectsModal(state) {
-  if (!state?.open) return '';
+export function renderDefaultObjectsCatalog() {
   const fish = DEFAULT_OBJECTS_MANIFEST.filter((e) => e.type === 'fish');
   const deco = DEFAULT_OBJECTS_MANIFEST.filter((e) => e.type === 'deco');
   const empty = DEFAULT_OBJECTS_MANIFEST.length === 0;
 
   return `
-    <div class="default-objects-backdrop" data-default-objects-backdrop role="presentation"></div>
-    <div
-      class="default-objects-modal"
-      data-default-objects-modal
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="default-objects-title"
-    >
-      <header class="default-objects-modal-header">
-        <h2 class="default-objects-modal-title" id="default-objects-title">
-          <span aria-hidden="true">🎁</span>
-          기본 오브젝트
-          <span class="default-objects-modal-title-en" aria-hidden="true">Default Objects</span>
-        </h2>
-        <button
-          class="default-objects-close"
-          type="button"
-          data-default-objects-close
-          aria-label="닫기"
-        >✕</button>
-      </header>
-      <div class="default-objects-modal-body">
-        ${empty ? `
-          <div class="default-objects-empty">
-            <span class="default-objects-empty-emoji" aria-hidden="true">❓</span>
-            <p>기본 오브젝트가 비어 있어요.</p>
-          </div>
-        ` : `
-          ${renderGroup('fish', fish)}
-          ${renderGroup('deco', deco)}
-        `}
-      </div>
+    <div class="default-objects-modal-body" data-default-objects-modal>
+      ${empty ? `
+        <div class="default-objects-empty">
+          <span class="default-objects-empty-emoji" aria-hidden="true">❓</span>
+          <p>기본 오브젝트가 비어 있어요.</p>
+        </div>
+      ` : `
+        ${renderGroup('fish', fish)}
+        ${renderGroup('deco', deco)}
+      `}
     </div>
   `;
 }

@@ -232,6 +232,14 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     state.movementEnabled = event.target.value !== 'off';
   });
 
+  root.querySelectorAll('[data-fish-input-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset.fishInputTab === 'create' ? 'create' : 'catalog';
+      if (state.activeTab === next) return;
+      updateState(state, { activeTab: next }, render);
+    });
+  });
+
   root.querySelectorAll('[data-fish-prop-type]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const next = btn.dataset.fishPropType === 'deco' ? 'deco' : 'fish';
