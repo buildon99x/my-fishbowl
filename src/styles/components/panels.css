@@ -393,6 +393,23 @@
   transform: translate(-50%, 0);
 }
 
+/* Touch devices have no hover state, so the tooltip would never appear.
+   Show it persistently — slightly smaller — so iPad users can read the
+   label without long-pressing. */
+@media (hover: none) {
+  .prop-btn-wrap::before {
+    opacity: 0.92;
+    transform: translate(-50%, 0);
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+}
+
+/* Hide the tooltip when the feed submenu is open (same anchor point). */
+.prop-btn-wrap:has(.prop-feed-submenu.is-visible)::before {
+  opacity: 0;
+}
+
 .prop-btn {
   display: flex;
   align-items: center;

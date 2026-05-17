@@ -102,7 +102,7 @@ function renderPanelShell(entity, target, typeBadge, contentHtml, pos, propPanel
           data-close-prop-panel
           title="닫기"
           aria-label="닫기"
-        >❌</button>
+        >×</button>
       </div>
       <div class="prop-panel-body">
         ${typeControl}
@@ -124,7 +124,7 @@ function renderUnsupportedProp(target, pos) {
           data-close-prop-panel
           title="닫기"
           aria-label="닫기"
-        >❌</button>
+        >×</button>
       </div>
       <div class="prop-panel-body">
         <p class="prop-unsupported">지원되지 않는 타입입니다: ${escapeHtml(target.type)}</p>
