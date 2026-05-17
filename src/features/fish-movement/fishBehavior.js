@@ -1,4 +1,4 @@
-import { clamp } from '../../lib/utils.js';
+import { clamp, randomInRange } from '../../lib/utils.js';
 
 const BEHAVIOR_STATUSES = ['cruising', 'idle', 'dart', 'wander', 'turning'];
 
@@ -9,12 +9,8 @@ const MOUSE_AVOID_DISTANCE = 80;
 
 const PREFERRED_DEPTHS = ['top', 'middle', 'bottom'];
 
-function randomInRange(random, min, max) {
-  return min + random() * (max - min);
-}
-
 function choosePreferredDepth(random) {
-  return PREFERRED_DEPTHS[Math.min(Math.floor(random() * PREFERRED_DEPTHS.length), PREFERRED_DEPTHS.length - 1)];
+  return PREFERRED_DEPTHS[Math.floor(random() * PREFERRED_DEPTHS.length)];
 }
 
 function normalizeBehaviorStatus(value) {

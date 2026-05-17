@@ -87,10 +87,15 @@ export function renderFishList(fishes, selectedFishId, editingTarget) {
 }
 
 function renderCountChips(fishes) {
-  const visible = fishes.filter((item) => !item?.pendingDelete);
-  const fishCount = visible.filter((item) => getPropType(item) === 'fish').length;
-  const decoCount = visible.filter((item) => getPropType(item) === 'deco').length;
-  const totalCount = visible.length;
+  let fishCount = 0;
+  let decoCount = 0;
+  let totalCount = 0;
+  for (const item of fishes) {
+    if (item?.pendingDelete) continue;
+    totalCount += 1;
+    if (getPropType(item) === 'fish') fishCount += 1;
+    else decoCount += 1;
+  }
 
   return `
     <div class="prop-count-chips" aria-label="오브젝트 카운트">
