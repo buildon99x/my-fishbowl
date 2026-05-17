@@ -56,7 +56,9 @@
 
 .aquarium-status {
   position: fixed;
-  top: 18px;
+  /* 76px = 16px(button top) + 48px(button) + 12px(gap) so the right-rail
+     buttons (🔊 mute, ❓ help) sit above this panel instead of on top of it. */
+  top: 76px;
   right: 22px;
   z-index: 20;
   width: min(280px, 100%);
