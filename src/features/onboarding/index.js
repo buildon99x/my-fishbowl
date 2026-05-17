@@ -5,9 +5,9 @@ import {
   resetOnboarding,
   saveOnboardingState,
 } from './state.js';
-import { renderCanvasOutlineGuide, renderHelpButton, renderOnboardingOverlay } from './view.js';
+import { renderCanvasOutlineGuide, renderOnboardingOverlay } from './view.js';
 
-export { renderHelpButton, renderOnboardingOverlay };
+export { renderOnboardingOverlay };
 
 const IDLE_NOTIFY_MS = 30000;
 const PULSE_MAX = 3;

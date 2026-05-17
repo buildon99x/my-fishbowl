@@ -23,9 +23,9 @@
 .prop-action-panel {
   position: fixed;
   left: 50%;
-  bottom: 18px;
+  bottom: var(--dock-bottom);
   transform: translateX(-50%);
-  z-index: 30;
+  z-index: var(--z-dock);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -36,13 +36,10 @@
 
 .prop-panel {
   position: fixed;
-  /* Anchor to the left rail (below the page-header) so the panel no longer
-     depends on aquarium-status width. Previously the right-edge calc was
-     tuned for mobile-only (220px) and broke on desktop. */
-  top: 110px;
-  left: 22px;
-  z-index: 10;
-  width: min(320px, calc(100vw - 44px));
+  top: calc(var(--safe-top) + 64px);
+  left: var(--safe-left);
+  z-index: var(--z-panel);
+  width: min(320px, calc(100vw - var(--safe-left) - var(--safe-right)));
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-xl);
   background: var(--color-surface-soft);
@@ -615,8 +612,6 @@
 
 @media (max-width: 760px) {
   .prop-panel {
-    top: 84px;
-    left: 12px;
-    width: min(260px, calc(100vw - 24px));
+    width: min(260px, calc(100vw - var(--safe-left) - var(--safe-right)));
   }
 }

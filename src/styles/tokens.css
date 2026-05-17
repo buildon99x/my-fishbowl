@@ -80,6 +80,32 @@
   --tracking-display-sm: -0.5px;
   --tracking-title-lg: -0.3px;
   --tracking-caption-uc: 1.5px;
+
+  /* Layout — safe areas, dock, drawer, keyboard inset (S-028) */
+  --safe-top: max(16px, env(safe-area-inset-top));
+  --safe-bottom: max(16px, env(safe-area-inset-bottom));
+  --safe-left: max(16px, env(safe-area-inset-left));
+  --safe-right: max(16px, env(safe-area-inset-right));
+  --dock-height: 68px;
+  --dock-bottom: calc(var(--safe-bottom) + 2px);
+  --drawer-width: 0px;
+  --drawer-width-open: 320px;
+  --keyboard-inset: 0px;
+
+  /* z-index scale */
+  --z-chrome: 20;
+  --z-panel: 30;
+  --z-dock: 40;
+  --z-overlay: 50;
+  --z-modal: 200;
+  --z-toast: 1000;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --dock-height: 60px;
+    --dock-bottom: calc(var(--safe-bottom) - 4px);
+  }
 }
 
 .display {
