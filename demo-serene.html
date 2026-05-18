@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시안 B — Serene Aquatic · My Fishbowl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
+    <link rel="stylesheet" href="/src/demos/serene.css" />
+  </head>
+  <body>
+    <a class="demo-switch" href="/demo-claymorphism.html">← 시안 A 보기</a>
+
+    <main class="page">
+      <header class="page-header">
+        <p class="eyebrow">Proposal B · Serene Aquatic</p>
+        <h1 class="display"><em>quiet</em> companion on your desk</h1>
+        <p class="lede">차분한 응시 · 글래스 컨트롤 · 호흡하는 어항</p>
+      </header>
+
+      <section class="stage" aria-label="가상 어항 미리보기">
+        <p class="caption">My Fishbowl</p>
+        <h2 class="aquarium-name">Tideglass</h2>
+
+        <div class="aquarium-bowl">
+          <svg class="bubble-layer" viewBox="0 0 400 280" aria-hidden="true">
+            <circle cx="80" cy="240" r="3" class="bubble" style="--d:0s" />
+            <circle cx="180" cy="220" r="4" class="bubble" style="--d:1.8s" />
+            <circle cx="290" cy="250" r="3" class="bubble" style="--d:3s" />
+            <circle cx="340" cy="230" r="4" class="bubble" style="--d:0.9s" />
+          </svg>
+          <div class="fish fish-a" aria-hidden="true">🐟</div>
+          <div class="fish fish-b" aria-hidden="true">🐠</div>
+          <div class="fish deco" aria-hidden="true">🪸</div>
+        </div>
+
+        <div class="glass-controls" role="toolbar" aria-label="액션">
+          <button class="ctl" type="button" aria-label="추가">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+          <button class="ctl" type="button" aria-label="먹이주기">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" /><circle cx="6" cy="8" r="1.2" /><circle cx="18" cy="9" r="1.2" /><circle cx="7" cy="17" r="1.2" /><circle cx="17" cy="16" r="1.2" />
+            </svg>
+          </button>
+          <button class="ctl" type="button" aria-label="청소">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21l3-8 5-5 8 8-5 5-8 3z" /><path d="M14 6l4 4" />
+            </svg>
+          </button>
+          <button class="ctl" type="button" aria-label="사운드">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 5L6 9H3v6h3l5 4V5z" /><path d="M16 9a4 4 0 010 6" />
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <section class="meta">
+        <article class="meta-card">
+          <h3>코코 <span>· fish</span></h3>
+          <dl>
+            <div><dt>크기</dt><dd>중간</dd></div>
+            <div><dt>속도</dt><dd>느림</dd></div>
+            <div><dt>등록일</dt><dd>3일 전</dd></div>
+          </dl>
+          <button class="link" type="button">상세 편집 →</button>
+        </article>
+
+        <article class="meta-card">
+          <h3>Tokens</h3>
+          <div class="swatches">
+            <span style="--c:#0F766E">teal</span>
+            <span style="--c:#C9A961" data-dark>gold</span>
+            <span style="--c:#F8F7F4" data-dark>canvas</span>
+            <span style="--c:#111827">ink</span>
+            <span style="--c:#BAE6FD" data-dark>aqua-lt</span>
+            <span style="--c:#0369A1">aqua-dk</span>
+          </div>
+          <p class="muted">Lora · Pretendard · WCAG AAA contrast</p>
+        </article>
+
+        <article class="meta-card">
+          <h3>Motion</h3>
+          <p class="muted">호흡 펄스 · 8s · opacity .98 ↔ 1</p>
+          <p class="muted">전환 250-400ms · ease-out</p>
+          <p class="muted">overshoot 없음</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
