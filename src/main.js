@@ -192,6 +192,14 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   const render = () => renderApp(root, aquarium, fishInputState, feedingState, appState);
 
   const { cleaningState } = appState;
+
+  // S-034: cleaning mode owns the canvas; close all editing surfaces
+  // before render so they can't shadow the cleaning brush hit area.
+  if (cleaningState.cleaningMode) {
+    appState.propPanel.editingTarget = null;
+    fishInputState.isExpanded = false;
+  }
+
   const visibleProps = aquarium.fishes.filter((p) => !p.pendingDelete);
   const editingTargetId = appState.propPanel.editingTarget?.id ?? null;
 
