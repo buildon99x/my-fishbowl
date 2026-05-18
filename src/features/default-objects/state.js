@@ -2,10 +2,10 @@ const CTA_SEEN_KEY = 'defaultObjects.cta.seen';
 const DEBOUNCE_MS = 200;
 
 export function createDefaultObjectsState() {
+  // S-031: `open` was for the standalone modal; the catalog now always lives
+  // inside the ➕ sheet tab so visibility is owned by fishInputState.
   return {
-    open: false,
     lastClickAt: new Map(),
-    pendingIds: new Set(),
     ctaPulseShownThisSession: false,
   };
 }
