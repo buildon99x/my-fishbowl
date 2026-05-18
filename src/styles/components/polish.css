@@ -20,14 +20,19 @@ body[data-activity="idle"] .chrome:focus-within {
   }
 }
 
-/* Focus-visible outline for all dock/drawer/prop buttons. */
+/* Focus-visible outline — single source of truth for dock/drawer/sheet/sticky
+   buttons. New chrome elements should add their selector here rather than
+   defining a local :focus-visible rule. */
 .prop-btn:focus-visible,
 .prop-action-btn:focus-visible,
 .drawer-menu-btn:focus-visible,
 .drawer-close-btn:focus-visible,
 .drawer-help-link:focus-visible,
 .fish-action-button:focus-visible,
-.sound-mute-toggle:focus-visible {
+.sound-mute-toggle:focus-visible,
+.fish-input-tab:focus-visible,
+.cleaning-exit-btn:focus-visible,
+.bottom-sheet-grabber:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-brand-ochre) 60%, transparent);
   outline-offset: 3px;
 }
