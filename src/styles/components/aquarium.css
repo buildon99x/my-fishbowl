@@ -174,13 +174,74 @@
   width: 100%;
   height: 100%;
 }
+/* S-035: 4세 어린이가 글을 못 읽어도 행동을 유도하도록 ➕ 아이콘과
+   dock(아래) 방향 화살표를 함께 보여준다. */
 .aquarium-empty {
   position: absolute;
   left: 50%;
-  top: 57%;
+  top: 50%;
   z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
   color: var(--color-muted-soft);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.aquarium-empty-icon {
+  font-size: clamp(32px, 5vw, 64px);
+  line-height: 1;
+}
+
+.aquarium-empty-text {
+  margin: 0;
   font-size: clamp(14px, 1.4vw, var(--text-title-md));
   font-weight: 500;
-  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.aquarium-empty-arrow {
+  font-size: clamp(20px, 2.5vw, 32px);
+  line-height: 1;
+  animation: aquarium-empty-bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes aquarium-empty-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aquarium-empty-arrow {
+    animation: none;
+  }
+}
+
+/* drawer 내부 fish-list 빈 상태도 동일한 시각 언어를 사용 */
+.fish-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-lg) var(--space-md);
+  color: var(--color-muted);
+}
+
+.fish-list-empty-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.fish-list-empty-text {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  text-align: center;
+}
+
+.fish-list-empty-arrow {
+  font-size: 20px;
+  line-height: 1;
+  animation: aquarium-empty-bounce 1.6s ease-in-out infinite;
 }

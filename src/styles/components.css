@@ -14,81 +14,32 @@
   gap: var(--space-sm);
 }
 
-.aquarium-status-toggle {
+/* S-035: drawer 안 fish-list는 항상 펼침. 토글 버튼 제거. */
+.aquarium-status-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-sm);
-  width: 100%;
-  min-height: 52px;
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm);
-  color: var(--color-ink);
-  text-align: left;
-  background: var(--color-canvas);
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(10, 10, 10, 0.04);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  margin-bottom: var(--space-sm);
 }
 
-.aquarium-status-toggle:hover {
-  border-color: var(--color-ink);
-  background: var(--color-surface-soft);
-}
-
-.aquarium-status-toggle:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--color-brand-ochre) 50%, transparent);
-  outline-offset: 2px;
-}
-
-.aquarium-status-toggle-copy {
-  display: grid;
-  gap: var(--space-xxs);
-  min-width: 0;
-}
-
-.aquarium-status-toggle-copy span:first-child {
+.aquarium-status-title {
   font-size: var(--text-title-md);
   font-weight: 600;
   color: var(--color-ink);
+  margin: 0;
 }
 
-.aquarium-status-toggle-copy span:last-child {
+.aquarium-status-count {
   color: var(--color-muted);
   font-size: var(--text-caption);
   font-weight: 500;
 }
 
-.aquarium-status-toggle-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xxs);
-  flex: 0 0 auto;
-  min-width: 68px;
-  border: 1px solid var(--color-ink);
-  border-radius: var(--radius-sm);
-  padding: var(--space-xs) var(--space-sm);
-  color: var(--color-on-primary);
-  font-size: var(--text-caption-uc);
-  font-weight: 600;
-  text-align: center;
-  background: var(--color-primary);
-}
-
-.aquarium-status-toggle-icon span:first-child {
-  width: 14px;
-  font-size: var(--text-title-sm);
-  line-height: 1;
-}
-
 .aquarium-status-body {
-  margin-top: var(--space-md);
-}
-
-.aquarium-status.is-collapsed {
-  padding-block: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
 .status-list div {
@@ -124,13 +75,6 @@
   margin-top: 14px;
   overflow: auto;
   padding-right: 2px;
-}
-
-.fish-list-empty {
-  margin-top: var(--space-md);
-  color: var(--color-muted);
-  font-size: var(--text-caption);
-  font-weight: 500;
 }
 
 .fish-list-item {
@@ -187,18 +131,25 @@
 
 .fish-list-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xxs);
+  flex-wrap: nowrap;
+  gap: var(--space-sm); /* S-035: ≥12px spacing between hide / delete */
   justify-content: flex-end;
 }
 
+/* S-035: 44x44 hit target sized for 4세 어린이 손가락. The icon-only
+   buttons replace 편집/감추기/삭제 text labels; aria-label provides the
+   accessible name. */
 .fish-action-button {
-  min-height: 32px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-sm);
-  padding: var(--space-xxs) var(--space-sm);
+  padding: 0;
   color: var(--color-ink);
-  font-size: var(--text-caption-uc);
+  font-size: 20px;
   font-weight: 600;
   background: var(--color-canvas);
   cursor: pointer;

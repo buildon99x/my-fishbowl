@@ -14,7 +14,6 @@ function makeFish(overrides = {}) {
 
 function makeAppState(overrides = {}) {
   return {
-    isFishListCollapsed: false,
     selectedFishId: null,
     propPanel: { editingTarget: null },
     ...overrides,
@@ -51,32 +50,33 @@ describe('renderFishList', () => {
     expect(renderFishList([], null, null)).toContain('fish-list-empty');
   });
 
-  it('renders one item with action buttons', () => {
+  it('renders one item with row + inline action buttons (no ✏️)', () => {
     const html = renderFishList([makeFish()], null, null);
     expect(html).toContain('data-fish-list');
     expect(html).toContain('data-fish-id="f1"');
     expect(html).toContain('data-select-fish="f1"');
     expect(html).toContain('data-toggle-fish-hidden="f1"');
-    expect(html).toContain('data-edit-fish="f1"');
     expect(html).toContain('data-delete-fish="f1"');
-    expect(html).toContain('감추기');
+    // ✏️ edit button removed (S-035: row tap == edit)
+    expect(html).not.toContain('data-edit-fish');
   });
 
   it('marks the selected fish', () => {
     const html = renderFishList([makeFish()], 'f1', null);
     expect(html).toContain('is-selected');
+  });
+
+  it('marks the editing fish row as active', () => {
+    const html = renderFishList([makeFish()], null, { type: 'fish', id: 'f1' });
+    expect(html).toContain('is-selected');
     expect(html).toContain('aria-pressed="true"');
   });
 
-  it('marks the editing fish action button as active', () => {
-    const html = renderFishList([makeFish()], null, { type: 'fish', id: 'f1' });
-    expect(html).toMatch(/fish-action-button is-active[^"]*" type="button" data-edit-fish="f1"/);
-  });
-
-  it('shows "보이기" label when fish.hidden is true', () => {
-    const html = renderFishList([makeFish({ hidden: true })], null, null);
-    expect(html).toContain('보이기');
-    expect(html).not.toContain('감추기');
+  it('swaps hide icon when fish.hidden is true', () => {
+    const visible = renderFishList([makeFish()], null, null);
+    const hidden = renderFishList([makeFish({ hidden: true })], null, null);
+    expect(visible).toContain('🙈');
+    expect(hidden).toContain('👁');
   });
 
   it('escapes name and createdAt', () => {
@@ -101,16 +101,11 @@ describe('renderAquariumStatus', () => {
     expect(html).toContain('오브젝트 목록');
     expect(html).toContain('100%');
     expect(html).toContain('이끼 단계');
-    expect(html).toContain('data-toggle-fish-list');
   });
 
-  it('reflects collapsed state in toggle and body', () => {
-    const html = renderAquariumStatus(
-      makeAquarium(),
-      makeAppState({ isFishListCollapsed: true }),
-    );
-    expect(html).toContain('is-collapsed');
-    expect(html).toContain('aria-expanded="false"');
-    expect(html).toContain('펼치기');
+  it('no longer renders the collapse toggle (S-035)', () => {
+    const html = renderAquariumStatus(makeAquarium(), makeAppState());
+    expect(html).not.toContain('data-toggle-fish-list');
+    expect(html).not.toContain('aria-expanded');
   });
 });

@@ -7,24 +7,21 @@ import {
 } from '../aquarium/fish-actions.js';
 
 export function bindFishListEvents(root, aquarium, appState, { render }) {
-  root.querySelector('[data-toggle-fish-list]')?.addEventListener('click', () => {
-    appState.isFishListCollapsed = !appState.isFishListCollapsed;
-    render();
-  });
-
+  // S-035: row tap = open prop-panel + close drawer. The ✏️ button has
+  // been removed; the row itself is the affordance for editing.
   root.querySelectorAll('[data-select-fish]').forEach((button) => {
     button.addEventListener('click', () => {
       const propId = button.dataset.selectFish;
       const target = aquarium.fishes.find((f) => f.id === propId);
       if (!target) return;
       appState.selectedFishId = propId;
-      // S-030: a single tap on a list row also opens the prop-panel so the
-      // selection + editing flow is unified across sprite/list entry points.
-      const current = appState.propPanel.editingTarget;
-      appState.propPanel.editingTarget =
-        current?.id === propId
-          ? null
-          : { id: propId, type: target.type === 'deco' ? 'deco' : 'fish' };
+      // S-030 + S-035: row tap = open prop-panel (always set, not toggle)
+      // and close drawer so the panel slides in to the right unobstructed.
+      appState.propPanel.editingTarget = {
+        id: propId,
+        type: target.type === 'deco' ? 'deco' : 'fish',
+      };
+      appState.drawerOpen = false;
       render();
     });
   });
@@ -32,21 +29,6 @@ export function bindFishListEvents(root, aquarium, appState, { render }) {
   root.querySelectorAll('[data-toggle-fish-hidden]').forEach((button) => {
     button.addEventListener('click', () => {
       toggleFishHidden(aquarium, button.dataset.toggleFishHidden);
-      render();
-    });
-  });
-
-  root.querySelectorAll('[data-edit-fish]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const propId = button.dataset.editFish;
-      const target = aquarium.fishes.find((f) => f.id === propId);
-      if (!target) return;
-      appState.selectedFishId = propId;
-      const current = appState.propPanel.editingTarget;
-      appState.propPanel.editingTarget =
-        current?.id === propId
-          ? null
-          : { id: propId, type: target.type === 'deco' ? 'deco' : 'fish' };
       render();
     });
   });
