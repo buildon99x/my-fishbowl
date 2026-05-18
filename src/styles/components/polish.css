@@ -28,15 +28,23 @@ body[data-activity="idle"] .prop-action-panel {
 }
 
 /* S-033: keep only one chrome surface visible while a bottom-sheet is open.
-   The sheet covers dock affordances anyway; hiding dock prevents the user
-   from chasing a partially-visible row of buttons. */
+   `visibility: hidden` removes the dock buttons from the tab order so
+   keyboard users can't focus invisible controls behind the sheet, while
+   the delayed visibility transition lets the fade-out animate. */
+.prop-action-panel {
+  visibility: visible;
+  transition: opacity 0.18s ease, visibility 0s linear 0s;
+}
+
 body[data-sheet-open="true"] .prop-action-panel {
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.18s ease;
+  transition: opacity 0.18s ease, visibility 0s linear 0.18s;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .prop-action-panel,
   body[data-sheet-open="true"] .prop-action-panel {
     transition: none;
   }
