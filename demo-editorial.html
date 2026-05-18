@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시안 D — Specimen Cabinet · My Fishbowl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
+    <link rel="stylesheet" href="/src/demos/editorial.css" />
+  </head>
+  <body>
+    <nav class="demo-nav" aria-label="시안 전환">
+      <a href="/demo-claymorphism.html">A</a>
+      <a href="/demo-serene.html">B</a>
+      <a href="/demo-retro.html">C</a>
+      <a href="/demo-editorial.html" aria-current="page">D</a>
+    </nav>
+
+    <main class="page">
+      <header class="page-header">
+        <p class="folio">VOL. I &middot; № 003 &middot; MMXXVI</p>
+        <h1 class="display"><em>A Cabinet of</em><br />Living Curiosities</h1>
+        <p class="subhead">— or, the keeping of small fishes in glass —</p>
+        <hr class="rule" />
+        <p class="lede">
+          Proposal D recasts the digital fishbowl as a <em>naturalist's cabinet</em>:
+          each specimen catalogued, illustrated, and annotated with the patience
+          of a 19th-century field journal.
+        </p>
+      </header>
+
+      <section class="cabinet">
+        <div class="cabinet-frame">
+          <div class="corner tl" aria-hidden="true"></div>
+          <div class="corner tr" aria-hidden="true"></div>
+          <div class="corner bl" aria-hidden="true"></div>
+          <div class="corner br" aria-hidden="true"></div>
+
+          <div class="aquarium-bowl">
+            <svg class="bubble-layer" viewBox="0 0 400 280" aria-hidden="true">
+              <circle cx="70" cy="240" r="3" class="bubble" style="--d:0s" />
+              <circle cx="180" cy="220" r="4" class="bubble" style="--d:1.6s" />
+              <circle cx="300" cy="250" r="3" class="bubble" style="--d:2.8s" />
+            </svg>
+            <div class="fish fish-a" aria-hidden="true">🐟</div>
+            <div class="fish fish-b" aria-hidden="true">🐠</div>
+            <div class="fish coral" aria-hidden="true">🪸</div>
+          </div>
+
+          <p class="plate"><em>Fig. 1.</em> The Author's Vivarium, in situ.</p>
+        </div>
+      </section>
+
+      <section class="catalogue">
+        <article class="specimen">
+          <p class="latin">Paracheirodon innesi</p>
+          <h2>Koko, the Tetra</h2>
+          <dl>
+            <div><dt>Family</dt><dd>Characidae</dd></div>
+            <div><dt>Habitat</dt><dd>Glass, fresh</dd></div>
+            <div><dt>Acquired</dt><dd>iii. days past</dd></div>
+            <div><dt>Disposition</dt><dd>Sanguine</dd></div>
+          </dl>
+          <p class="note">
+            <em>Notes.</em> — Observed to favour the upper third of the vessel,
+            tho' descending willingly at the offering of pellet.
+          </p>
+        </article>
+
+        <article class="specimen">
+          <p class="latin">Officina &middot; instrumenta</p>
+          <h2>Instruments</h2>
+          <ul class="instr">
+            <li><span class="num">i.</span> To add a specimen</li>
+            <li><span class="num">ii.</span> To dispense feed</li>
+            <li><span class="num">iii.</span> To purge the algae</li>
+            <li><span class="num">iv.</span> To attend the sounds</li>
+          </ul>
+        </article>
+
+        <article class="specimen">
+          <p class="latin">Chromatica &middot; typographica</p>
+          <h2>Of Colours &amp; Letters</h2>
+          <div class="swatches">
+            <span style="--c:#f5efe1" data-dark>parchment</span>
+            <span style="--c:#1a1410" data-light>sepia ink</span>
+            <span style="--c:#8b3a2f" data-light>oxblood</span>
+            <span style="--c:#3d5a3a" data-light>moss</span>
+            <span style="--c:#c9a961" data-dark>gilt</span>
+            <span style="--c:#7a6d57" data-light>walnut</span>
+          </div>
+          <p class="note">
+            Playfair Display &middot; EB Garamond &middot; Pretendard (한글)
+          </p>
+        </article>
+      </section>
+
+      <footer class="colophon">
+        <p>— set in the manner of the old plates —</p>
+      </footer>
+    </main>
+  </body>
+</html>

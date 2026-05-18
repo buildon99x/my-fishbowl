@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시안 C — Tamagotchi Reboot · My Fishbowl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
+    <link rel="stylesheet" href="/src/demos/retro.css" />
+  </head>
+  <body>
+    <nav class="demo-nav" aria-label="시안 전환">
+      <a href="/demo-claymorphism.html">A</a>
+      <a href="/demo-serene.html">B</a>
+      <a href="/demo-retro.html" aria-current="page">C</a>
+      <a href="/demo-editorial.html">D</a>
+    </nav>
+
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <main class="page">
+      <header class="page-header">
+        <p class="eyebrow">PROPOSAL_C // TAMAGOTCHI_REBOOT</p>
+        <h1 class="display">PIXEL.POND</h1>
+        <p class="lede">&gt; 8-BIT NEON · CRT GLOW · KEEP YOUR FISH ALIVE</p>
+      </header>
+
+      <section class="stage">
+        <div class="device" role="img" aria-label="가상 어항">
+          <div class="device-screen">
+            <div class="hud">
+              <span class="hud-stat">HP <em>██████░░</em></span>
+              <span class="hud-stat">FOOD <em>███░░░░░</em></span>
+              <span class="hud-stat">LV.07</span>
+            </div>
+            <div class="aquarium-bowl">
+              <div class="grid-bg" aria-hidden="true"></div>
+              <div class="bubbles" aria-hidden="true">
+                <span style="--x:12%;--d:0s"></span>
+                <span style="--x:30%;--d:1.4s"></span>
+                <span style="--x:55%;--d:2.6s"></span>
+                <span style="--x:78%;--d:0.7s"></span>
+                <span style="--x:88%;--d:3.2s"></span>
+              </div>
+              <div class="pixel-fish fish-a" aria-hidden="true"></div>
+              <div class="pixel-fish fish-b" aria-hidden="true"></div>
+              <div class="pixel-coral" aria-hidden="true"></div>
+            </div>
+            <div class="readout">&gt; KOKO IS HUNGRY_<span class="cursor">█</span></div>
+          </div>
+
+          <div class="dpad" role="toolbar" aria-label="액션">
+            <button class="key key-a" type="button" aria-label="추가">A</button>
+            <button class="key" type="button" aria-label="먹이">FEED</button>
+            <button class="key" type="button" aria-label="청소">CLEAN</button>
+            <button class="key" type="button" aria-label="사운드">♪</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="meta">
+        <article class="card">
+          <h3>// SPECIES</h3>
+          <pre>NAME......KOKO
+TYPE......NEON_TETRA
+LV........07
+HATCHED...3 CYCLES AGO
+MOOD......[##______]</pre>
+        </article>
+        <article class="card">
+          <h3>// PALETTE</h3>
+          <div class="swatches">
+            <span style="--c:#0b1027">bg</span>
+            <span style="--c:#39ff14">accent</span>
+            <span style="--c:#ff2bd6">magenta</span>
+            <span style="--c:#00e5ff">cyan</span>
+            <span style="--c:#fde047">yellow</span>
+            <span style="--c:#f8fafc">paper</span>
+          </div>
+        </article>
+        <article class="card">
+          <h3>// TYPE</h3>
+          <p class="t-press">PRESS START 2P · HUD</p>
+          <p class="t-vt">VT323 · 24px · readout</p>
+          <p class="t-mono">JetBrains Mono · 14px</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
