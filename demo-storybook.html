@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시안 F — Watercolor Storybook · My Fishbowl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Quicksand:wght@400;500;600;700&family=Patrick+Hand&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
+    <link rel="stylesheet" href="/src/demos/storybook.css" />
+  </head>
+  <body>
+    <div class="paper-grain" aria-hidden="true"></div>
+
+    <nav class="demo-nav" aria-label="시안 전환">
+      <a href="/demo-claymorphism.html">A</a>
+      <a href="/demo-serene.html">B</a>
+      <a href="/demo-retro.html">C</a>
+      <a href="/demo-editorial.html">D</a>
+      <a href="/demo-toon.html">E</a>
+      <a href="/demo-storybook.html" aria-current="page">F</a>
+    </nav>
+
+    <main class="page">
+      <header class="page-header">
+        <p class="kicker">chapter six ·  storybook</p>
+        <h1 class="display">a little pond,<br /><em>and the friends in it</em></h1>
+        <p class="lede">손그림 수채화 · 동화책 페이지 · 보드라운 파스텔 · 잔잔한 모험</p>
+      </header>
+
+      <section class="spread">
+        <div class="page-leaf">
+          <div class="aquarium-bowl" aria-label="가상 어항">
+            <div class="wash sky" aria-hidden="true"></div>
+            <div class="wash water" aria-hidden="true"></div>
+            <div class="wash sand" aria-hidden="true"></div>
+
+            <svg class="splash" viewBox="0 0 600 360" aria-hidden="true">
+              <defs>
+                <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" />
+                  <feDisplacementMap in="SourceGraphic" scale="3" />
+                </filter>
+              </defs>
+
+              <g filter="url(#rough)" stroke="#3b4a55" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.55">
+                <path d="M40 210 Q120 195 200 215 T380 205 T560 220" />
+                <path d="M60 250 Q160 232 260 252 T460 248 T580 260" />
+              </g>
+
+              <g class="fish-a" filter="url(#rough)">
+                <ellipse cx="180" cy="180" rx="38" ry="20" fill="#f6a8a8" stroke="#7a3b3b" stroke-width="2" />
+                <path d="M140 180 L122 168 L122 192 Z" fill="#f6a8a8" stroke="#7a3b3b" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="200" cy="174" r="4" fill="#3b2a2a" />
+                <path d="M165 180 Q180 175 195 180" stroke="#7a3b3b" stroke-width="1.5" fill="none" />
+              </g>
+
+              <g class="fish-b" filter="url(#rough)">
+                <ellipse cx="420" cy="240" rx="34" ry="18" fill="#fbd38d" stroke="#7a5a2b" stroke-width="2" />
+                <path d="M386 240 L370 230 L370 250 Z" fill="#fbd38d" stroke="#7a5a2b" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="440" cy="236" r="3.5" fill="#3b2a2a" />
+              </g>
+
+              <g class="fish-c" filter="url(#rough)">
+                <ellipse cx="100" cy="290" rx="22" ry="12" fill="#a3c9a8" stroke="#3d5a3a" stroke-width="2" />
+                <path d="M80 290 L70 284 L70 296 Z" fill="#a3c9a8" stroke="#3d5a3a" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="112" cy="288" r="2.5" fill="#3b2a2a" />
+              </g>
+
+              <g filter="url(#rough)">
+                <path d="M260 340 Q270 280 282 320 Q298 270 312 320 Q326 285 340 330 Q360 290 370 340 Z"
+                      fill="#c2a4d6" stroke="#5b3e75" stroke-width="2" stroke-linejoin="round" />
+                <circle cx="285" cy="310" r="3" fill="#fff7e6" stroke="#5b3e75" stroke-width="1.2" />
+                <circle cx="320" cy="305" r="3" fill="#fff7e6" stroke="#5b3e75" stroke-width="1.2" />
+                <circle cx="350" cy="315" r="3" fill="#fff7e6" stroke="#5b3e75" stroke-width="1.2" />
+              </g>
+
+              <g class="bubbles" opacity="0.7">
+                <circle cx="120" cy="240" r="5" fill="none" stroke="#86bcd9" stroke-width="1.6" />
+                <circle cx="240" cy="260" r="4" fill="none" stroke="#86bcd9" stroke-width="1.6" />
+                <circle cx="480" cy="200" r="6" fill="none" stroke="#86bcd9" stroke-width="1.6" />
+                <circle cx="520" cy="270" r="4" fill="none" stroke="#86bcd9" stroke-width="1.6" />
+              </g>
+            </svg>
+
+            <p class="caption-hand">— and Koko swam in slow, happy circles.</p>
+          </div>
+        </div>
+
+        <aside class="page-side">
+          <div class="ribbon">
+            <span>★</span> 오늘의 이야기
+          </div>
+          <p class="story">
+            물고기 친구들이 햇살을 따라 헤엄쳤어요.
+            <br /><br />
+            먹이를 살짝 떨어뜨려 주면, 코코가 가장 먼저 달려와요.
+            기다리는 동안 거품 하나가 톡 — 하고 떠올랐답니다.
+          </p>
+
+          <div class="hand-actions" role="toolbar" aria-label="액션">
+            <button class="hand-btn" type="button">
+              <span class="hand-circle" style="--c:#f6a8a8">＋</span>
+              <span class="hand-label">친구 더하기</span>
+            </button>
+            <button class="hand-btn" type="button">
+              <span class="hand-circle" style="--c:#fbd38d">●</span>
+              <span class="hand-label">먹이 주기</span>
+            </button>
+            <button class="hand-btn" type="button">
+              <span class="hand-circle" style="--c:#a3c9a8">≋</span>
+              <span class="hand-label">물 닦기</span>
+            </button>
+            <button class="hand-btn" type="button">
+              <span class="hand-circle" style="--c:#c2a4d6">♪</span>
+              <span class="hand-label">노래 듣기</span>
+            </button>
+          </div>
+        </aside>
+      </section>
+
+      <section class="margin-notes">
+        <article>
+          <h3>색의 노래</h3>
+          <div class="washes">
+            <span style="--c:#f6a8a8">peach</span>
+            <span style="--c:#fbd38d">honey</span>
+            <span style="--c:#a3c9a8">leaf</span>
+            <span style="--c:#86bcd9">sky</span>
+            <span style="--c:#c2a4d6">lilac</span>
+            <span style="--c:#fdf6e8">cream</span>
+          </div>
+        </article>
+        <article>
+          <h3>글의 모양</h3>
+          <p class="t-caveat">Caveat &middot; 손글씨 강조</p>
+          <p class="t-patrick">Patrick Hand · 본문 강세</p>
+          <p class="t-quick">Quicksand &middot; UI / 본문</p>
+        </article>
+        <article>
+          <h3>움직임</h3>
+          <p>모든 동작은 천천히 흔들리듯 — 600~900ms ease-in-out.</p>
+          <p>물고기는 한 번에 한 방향으로만, 종이는 흔들리지 않게.</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

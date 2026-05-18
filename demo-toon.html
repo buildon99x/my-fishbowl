@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시안 E — Saturday Morning Toon · My Fishbowl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;500;600;700&family=Bowlby+One&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      as="style"
+      crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
+    <link rel="stylesheet" href="/src/demos/toon.css" />
+  </head>
+  <body>
+    <div class="halftone" aria-hidden="true"></div>
+
+    <nav class="demo-nav" aria-label="시안 전환">
+      <a href="/demo-claymorphism.html">A</a>
+      <a href="/demo-serene.html">B</a>
+      <a href="/demo-retro.html">C</a>
+      <a href="/demo-editorial.html">D</a>
+      <a href="/demo-toon.html" aria-current="page">E</a>
+      <a href="/demo-storybook.html">F</a>
+    </nav>
+
+    <main class="page">
+      <header class="page-header">
+        <p class="kicker">★ PROPOSAL E ★</p>
+        <h1 class="display">FISH<span>!</span>FRIENDS</h1>
+        <p class="lede">Saturday morning energy &middot; thick lines &middot; pow-zap interaction</p>
+      </header>
+
+      <section class="stage">
+        <div class="bubble-shout shout-1" aria-hidden="true">POP!</div>
+        <div class="bubble-shout shout-2" aria-hidden="true">GLUB!</div>
+        <div class="bubble-shout shout-3" aria-hidden="true">YUM!</div>
+
+        <div class="aquarium-bowl" aria-label="가상 어항">
+          <div class="sun-rays" aria-hidden="true"></div>
+          <div class="water-line" aria-hidden="true"></div>
+          <div class="bubbles" aria-hidden="true">
+            <span style="--x:15%;--d:0s;--s:14px"></span>
+            <span style="--x:35%;--d:1.4s;--s:10px"></span>
+            <span style="--x:62%;--d:2.6s;--s:16px"></span>
+            <span style="--x:82%;--d:0.7s;--s:12px"></span>
+          </div>
+
+          <svg class="toon-fish fish-a" viewBox="0 0 100 60" aria-hidden="true">
+            <path d="M5 30 Q25 5 60 10 L80 5 L78 22 L98 30 L78 38 L80 55 L60 50 Q25 55 5 30 Z"
+                  fill="#ff5e7a" stroke="#1a1a1a" stroke-width="4" stroke-linejoin="round" />
+            <circle cx="68" cy="22" r="6" fill="#fff" stroke="#1a1a1a" stroke-width="3" />
+            <circle cx="70" cy="23" r="2.5" fill="#1a1a1a" />
+            <path d="M30 30 Q45 22 60 30 Q45 38 30 30" fill="#fff" opacity="0.4" />
+          </svg>
+
+          <svg class="toon-fish fish-b" viewBox="0 0 100 60" aria-hidden="true">
+            <path d="M5 30 Q25 5 60 10 L80 5 L78 22 L98 30 L78 38 L80 55 L60 50 Q25 55 5 30 Z"
+                  fill="#ffd23f" stroke="#1a1a1a" stroke-width="4" stroke-linejoin="round" />
+            <circle cx="68" cy="22" r="6" fill="#fff" stroke="#1a1a1a" stroke-width="3" />
+            <circle cx="70" cy="23" r="2.5" fill="#1a1a1a" />
+          </svg>
+
+          <svg class="toon-fish fish-c" viewBox="0 0 100 60" aria-hidden="true">
+            <path d="M5 30 Q25 5 60 10 L80 5 L78 22 L98 30 L78 38 L80 55 L60 50 Q25 55 5 30 Z"
+                  fill="#5cd6ff" stroke="#1a1a1a" stroke-width="4" stroke-linejoin="round" />
+            <circle cx="68" cy="22" r="6" fill="#fff" stroke="#1a1a1a" stroke-width="3" />
+            <circle cx="70" cy="23" r="2.5" fill="#1a1a1a" />
+          </svg>
+
+          <svg class="toon-coral" viewBox="0 0 200 80" aria-hidden="true">
+            <path d="M20 80 Q25 30 40 40 Q50 20 60 40 Q70 25 80 45 Q95 30 100 50 Q110 25 120 45 Q135 30 145 50 Q155 35 170 45 Q180 30 180 80 Z"
+                  fill="#a78bfa" stroke="#1a1a1a" stroke-width="4" stroke-linejoin="round" />
+            <circle cx="50" cy="55" r="4" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/>
+            <circle cx="100" cy="60" r="4" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/>
+            <circle cx="150" cy="58" r="4" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/>
+          </svg>
+        </div>
+
+        <div class="actions" role="toolbar" aria-label="액션">
+          <button class="btn btn-cta" type="button">
+            <span class="btn-label">+ NEW</span>
+          </button>
+          <button class="btn btn-yellow" type="button">
+            <span class="btn-label">FEED</span>
+          </button>
+          <button class="btn btn-cyan" type="button">
+            <span class="btn-label">CLEAN</span>
+          </button>
+          <button class="btn btn-purple" type="button">
+            <span class="btn-label">♪</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="meta">
+        <article class="card card-tilt-l">
+          <div class="card-tag">★ MEET</div>
+          <h3>KOKO</h3>
+          <p>Loud. Hungry. <em>Best fish.</em></p>
+        </article>
+        <article class="card card-tilt-r">
+          <div class="card-tag">★ COLORS</div>
+          <div class="swatches">
+            <span style="--c:#ff5e7a"></span>
+            <span style="--c:#ffd23f"></span>
+            <span style="--c:#5cd6ff"></span>
+            <span style="--c:#a78bfa"></span>
+            <span style="--c:#1a1a1a"></span>
+            <span style="--c:#fff8e7"></span>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-tag">★ TYPE</div>
+          <p class="t-bang">BANGERS · SHOUT</p>
+          <p class="t-bowlby">BOWLBY · TITLE</p>
+          <p class="t-fred">Fredoka · UI</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
