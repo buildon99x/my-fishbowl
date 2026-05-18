@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시안 N — Bio-Telemetry Console · My Fishbowl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+    <link rel="stylesheet" href="/src/demos/telemetry.css" />
+  </head>
+  <body>
+    <nav class="demo-nav" aria-label="시안 전환" data-current="N"></nav>
+
+    <main class="page">
+      <header class="top-bar">
+        <div class="brand">
+          <span class="dot ok"></span>
+          <span class="brand-mark">FISHBOWL/0.1</span>
+          <span class="brand-sub">vivarium telemetry</span>
+        </div>
+        <div class="brand-meta">
+          <span>SESSION 4d 02:18:44</span>
+          <span>2026-05-18 18:00 KST</span>
+          <span class="status ok">● LIVE</span>
+        </div>
+      </header>
+
+      <h1 class="hero">VIVARIUM <span>—</span> <em>a quiet system, observed</em></h1>
+
+      <section class="grid">
+        <article class="panel panel-large">
+          <header class="panel-head">
+            <h2>HABITAT / live view</h2>
+            <span class="muted">[ optical channel ]</span>
+          </header>
+          <div class="viewport" aria-label="가상 어항">
+            <svg class="grid-overlay" viewBox="0 0 600 320" aria-hidden="true">
+              <defs>
+                <pattern id="gp" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(80, 180, 200, 0.18)" stroke-width="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="600" height="320" fill="url(#gp)"/>
+              <text x="12" y="22" fill="#7fc8d6" font-family="'IBM Plex Mono'" font-size="10">+00:00</text>
+              <text x="540" y="22" fill="#7fc8d6" font-family="'IBM Plex Mono'" font-size="10">N 37.51</text>
+              <line x1="120" y1="180" x2="180" y2="180" stroke="#39ffae" stroke-width="1"/>
+              <text x="124" y="170" fill="#39ffae" font-family="'IBM Plex Mono'" font-size="10">SUBJ-01</text>
+              <line x1="420" y1="240" x2="480" y2="240" stroke="#39ffae" stroke-width="1"/>
+              <text x="424" y="230" fill="#39ffae" font-family="'IBM Plex Mono'" font-size="10">SUBJ-02</text>
+            </svg>
+            <div class="bowl-bg" aria-hidden="true"></div>
+            <svg class="tel-fish fish-a" viewBox="0 0 100 60" aria-hidden="true">
+              <path d="M5 30 Q22 8 60 12 L82 4 L78 24 L98 30 L78 36 L82 56 L60 48 Q22 52 5 30 Z"
+                    fill="none" stroke="#39ffae" stroke-width="1.4"/>
+              <circle cx="74" cy="22" r="2" fill="#39ffae"/>
+            </svg>
+            <svg class="tel-fish fish-b" viewBox="0 0 100 60" aria-hidden="true">
+              <path d="M5 30 Q22 8 60 12 L82 4 L78 24 L98 30 L78 36 L82 56 L60 48 Q22 52 5 30 Z"
+                    fill="none" stroke="#39ffae" stroke-width="1.4"/>
+              <circle cx="74" cy="22" r="2" fill="#39ffae"/>
+            </svg>
+            <svg class="tel-fish fish-c" viewBox="0 0 100 60" aria-hidden="true">
+              <path d="M5 30 Q22 8 60 12 L82 4 L78 24 L98 30 L78 36 L82 56 L60 48 Q22 52 5 30 Z"
+                    fill="none" stroke="#ffb83a" stroke-width="1.4"/>
+              <circle cx="74" cy="22" r="2" fill="#ffb83a"/>
+            </svg>
+            <div class="readout-overlay">
+              <span>SUBJECTS: 03</span>
+              <span>MOTION: 0.42 m/s</span>
+              <span>FOV: 84°</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <header class="panel-head">
+            <h2>WATER / chemistry</h2>
+            <span class="muted">15s</span>
+          </header>
+          <ul class="kv">
+            <li><span class="k">pH</span><span class="v">7.24</span><span class="trend up">▲ 0.02</span></li>
+            <li><span class="k">TEMP</span><span class="v">24.6°C</span><span class="trend">— 0.00</span></li>
+            <li><span class="k">O₂</span><span class="v">8.1 mg/L</span><span class="trend up">▲ 0.1</span></li>
+            <li><span class="k">NH₃</span><span class="v">0.03 ppm</span><span class="trend down">▼ 0.01</span></li>
+          </ul>
+        </article>
+
+        <article class="panel">
+          <header class="panel-head">
+            <h2>SUBJ-01 / KOKO</h2>
+            <span class="status ok">● healthy</span>
+          </header>
+          <svg class="spark" viewBox="0 0 240 60" aria-hidden="true">
+            <polyline points="0,30 12,28 24,34 36,22 48,26 60,18 72,24 84,16 96,22 108,14 120,20 132,12 144,18 156,10 168,20 180,14 192,22 204,16 216,24 228,20 240,26"
+                      fill="none" stroke="#39ffae" stroke-width="1.5"/>
+            <polyline points="0,30 12,28 24,34 36,22 48,26 60,18 72,24 84,16 96,22 108,14 120,20 132,12 144,18 156,10 168,20 180,14 192,22 204,16 216,24 228,20 240,26"
+                      fill="url(#sparkfill)" opacity="0.2"/>
+            <defs>
+              <linearGradient id="sparkfill" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#39ffae"/>
+                <stop offset="100%" stop-color="#39ffae" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <ul class="kv kv-compact">
+            <li><span class="k">HR</span><span class="v">82 bpm</span></li>
+            <li><span class="k">ACT</span><span class="v">0.61</span></li>
+            <li><span class="k">FED</span><span class="v">04:12 ago</span></li>
+          </ul>
+        </article>
+
+        <article class="panel">
+          <header class="panel-head">
+            <h2>POPULATION</h2>
+            <span class="muted">n = 3</span>
+          </header>
+          <table class="tab">
+            <thead><tr><th>ID</th><th>SPECIES</th><th>STATE</th><th>HR</th></tr></thead>
+            <tbody>
+              <tr><td>01</td><td>P. innesi</td><td class="ok">healthy</td><td>82</td></tr>
+              <tr><td>02</td><td>P. innesi</td><td class="ok">healthy</td><td>78</td></tr>
+              <tr><td>03</td><td>D. rerio</td><td class="warn">hungry</td><td>91</td></tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel panel-wide">
+          <header class="panel-head">
+            <h2>EVENT LOG</h2>
+            <span class="muted">tail -f</span>
+          </header>
+          <pre class="log">
+2026-05-18T18:00:02Z  INFO   feed.cycle scheduled t+04:00
+2026-05-18T17:58:14Z  EVENT  subj-03 → feeding zone
+2026-05-18T17:55:42Z  OK     filter cycle complete (32m)
+2026-05-18T17:42:08Z  EVENT  subj-01 fed (pellet ×2)
+2026-05-18T17:40:55Z  INFO   pH delta +0.02 (within band)
+2026-05-18T17:38:12Z  OK     algae level nominal: 0.18</pre>
+        </article>
+
+        <article class="panel panel-actions">
+          <header class="panel-head"><h2>COMMANDS</h2></header>
+          <div class="cmd-grid" role="toolbar" aria-label="액션">
+            <button class="cmd cmd-primary" type="button"><kbd>N</kbd> register</button>
+            <button class="cmd" type="button"><kbd>F</kbd> feed</button>
+            <button class="cmd" type="button"><kbd>C</kbd> clean</button>
+            <button class="cmd" type="button"><kbd>M</kbd> mute</button>
+          </div>
+        </article>
+      </section>
+
+      <footer class="foot">
+        <span>fishbowl-telemetry · proposal N · "<em>a quiet system, observed</em>"</span>
+        <span>IBM Plex Mono · IBM Plex Sans · IBM Plex Serif Italic</span>
+      </footer>
+    </main>
+
+    <script type="module" src="/src/demos/nav.js"></script>
+  </body>
+</html>
