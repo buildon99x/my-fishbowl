@@ -199,6 +199,15 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     appState.propPanel.editingTarget = null;
     fishInputState.isExpanded = false;
   }
+  // S-034: prop-panel and the ➕ sheet both anchor to the bottom on narrow
+  // screens. They must never render together — if a callback set both,
+  // collapse the sheet so only the panel is visible. (The active opener
+  // path already calls this, but row-tap and other handlers don't have a
+  // direct reference to fishInputState; this normalization is the safety
+  // net.)
+  if (appState.propPanel.editingTarget && fishInputState.isExpanded) {
+    fishInputState.isExpanded = false;
+  }
 
   const visibleProps = aquarium.fishes.filter((p) => !p.pendingDelete);
   const editingTargetId = appState.propPanel.editingTarget?.id ?? null;
@@ -281,6 +290,9 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
         if (prop.type === 'deco') {
           appState.propPanel.editingTarget = { id: prop.id, type: prop.type };
+          // S-034: sheet must close before panel opens so the two bottom
+          // surfaces don't stack on narrow screens.
+          fishInputState.isExpanded = false;
           appState.onboarding.onFishRegistered();
           return;
         }
@@ -307,6 +319,9 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
           },
           onBreathEnd: () => {
             appState.propPanel.editingTarget = { id: prop.id, type: prop.type };
+            // S-034: close sheet defensively (it's usually already closed
+            // by magic-moment timing, but ensure no overlap on narrow).
+            fishInputState.isExpanded = false;
             render();
             appState.onboarding.onMagicMomentDone();
           },

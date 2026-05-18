@@ -54,9 +54,24 @@
   transition: transform 0.22s ease;
 }
 
+/* Entrance animation: the panel is conditionally rendered (no DOM when
+   editingTarget is null), so we use @starting-style to give it an
+   off-screen initial transform that animates to translateX(0) on mount.
+   Exit is abrupt by design since the panel unmounts when target clears. */
+@starting-style {
+  .prop-panel {
+    transform: translateX(110%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .prop-panel {
     transition: none;
+  }
+  @starting-style {
+    .prop-panel {
+      transform: translateX(0);
+    }
   }
 }
 
@@ -73,12 +88,19 @@
     max-height: 70svh;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     transform: translateY(0);
-    transition: transform 0.22s ease;
+  }
+
+  @starting-style {
+    .prop-panel {
+      transform: translateY(100%);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .prop-panel {
-      transition: none;
+    @starting-style {
+      .prop-panel {
+        transform: translateY(0);
+      }
     }
   }
 }
