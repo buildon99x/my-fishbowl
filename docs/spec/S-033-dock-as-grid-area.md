@@ -17,10 +17,13 @@
 - 포함할 것:
   - `.fishbowl-page` grid에서 `dock` row가 실제 dock 높이를 차지하도록 `.prop-action-panel`을 `position: fixed` → grid `grid-area: dock`로 강등.
   - 어항(hero) 영역의 `max-height`가 자동으로 `100svh - dock - safe area`만큼 줄어들도록 layout 정리.
-  - dock idle fade 단계(`body[data-activity="idle"] .prop-action-panel`)에 `pointer-events: none` 추가해 어항 탭이 잘못 dock에 captured되지 않게.
+  - dock 토큰 정의: `--dock-height: clamp(56px, 8svh, 72px)`, `--dock-bottom: var(--safe-bottom, 0px)`을 `tokens.css`에 신설. S-034가 동일 토큰을 참조한다.
+  - dock idle fade 단계(`body[data-activity="idle"] .prop-action-panel`)에 `pointer-events: none` 추가하되, **첫 탭은 dock 복귀에만 소비**(S-032 chrome wake)되어야 한다. 어항 액션을 동시에 트리거하지 않는다.
+  - dock 강등으로 hero 크기가 바뀔 때 어항 경계(S-021 타원 충돌) 재계산이 트리거되도록 `ResizeObserver`(또는 기존 resize 훅) 경로를 점검·연결한다.
+  - DEV에서 God Mode 추가로 5+1개 버튼 → 360px 폭 viewport에서 overflow 시 `flex-wrap: nowrap; overflow-x: auto;` 또는 dock 가로 폭 `min-content`로 안전 처리.
   - ➕ bottom-sheet가 열렸을 때 dock을 함께 hide(또는 시트 안 sticky로 흡수)해 한 번에 한 chrome만 노출.
 - 제외할 것:
-  - dock을 우측 vertical로 옮기는 안 → 별도 옵션, 본 스펙은 grid area 강등 단일 안만 다룬다.
+  - dock을 우측 vertical로 옮기는 안 → 가로 모드 iPad에서 매력적이나, 본 스펙은 grid area 강등 단일 안만 다루고 후속 LRN으로 분리.
   - prop-panel 위치 변경 → **S-034** 별도.
   - drawer 단순화 → **S-035** 별도.
 
@@ -54,7 +57,10 @@
 
 - [ ] iPad 가로/세로에서 dock 아래 픽셀에 fish/이끼가 그려진 적이 없다(어항 region이 dock 위까지만).
 - [ ] dock 영역 자체는 항상 어항과 겹치지 않고 화면 하단에 자기 자리를 차지한다.
-- [ ] 3초 idle 시 dock이 페이드되고, 그 상태에서 어항 하단 영역을 탭하면 dock 버튼이 아닌 어항이 받는다.
+- [ ] 3초 idle 시 dock이 페이드되고, 그 상태에서 어항 하단 영역을 탭하면 dock 버튼이 아닌 어항이 받는다. 단 dock 영역을 직접 탭하면 **첫 탭은 dock wake에만 소비**되며 어항 액션은 발생하지 않는다.
 - [ ] ➕ 시트 peek 시 dock이 사라지고, 시트 닫힘 시 다시 등장한다.
+- [ ] dock 높이가 바뀌어 어항 hero 영역이 줄어들 때, fish 타원 경계가 새 영역에 맞춰 재계산된다(기존 fish가 dock 위에 머무르지 않음).
+- [ ] DEV God Mode 6번째 버튼이 추가된 360px 폭 viewport에서 dock 버튼이 잘리지 않는다(스크롤 또는 축소).
+- [ ] `--dock-height`, `--dock-bottom` 토큰이 `tokens.css`에 정의되어 있고 S-034 등 외부에서 참조 가능하다.
 - [ ] `prefers-reduced-motion: reduce` 환경에서 dock visibility 전환이 즉시 발생(transition 0).
 - [ ] 콘솔 오류 없음, `npm run build`/`npm test` 통과.

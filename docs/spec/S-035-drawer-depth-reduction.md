@@ -19,7 +19,11 @@
   - `appState.isFishListCollapsed` 상태 제거(또는 default true로 고정).
   - fish-list 행에서 `✏️ 편집` 버튼 제거. 행 자체 탭이 prop-panel 진입(S-030에서 이미 row 탭=편집 통합).
   - "감추기 / 삭제" 액션은 **행 우측 swipe 또는 long-press 메뉴**로 격리(또는 행 우측 inline 아이콘 2개로 축소). 본 스펙은 단순화: long-press 메뉴 + 우측 아이콘 2개 유지 안 중 **inline 2 icon** 채택.
+  - 4세 어린이 오탭 보호: 🗑 탭 시 즉시 삭제하되 **5초 undo snackbar**("되돌리기")를 화면 하단에 표시. snackbar 영역은 dock 위 8px gap, `role="status"`.
+  - inline icon 정량 기준: 각 아이콘 hit area 44×44px 이상, 두 아이콘 사이 간격 ≥ 12px(4세 어린이 손가락 평균 폭 대응).
+  - drawer 닫힘 ↔ prop-panel 열림: 같은 duration(0.22s) **동시 진행**. 한쪽이 끝난 후 다른 쪽이 시작하지 않도록 동기화.
   - drawer footer에 "🐟 화면에 없는 친구 찾기" 헬프 라인 1줄 추가(옵션 — 사용자가 drawer 역할을 즉시 이해하도록).
+  - fish 0개 empty state: 텍스트 + ➕ 아이콘 + 우하단(또는 dock) 방향 화살표 1개로 글 못 읽는 어린이도 행동을 유도.
 - 제외할 것:
   - 부모 영역 게이트(S-026)는 별도 — 본 스펙은 drawer 단순화만.
   - drawer 자체를 bottom-sheet로 통합하는 안 → 후속 검토.
@@ -59,6 +63,10 @@
 - [ ] drawer 열기 → fish 목록이 즉시 펼쳐진 상태로 보인다.
 - [ ] 행 한 번 탭으로 drawer가 닫히고 prop-panel이 열린다.
 - [ ] 행에 ✏️ 버튼이 없다. 🙈/🗑 두 액션은 인라인으로 노출.
-- [ ] fish 0개 빈 상태 메시지가 갱신된 dock 문구와 일치한다.
+- [ ] fish 0개 빈 상태에 텍스트 + ➕ 아이콘 + 화살표가 함께 표시된다.
+- [ ] 🗑 탭 시 5초 undo snackbar가 뜨고, "되돌리기" 탭으로 fish가 복원된다. 5초 경과 후 영구 삭제.
+- [ ] inline 아이콘 hit area ≥ 44×44px, 아이콘 간격 ≥ 12px.
+- [ ] row 탭 시 drawer 닫힘과 prop-panel 열림이 동일 duration에 동시에 진행된다.
+- [ ] drawer 재오픈 시 fish-list 스크롤 위치가 보존된다(S-011 회귀 없음).
 - [ ] drawer 닫혀있을 때 `appState.drawerOpen === false`, 열려있을 때 fish-list가 항상 렌더.
 - [ ] 콘솔 오류 없음, `npm run build`/`npm test` 통과.

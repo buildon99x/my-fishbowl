@@ -15,15 +15,20 @@
 ## 범위
 
 - 포함할 것:
-  - `.prop-panel`을 `position: fixed; top: var(--safe-top); right: var(--safe-right); width: min(360px, 92vw); max-height: calc(100svh - var(--safe-top) - var(--dock-height) - var(--dock-bottom) - 24px);` 형태로 우측 고정.
+  - `.prop-panel`을 `position: fixed; top: var(--safe-top); right: var(--safe-right); width: min(360px, 92vw); max-height: calc(100svh - var(--safe-top) - var(--dock-height) - var(--dock-bottom) - 24px);` 형태로 우측 고정. 토큰은 S-033에서 정의된 것을 사용.
   - 진입/이탈 transition: `transform: translateX(...)` slide-in 0.22s.
   - `prefers-reduced-motion: reduce` 시 즉시 전환.
   - 좁은 폭(< 600px)에서는 bottom-sheet의 stage로 통합(`.prop-panel`이 시트 컨테이너의 추가 stage로 렌더). 단일 화면에 두 시트가 공존하지 않도록 ➕ 시트와 prop-panel은 **서로 배타**.
+  - **선택된 sprite 가시성 보장**: prop-panel이 열렸을 때 편집 대상 sprite가 panel 영역(우측 360px) 뒤로 숨지 않도록 (a) 어항의 fish 이동 가능 영역을 panel 폭만큼 축소하거나 (b) 선택 직후 sprite를 panel 영역 밖으로 1회 nudge한다. 본 스펙은 (b) 채택.
+  - **선택 시각 표시**: 선택된 sprite 둘레에 `outline`(`color-mix(in srgb, var(--color-primary) 60%, transparent)`) halo를 추가해 panel과 sprite의 연결을 명확히 한다.
+  - **drawer ↔ prop-panel 정책**: 동시 열림 금지. prop-panel을 열 때 drawer가 열려 있으면 drawer를 닫는다(S-035의 row 탭은 이미 drawer를 닫는다).
+  - **청소 모드 중**: sprite 탭은 무시(기존 동작 유지). 청소 모드 진입 시 열려 있던 prop-panel은 자동 닫힘.
   - `max-height`를 토큰 기반(`--dock-height`/`--dock-bottom`/`--safe-*`) 계산으로 통일.
 - 제외할 것:
   - dock의 grid area 강등 → **S-033** 별도.
   - drawer 안 list 단순화 → **S-035** 별도.
   - prop-panel 내부 컨트롤 재배치(슬라이더 그룹화 등) → 후속.
+  - 온보딩(S-023) 포인터의 좌→우 위치 갱신 → 본 스펙 구현 후 S-023 후속 패치로 분리.
 
 ## 사용자 흐름
 
@@ -58,9 +63,12 @@
 ## 검증 기준
 
 - [ ] iPad 가로에서 prop-panel 오픈 시 어항 좌측 50% 이상이 그대로 보인다.
-- [ ] drawer 열림 ↔ prop-panel 열림 동시 발생 시 시각적으로 겹치지 않는다.
+- [ ] drawer 열림 ↔ prop-panel 열림: drawer가 열려 있으면 prop-panel 열기 시 drawer가 자동 닫힌다.
 - [ ] 폭 600px 이하에서 prop-panel이 bottom-sheet stage로 표시된다.
 - [ ] sprite 탭으로 prop-panel 열기 → 다른 sprite 탭 → 시트 그대로, 내용만 교체.
+- [ ] 우측 panel 뒤에 있던 sprite를 탭해 panel을 열면, sprite가 panel 영역 밖으로 nudge되어 보인다.
+- [ ] 선택된 sprite 둘레에 halo가 표시되고 panel 닫힘과 함께 사라진다.
+- [ ] 청소 모드 진입 시 열려있던 prop-panel이 자동 닫히고, 청소 모드 중 sprite 탭은 prop-panel을 열지 않는다.
 - [ ] `prop-panel` 좌표/`max-height`에 하드코딩된 픽셀이 없다(모두 토큰 기반).
 - [ ] `prefers-reduced-motion: reduce`에서 slide transition 비활성.
 - [ ] 콘솔 오류 없음, `npm run build`/`npm test` 통과.
