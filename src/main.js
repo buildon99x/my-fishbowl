@@ -248,6 +248,10 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   `;
   restoreFishListScroll(root, appState);
 
+  // S-033: toggle a body-level flag so dock can hide while the ➕ sheet is
+  // open. Only one chrome surface at a time.
+  document.body.dataset.sheetOpen = fishInputState.isExpanded ? 'true' : 'false';
+
   const algaeCanvas = root.querySelector('[data-algae-canvas]');
   if (algaeCanvas) {
     drawAlgaeLayer(algaeCanvas, aquarium.algaeLevel, aquarium.lastCleanedAt);

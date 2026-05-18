@@ -20,6 +20,28 @@ body[data-activity="idle"] .chrome:focus-within {
   }
 }
 
+/* S-033: dock falls through to aquarium while faded so the first tap wakes
+   chrome (via document-level pointerdown listener) without firing a dock
+   button. The aquarium below dock receives the tap normally. */
+body[data-activity="idle"] .prop-action-panel {
+  pointer-events: none;
+}
+
+/* S-033: keep only one chrome surface visible while a bottom-sheet is open.
+   The sheet covers dock affordances anyway; hiding dock prevents the user
+   from chasing a partially-visible row of buttons. */
+body[data-sheet-open="true"] .prop-action-panel {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-sheet-open="true"] .prop-action-panel {
+    transition: none;
+  }
+}
+
 /* Focus-visible outline — single source of truth for dock/drawer/sheet/sticky
    buttons. New chrome elements should add their selector here rather than
    defining a local :focus-visible rule. */
