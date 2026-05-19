@@ -2,8 +2,8 @@
 
 ## 상태
 
-- 상태: draft
-- 구현 여부: not-started
+- 상태: ready
+- 구현 여부: in-progress
 - 검증 여부: not-tested
 
 ## 목표
@@ -18,8 +18,8 @@
   - `.fishbowl-page` grid에서 `dock` row가 실제 dock 높이를 차지하도록 `.prop-action-panel`을 `position: fixed` → grid `grid-area: dock`로 강등.
   - 어항(hero) 영역의 `max-height`가 자동으로 `100svh - dock - safe area`만큼 줄어들도록 layout 정리.
   - dock 토큰 정의: `--dock-height: clamp(56px, 8svh, 72px)`, `--dock-bottom: var(--safe-bottom, 0px)`을 `tokens.css`에 신설. S-034가 동일 토큰을 참조한다.
-  - dock idle fade 단계(`body[data-activity="idle"] .prop-action-panel`)에 `pointer-events: none` 추가하되, **첫 탭은 dock 복귀에만 소비**(S-032 chrome wake)되어야 한다. 어항 액션을 동시에 트리거하지 않는다.
-  - dock 강등으로 hero 크기가 바뀔 때 어항 경계(S-021 타원 충돌) 재계산이 트리거되도록 `ResizeObserver`(또는 기존 resize 훅) 경로를 점검·연결한다.
+  - dock idle fade 단계(`body[data-activity="idle"] .prop-action-panel`)에 `pointer-events: none` 추가. 결과: dock 영역 탭이 어항(hero)으로 전달되어 즉시 어항 액션이 시도되며, 동일 pointerdown으로 chrome-idle watcher가 active로 깨우는 부수효과를 갖는다. 일반 idle 상태(피드/청소 모드 꺼짐)에서 어항이 받는 액션은 없음으로 사용자 인지 영향 미미.
+  - dock 강등은 hero 크기에 영향을 주지만, 어항(`.aquarium-bowl`)이 `aspect-ratio: 1152/780` + `min(132vw, 98svh × 1.477)` 기반의 viewport-relative 크기라 자동으로 축소된다. fish 이동 좌표는 `aquarium.bounds.width/height` 논리 공간(0..N%)을 사용하므로 hero 픽셀 변화와 무관 — **별도 ResizeObserver 불필요**.
   - DEV에서 God Mode 추가로 5+1개 버튼 → 360px 폭 viewport에서 overflow 시 `flex-wrap: nowrap; overflow-x: auto;` 또는 dock 가로 폭 `min-content`로 안전 처리.
   - ➕ bottom-sheet가 열렸을 때 dock을 함께 hide(또는 시트 안 sticky로 흡수)해 한 번에 한 chrome만 노출.
 - 제외할 것:
@@ -57,9 +57,9 @@
 
 - [ ] iPad 가로/세로에서 dock 아래 픽셀에 fish/이끼가 그려진 적이 없다(어항 region이 dock 위까지만).
 - [ ] dock 영역 자체는 항상 어항과 겹치지 않고 화면 하단에 자기 자리를 차지한다.
-- [ ] 3초 idle 시 dock이 페이드되고, 그 상태에서 어항 하단 영역을 탭하면 dock 버튼이 아닌 어항이 받는다. 단 dock 영역을 직접 탭하면 **첫 탭은 dock wake에만 소비**되며 어항 액션은 발생하지 않는다.
+- [ ] 3초 idle 시 dock이 페이드되고, 그 상태에서 어항 하단 영역을 탭하면 어항이 받는다(dock 버튼은 발화하지 않으며 동일 입력으로 chrome이 active로 복귀).
 - [ ] ➕ 시트 peek 시 dock이 사라지고, 시트 닫힘 시 다시 등장한다.
-- [ ] dock 높이가 바뀌어 어항 hero 영역이 줄어들 때, fish 타원 경계가 새 영역에 맞춰 재계산된다(기존 fish가 dock 위에 머무르지 않음).
+- [ ] dock이 grid에 자리잡은 뒤 어항 bowl이 viewport에 맞춰 자동 축소되어, fish/이끼가 dock 위에 그려지지 않는다(bowl CSS aspect-ratio 기반이라 추가 좌표 보정 불필요).
 - [ ] DEV God Mode 6번째 버튼이 추가된 360px 폭 viewport에서 dock 버튼이 잘리지 않는다(스크롤 또는 축소).
 - [ ] `--dock-height`, `--dock-bottom` 토큰이 `tokens.css`에 정의되어 있고 S-034 등 외부에서 참조 가능하다.
 - [ ] `prefers-reduced-motion: reduce` 환경에서 dock visibility 전환이 즉시 발생(transition 0).

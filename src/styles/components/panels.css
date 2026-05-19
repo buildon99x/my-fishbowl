@@ -18,18 +18,18 @@
   background: url('../../../assets/food/bloodworm.svg') center / contain no-repeat;
   filter: drop-shadow(0 2px 4px rgba(120, 20, 10, 0.35));
 }
-/* ── Action Button Cluster (right side) ─────────────────────── */
+/* ── Action Button Cluster (S-033: grid dock area) ──────────── */
 
 .prop-action-panel {
-  position: fixed;
-  left: 50%;
-  bottom: var(--dock-bottom);
-  transform: translateX(-50%);
-  z-index: var(--z-dock);
+  grid-area: dock;
+  justify-self: center;
+  align-self: end;
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--space-sm);
+  padding-bottom: var(--dock-bottom);
+  max-width: calc(100vw - var(--safe-left) - var(--safe-right));
 }
 
 /* ── Prop Editing Panel (left side) ─────────────────────────── */
@@ -355,6 +355,15 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.prop-btn-cluster::-webkit-scrollbar {
+  display: none;
 }
 
 .prop-btn-wrap {
