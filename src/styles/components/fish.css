@@ -49,3 +49,35 @@
       scaleY(calc(var(--fish-scale-y, 1) * var(--fish-flip-y, 1) * 1.08));
   }
 }
+
+/* S-030: long-press drag cursor + first-time hint toast */
+.fish-sprite.is-dragging {
+  cursor: grabbing;
+  outline: 2px dashed var(--color-brand-ochre);
+  outline-offset: 3px;
+}
+
+.long-press-toast {
+  position: fixed;
+  bottom: calc(var(--dock-bottom) + var(--dock-height) + 60px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(10, 10, 10, 0.86);
+  color: #fff;
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  animation: long-press-toast-in 0.25s ease;
+}
+
+@keyframes long-press-toast-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .long-press-toast { animation: none; }
+}

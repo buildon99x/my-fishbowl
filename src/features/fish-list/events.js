@@ -14,7 +14,17 @@ export function bindFishListEvents(root, aquarium, appState, { render }) {
 
   root.querySelectorAll('[data-select-fish]').forEach((button) => {
     button.addEventListener('click', () => {
-      appState.selectedFishId = button.dataset.selectFish;
+      const propId = button.dataset.selectFish;
+      const target = aquarium.fishes.find((f) => f.id === propId);
+      if (!target) return;
+      appState.selectedFishId = propId;
+      // S-030: a single tap on a list row also opens the prop-panel so the
+      // selection + editing flow is unified across sprite/list entry points.
+      const current = appState.propPanel.editingTarget;
+      appState.propPanel.editingTarget =
+        current?.id === propId
+          ? null
+          : { id: propId, type: target.type === 'deco' ? 'deco' : 'fish' };
       render();
     });
   });
