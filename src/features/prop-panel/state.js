@@ -6,6 +6,10 @@ export function createPropPanelState() {
     isAdvancedExpanded: false,
     statusMessage: '',
     statusTimerId: null,
+    // Tracks which target the persistent panel host is currently mounted for.
+    // Same key across renders ⇒ inner content is patched instead of remounted,
+    // so the slide-in animation does not replay on every interaction.
+    _mountedKey: null,
     godModeState: IS_DEV
       ? { thresholds: { light: 12, medium: 24, heavy: 48 } }
       : null,
