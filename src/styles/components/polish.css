@@ -1,0 +1,38 @@
+/* S-032: Chrome idle auto-fade + global :focus-visible polish */
+
+.chrome {
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+body[data-activity="idle"] .chrome {
+  opacity: 0.45;
+}
+
+body[data-activity="idle"] .chrome:hover,
+body[data-activity="idle"] .chrome:focus-within {
+  opacity: 0.92;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chrome {
+    transition: none;
+  }
+}
+
+/* Focus-visible outline — single source of truth for dock/drawer/sheet/sticky
+   buttons. New chrome elements should add their selector here rather than
+   defining a local :focus-visible rule. */
+.prop-btn:focus-visible,
+.prop-action-btn:focus-visible,
+.drawer-menu-btn:focus-visible,
+.drawer-close-btn:focus-visible,
+.drawer-help-link:focus-visible,
+.fish-action-button:focus-visible,
+.sound-mute-toggle:focus-visible,
+.fish-input-tab:focus-visible,
+.cleaning-exit-btn:focus-visible,
+.bottom-sheet-grabber:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-brand-ochre) 60%, transparent);
+  outline-offset: 3px;
+}

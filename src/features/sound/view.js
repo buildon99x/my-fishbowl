@@ -27,7 +27,7 @@ export function renderMuteToggle(masterEnabled) {
   return `
     <button
       type="button"
-      class="sound-mute-toggle"
+      class="sound-mute-toggle chrome"
       data-sound-mute-toggle
       aria-label="${label}"
       aria-pressed="${masterEnabled}"

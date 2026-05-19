@@ -187,7 +187,7 @@ export function renderActionCluster({ feedingState, fishInputState, propPanelSta
     : '';
 
   return `
-    <div class="prop-action-panel" aria-label="액션 버튼">
+    <div class="prop-action-panel chrome" aria-label="액션 버튼">
       <div class="prop-btn-cluster">
         <div class="prop-btn-wrap" data-tooltip="먹이 주기">
           <div class="prop-feed-submenu ${feedActive ? 'is-visible' : ''}">

@@ -54,6 +54,7 @@ import {
   renderMenuButton,
 } from './features/drawer/index.js';
 import { bindFishListEvents } from './features/fish-list/events.js';
+import { startChromeIdleWatcher } from './features/chrome-idle/index.js';
 import {
   bindDefaultObjectsEvents,
   createDefaultObjectsState,
@@ -450,6 +451,7 @@ function initApp() {
     onReset: () => renderApp(app, aquarium, fishInputState, feedingState, appState),
   });
   appState.onboarding.startIdleWatch();
+  startChromeIdleWatcher();
   // Install once at startup so the idle watchdog gets every pointerdown,
   // not just the first one after each renderApp.
   document.addEventListener('pointerdown', () => {
