@@ -32,19 +32,79 @@
   max-width: calc(100vw - var(--safe-left) - var(--safe-right));
 }
 
-/* ── Prop Editing Panel (left side) ─────────────────────────── */
+/* ── Prop Editing Panel (S-034: right side sheet) ──────────── */
 
 .prop-panel {
   position: fixed;
-  top: calc(var(--safe-top) + 64px);
-  left: var(--safe-left);
+  top: var(--safe-top);
+  right: var(--safe-right);
   z-index: var(--z-panel);
-  width: min(320px, calc(100vw - var(--safe-left) - var(--safe-right)));
+  width: min(360px, calc(100vw - var(--safe-left) - var(--safe-right)));
+  max-height: calc(
+    100svh - var(--safe-top) - var(--dock-height) - var(--dock-bottom) - var(--space-lg)
+  );
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-xl);
   background: var(--color-surface-soft);
   box-shadow: 0 12px 32px rgba(10, 10, 10, 0.06);
   overflow: hidden;
+  transform: translateX(0);
+  transition: transform 0.22s ease;
+}
+
+/* Entrance animation: the panel is conditionally rendered (no DOM when
+   editingTarget is null), so we use @starting-style to give it an
+   off-screen initial transform that animates to translateX(0) on mount.
+   Exit is abrupt by design since the panel unmounts when target clears.
+   Baseline: @starting-style is Chrome 117+ / Safari 17.5+ / Firefox 129+
+   (all 2024+). Older engines skip the entrance and just snap in. */
+@starting-style {
+  .prop-panel {
+    transform: translateX(110%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prop-panel {
+    transition: none;
+  }
+  @starting-style {
+    .prop-panel {
+      transform: translateX(0);
+    }
+  }
+}
+
+/* Narrow screens: collapse to bottom-sheet variant so it doesn't crowd the
+   aquarium with a 360px right column on a 390px-wide phone. */
+@media (max-width: 600px) {
+  .prop-panel {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100vw;
+    max-width: none;
+    max-height: 70svh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    transform: translateY(0);
+  }
+
+  @starting-style {
+    .prop-panel {
+      transform: translateY(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    @starting-style {
+      .prop-panel {
+        transform: translateY(0);
+      }
+    }
+  }
 }
 
 .prop-panel-header {
@@ -55,12 +115,7 @@
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-hairline);
   background: var(--color-surface-card);
-  cursor: grab;
   user-select: none;
-}
-
-.prop-panel-header:active {
-  cursor: grabbing;
 }
 
 .prop-panel-identity {
@@ -128,7 +183,8 @@
 .prop-panel-body {
   padding: var(--space-md);
   overflow-y: auto;
-  max-height: calc(100vh - 18px - 72px - 32px);
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* ── Prop Panel Controls ─────────────────────────────────────── */

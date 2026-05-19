@@ -25,7 +25,12 @@ export function bindActionClusterEvents(root, { fishInputState, propPanelState }
     const next = !fishInputState.isExpanded;
     fishInputState.isExpanded = next;
     fishInputState.sheetStage = next ? 'peek' : 'closed';
-    if (next) fishInputState.activeTab = 'catalog';
+    if (next) {
+      fishInputState.activeTab = 'catalog';
+      // S-034: opening the ➕ sheet closes the prop-panel so the two bottom
+      // surfaces don't stack on narrow screens.
+      propPanelState.editingTarget = null;
+    }
     render();
   });
 

@@ -26,6 +26,36 @@
 
 .fish-sprite.is-editing {
   cursor: move;
+  /* S-034: pulsing halo links the panel on the right with the sprite the
+     user is editing. This filter REPLACES is-selected's ochre/peach
+     drop-shadow when both classes apply — editing is the stronger signal,
+     so the primary-color halo wins over the selection glow. */
+  filter:
+    drop-shadow(0 0 0 var(--color-on-primary))
+    drop-shadow(0 0 12px color-mix(in srgb, var(--color-primary) 70%, transparent))
+    drop-shadow(0 0 24px color-mix(in srgb, var(--color-primary) 45%, transparent));
+  animation: fish-editing-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes fish-editing-pulse {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 0 var(--color-on-primary))
+      drop-shadow(0 0 8px color-mix(in srgb, var(--color-primary) 55%, transparent))
+      drop-shadow(0 0 18px color-mix(in srgb, var(--color-primary) 30%, transparent));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 0 var(--color-on-primary))
+      drop-shadow(0 0 14px color-mix(in srgb, var(--color-primary) 80%, transparent))
+      drop-shadow(0 0 28px color-mix(in srgb, var(--color-primary) 50%, transparent));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fish-sprite.is-editing {
+    animation: none;
+  }
 }
 
 .fish-sprite.is-eating {
