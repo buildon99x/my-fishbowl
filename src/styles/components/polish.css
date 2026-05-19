@@ -20,9 +20,11 @@ body[data-activity="idle"] .chrome:focus-within {
   }
 }
 
-/* S-033: dock falls through to aquarium while faded so the first tap wakes
-   chrome (via document-level pointerdown listener) without firing a dock
-   button. The aquarium below dock receives the tap normally. */
+/* S-033: while faded the dock yields hit-testing to the aquarium below it.
+   A tap on the dock area therefore (a) reaches the aquarium normally and
+   (b) wakes chrome via the document-level pointerdown capture listener,
+   without firing a dock button. In normal idle (no feed/clean mode active)
+   the aquarium has nothing to do with a stray tap, so this is benign. */
 body[data-activity="idle"] .prop-action-panel {
   pointer-events: none;
 }
