@@ -81,7 +81,7 @@ async function handleGet(req, deviceId) {
 
   const etag = stored.aquarium?.updatedAt ?? stored.updatedAt;
 
-  return jsonResponse({ aquarium: stored.aquarium ?? stored }, 200, {
+  return jsonResponse({ aquarium: stored.aquarium ?? stored, etag }, 200, {
     ETag: `"${etag}"`,
   });
 }

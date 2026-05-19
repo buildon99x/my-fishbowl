@@ -214,10 +214,12 @@ function handleSyncError(err, aquarium) {
 
   if (status === 412 || code === 'etag_mismatch') {
     // Conflict — surface for parent zone.
+    // 412 body shape: { error, serverAquarium }. ETag comes from serverAquarium.updatedAt.
+    const serverAquarium = err.body?.serverAquarium ?? null;
     conflictState = {
-      serverAquarium: err.body?.aquarium ?? null,
+      serverAquarium,
       localAquarium: aquarium ?? null,
-      sourceEtag: err.body?.etag ?? currentEtag,
+      sourceEtag: serverAquarium?.updatedAt ?? currentEtag,
     };
     syncState.status = 'conflict';
     syncState.lastError = { code: 'etag_mismatch', message: err.message };

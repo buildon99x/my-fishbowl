@@ -137,6 +137,10 @@ export default async function handler(req) {
   try {
     const kv = getKv();
 
+    // Load device first so we can include aquariumId on the account record
+    const device = await kv.get(`device:${deviceId}`);
+    const deviceAquariumId = device?.aquariumId;
+
     // Create account record if it does not exist yet
     const existingAccount = await kv.get(`account:${accountId}`);
     if (!existingAccount) {
@@ -145,25 +149,30 @@ export default async function handler(req) {
         sub,
         linkedAt: now,
         linkedDeviceIds: [deviceId],
+        ...(deviceAquariumId ? { aquariumId: deviceAquariumId } : {}),
       });
     } else {
-      // Add deviceId if not already linked
+      // Add deviceId if not already linked; always sync aquariumId
       const linkedDeviceIds = existingAccount.linkedDeviceIds || [];
       if (!linkedDeviceIds.includes(deviceId)) {
         linkedDeviceIds.push(deviceId);
-        await kv.set(`account:${accountId}`, { ...existingAccount, linkedDeviceIds });
       }
+      const aquariumId = deviceAquariumId ?? existingAccount.aquariumId;
+      await kv.set(`account:${accountId}`, {
+        ...existingAccount,
+        linkedDeviceIds,
+        ...(aquariumId ? { aquariumId } : {}),
+      });
     }
 
     // Link device → account
     await kv.set(`deviceAccountLink:${deviceId}`, accountId);
 
     // Update owner record to include accountId if aquarium is known for device
-    const device = await kv.get(`device:${deviceId}`);
-    if (device?.aquariumId) {
-      const owner = await kv.get(`owner:${device.aquariumId}`);
+    if (deviceAquariumId) {
+      const owner = await kv.get(`owner:${deviceAquariumId}`);
       if (owner) {
-        await kv.set(`owner:${device.aquariumId}`, { ...owner, accountId });
+        await kv.set(`owner:${deviceAquariumId}`, { ...owner, accountId });
       }
     }
   } catch {

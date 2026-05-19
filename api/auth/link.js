@@ -109,14 +109,19 @@ export default async function handler(req) {
       await kv.set(`device:${deviceId}`, { ...existingDevice, accountId, lastSeenAt: now });
     }
 
-    // Update account's linkedDeviceIds
+    // Update account's linkedDeviceIds and aquariumId
     const account = await kv.get(`account:${accountId}`);
     if (account) {
       const linkedDeviceIds = account.linkedDeviceIds || [];
       if (!linkedDeviceIds.includes(deviceId)) {
         linkedDeviceIds.push(deviceId);
-        await kv.set(`account:${accountId}`, { ...account, linkedDeviceIds });
       }
+      const aquariumId = existingDevice?.aquariumId ?? account.aquariumId;
+      await kv.set(`account:${accountId}`, {
+        ...account,
+        linkedDeviceIds,
+        ...(aquariumId ? { aquariumId } : {}),
+      });
     }
 
     // Update owner record to include accountId if device has an aquarium
