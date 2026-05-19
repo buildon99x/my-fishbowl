@@ -1,7 +1,13 @@
-import { createAquarium, normalizeAquarium } from './model.js';
+import { createAquarium, normalizeAquarium } from '../model.js';
 
 const STORAGE_KEY = 'my-fishbowl:aquarium';
 
+/**
+ * Loads the aquarium from localStorage.
+ * Falls back to a fresh default aquarium on parse error or empty storage.
+ *
+ * @returns {import('../model.js').Aquarium}
+ */
 export function loadAquarium() {
   try {
     const savedAquarium = localStorage.getItem(STORAGE_KEY);
@@ -17,6 +23,11 @@ export function loadAquarium() {
   }
 }
 
+/**
+ * Persists the aquarium to localStorage.
+ *
+ * @param {import('../model.js').Aquarium} aquarium
+ */
 export function saveAquarium(aquarium) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(aquarium));

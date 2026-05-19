@@ -1,7 +1,20 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/main.js", "index.html", "vite.config.js", "src/**/*.test.js"],
-  "project": ["src/**/*.js"],
-  "ignore": ["dist/**", "node_modules/**"],
-  "ignoreBinaries": ["knip", "depcheck"]
+  "entry": [
+    "src/main.js",
+    "index.html",
+    "vite.config.js",
+    "src/**/*.test.js",
+    "api/**/*.js"
+  ],
+  "project": ["src/**/*.js", "api/**/*.js"],
+  "ignore": [
+    "dist/**",
+    "node_modules/**",
+    "src/features/aquarium/storage/conflict-card.js",
+    "src/features/aquarium/storage/sprite-fallback.js"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "ignoreBinaries": ["knip", "depcheck"],
+  "ignoreDependencies": ["@vercel/kv", "zod"]
 }

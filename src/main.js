@@ -34,7 +34,7 @@ import {
 } from './features/cleaning/index.js';
 import { renderDecoration } from './features/aquarium/decoration.js';
 import { addUserPropToAquarium } from './features/aquarium/fish-actions.js';
-import { loadAquarium, saveAquarium } from './features/aquarium/storage.js';
+import { loadAquarium, saveAquarium } from './features/aquarium/storage/index.js';
 import {
   createSoundController,
   renderMuteToggle,

@@ -1,5 +1,5 @@
 import { jitterPropPosition, DEFAULT_FISH_DEFAULTS, DEFAULT_DECO_DEFAULTS } from './model.js';
-import { saveAquarium } from './storage.js';
+import { saveAquarium } from './storage/index.js';
 
 export const PENDING_DELETE_TIMEOUT_MS = 5000;
 
