@@ -14,7 +14,11 @@
 body {
   min-width: 320px;
   margin: 0;
-  background: var(--color-canvas);
+  background:
+    radial-gradient(circle at 12% 20%, rgba(26, 26, 26, 0.05) 1px, transparent 1.5px),
+    radial-gradient(circle at 80% 70%, rgba(26, 26, 26, 0.05) 1px, transparent 1.5px),
+    var(--color-canvas);
+  background-size: 28px 28px, 32px 32px, 100% 100%;
 }
 
 button,
@@ -25,8 +29,18 @@ textarea {
 
 h1,
 h2,
+h3,
 p,
 dl,
 dd {
   margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  color: var(--color-ink);
 }

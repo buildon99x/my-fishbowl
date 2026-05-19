@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시안 H — Cel-shaded Anime · My Fishbowl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Klee+One:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+    <link rel="stylesheet" href="/src/demos/anime.css" />
+  </head>
+  <body>
+    <nav class="demo-nav" aria-label="시안 전환">
+      <a href="/demo-claymorphism.html">A</a><a href="/demo-serene.html">B</a><a href="/demo-retro.html">C</a><a href="/demo-editorial.html">D</a><a href="/demo-toon.html">E</a><a href="/demo-storybook.html">F</a><a href="/demo-kawaii.html">G</a><a href="/demo-anime.html" aria-current="page">H</a><a href="/demo-collage.html">I</a><a href="/demo-doodle.html">J</a><a href="/demo-sticker.html">K</a>
+      <a href="/demo-pikmin.html">L</a>
+      <a href="/demo-mario.html">M</a>
+      <a href="/demo-telemetry.html">N</a>
+    </nav>
+
+    <main class="page">
+      <header class="page-header">
+        <p class="kicker">proposal — h</p>
+        <h1 class="display">夏空の魚たち<br /><span class="sub">— Fishes Under Summer Sky —</span></h1>
+        <p class="lede">셀섀이딩 · 신카이 톤 하늘 · 시네마틱 반사광</p>
+      </header>
+
+      <section class="stage">
+        <div class="aquarium-bowl" aria-label="가상 어항">
+          <div class="sky-layer" aria-hidden="true">
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            <div class="cloud cloud-3"></div>
+            <div class="sun"></div>
+          </div>
+          <div class="water-layer" aria-hidden="true">
+            <div class="caustics"></div>
+            <div class="surface-reflect"></div>
+          </div>
+
+          <svg class="anime-fish fish-a" viewBox="0 0 130 70" aria-hidden="true">
+            <defs>
+              <linearGradient id="grad-a" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#ff8a65"/>
+                <stop offset="55%" stop-color="#ff8a65"/>
+                <stop offset="56%" stop-color="#e65a3d"/>
+                <stop offset="100%" stop-color="#e65a3d"/>
+              </linearGradient>
+            </defs>
+            <path d="M8 35 Q24 8 75 14 L105 6 L100 28 L126 35 L100 42 L105 64 L75 56 Q24 62 8 35 Z"
+                  fill="url(#grad-a)" stroke="#5a2014" stroke-width="2.2" stroke-linejoin="round"/>
+            <path d="M40 22 Q60 16 80 22 L80 28 Q60 24 40 28 Z" fill="#fff" opacity="0.45"/>
+            <circle cx="92" cy="26" r="5" fill="#fff"/>
+            <circle cx="93" cy="26" r="3" fill="#1a0a05"/>
+          </svg>
+
+          <svg class="anime-fish fish-b" viewBox="0 0 130 70" aria-hidden="true">
+            <defs>
+              <linearGradient id="grad-b" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#7dd3fc"/>
+                <stop offset="55%" stop-color="#7dd3fc"/>
+                <stop offset="56%" stop-color="#0ea5e9"/>
+                <stop offset="100%" stop-color="#0369a1"/>
+              </linearGradient>
+            </defs>
+            <path d="M8 35 Q24 8 75 14 L105 6 L100 28 L126 35 L100 42 L105 64 L75 56 Q24 62 8 35 Z"
+                  fill="url(#grad-b)" stroke="#0c1c40" stroke-width="2.2" stroke-linejoin="round"/>
+            <circle cx="92" cy="26" r="5" fill="#fff"/>
+            <circle cx="93" cy="26" r="3" fill="#0c1c40"/>
+          </svg>
+
+          <svg class="anime-fish fish-c" viewBox="0 0 130 70" aria-hidden="true">
+            <defs>
+              <linearGradient id="grad-c" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#fde047"/>
+                <stop offset="55%" stop-color="#fde047"/>
+                <stop offset="56%" stop-color="#eab308"/>
+                <stop offset="100%" stop-color="#a16207"/>
+              </linearGradient>
+            </defs>
+            <path d="M8 35 Q24 8 75 14 L105 6 L100 28 L126 35 L100 42 L105 64 L75 56 Q24 62 8 35 Z"
+                  fill="url(#grad-c)" stroke="#3a2a04" stroke-width="2.2" stroke-linejoin="round"/>
+            <circle cx="92" cy="26" r="5" fill="#fff"/>
+            <circle cx="93" cy="26" r="3" fill="#3a2a04"/>
+          </svg>
+        </div>
+
+        <div class="ui-strip" role="toolbar" aria-label="액션">
+          <button class="abtn" type="button"><span class="ico">＋</span>追加</button>
+          <button class="abtn abtn-warm" type="button"><span class="ico">●</span>えさ</button>
+          <button class="abtn abtn-cool" type="button"><span class="ico">≋</span>そうじ</button>
+          <button class="abtn abtn-mute" type="button"><span class="ico">♪</span>音</button>
+        </div>
+      </section>
+
+      <section class="meta">
+        <article class="card">
+          <p class="tag">キャラクター</p>
+          <h3>ココ</h3>
+          <p>夏の終わりに来た、おとなしい子。</p>
+          <p class="latin">— quiet visitor of late summer —</p>
+        </article>
+        <article class="card">
+          <p class="tag">パレット</p>
+          <div class="swatches">
+            <span style="--c:#fff0d4">cream</span>
+            <span style="--c:#ff8a65">coral</span>
+            <span style="--c:#7dd3fc">sky</span>
+            <span style="--c:#0369a1" data-light>deep</span>
+            <span style="--c:#fde047">gold</span>
+            <span style="--c:#0c1c40" data-light>indigo</span>
+          </div>
+        </article>
+        <article class="card">
+          <p class="tag">タイポグラフィ</p>
+          <p class="t-zen">Zen Maru Gothic · headline</p>
+          <p class="t-klee">Klee One · serif accent</p>
+          <p class="t-pre">Pretendard · 한국어 본문</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

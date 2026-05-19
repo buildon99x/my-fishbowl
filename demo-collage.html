@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시안 I — Cut-paper Collage · My Fishbowl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Rubik:wght@400;500;700&family=Indie+Flower&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+    <link rel="stylesheet" href="/src/demos/collage.css" />
+  </head>
+  <body>
+    <nav class="demo-nav" aria-label="시안 전환">
+      <a href="/demo-claymorphism.html">A</a><a href="/demo-serene.html">B</a><a href="/demo-retro.html">C</a><a href="/demo-editorial.html">D</a><a href="/demo-toon.html">E</a><a href="/demo-storybook.html">F</a><a href="/demo-kawaii.html">G</a><a href="/demo-anime.html">H</a><a href="/demo-collage.html" aria-current="page">I</a><a href="/demo-doodle.html">J</a><a href="/demo-sticker.html">K</a>
+      <a href="/demo-pikmin.html">L</a>
+      <a href="/demo-mario.html">M</a>
+      <a href="/demo-telemetry.html">N</a>
+    </nav>
+
+    <main class="page">
+      <header class="page-header">
+        <p class="kicker">PROPOSAL · I</p>
+        <h1 class="display">PAPER<br/>POND</h1>
+        <p class="lede">찢어낸 종이 · 겹친 색지 · 두꺼운 질감의 콜라주 어항</p>
+      </header>
+
+      <section class="stage">
+        <div class="aquarium-bowl" aria-label="가상 어항">
+          <div class="paper bg-sky"></div>
+          <div class="paper bg-water"></div>
+          <div class="paper bg-sand"></div>
+
+          <svg class="paper-fish fish-a" viewBox="0 0 140 80" aria-hidden="true">
+            <filter id="rough-i" x="-10%" y="-10%" width="120%" height="120%">
+              <feTurbulence type="fractalNoise" baseFrequency="2" numOctaves="2" seed="2" />
+              <feDisplacementMap in="SourceGraphic" scale="2" />
+            </filter>
+            <g filter="url(#rough-i)">
+              <path d="M10 40 Q26 8 76 14 L108 6 L102 30 L134 40 L102 50 L108 74 L76 66 Q26 72 10 40 Z"
+                    fill="#e8553b"/>
+              <path d="M50 22 Q80 18 100 26 L100 32 Q80 28 50 30 Z" fill="#fcd0c6"/>
+              <circle cx="98" cy="28" r="6" fill="#1a1a1a"/>
+              <circle cx="100" cy="26" r="2" fill="#fff"/>
+            </g>
+          </svg>
+
+          <svg class="paper-fish fish-b" viewBox="0 0 140 80" aria-hidden="true">
+            <filter id="rough-i2" x="-10%" y="-10%" width="120%" height="120%">
+              <feTurbulence type="fractalNoise" baseFrequency="2.4" numOctaves="2" seed="7" />
+              <feDisplacementMap in="SourceGraphic" scale="2" />
+            </filter>
+            <g filter="url(#rough-i2)">
+              <path d="M10 40 Q26 8 76 14 L108 6 L102 30 L134 40 L102 50 L108 74 L76 66 Q26 72 10 40 Z"
+                    fill="#f0b929"/>
+              <circle cx="98" cy="28" r="6" fill="#3a2a04"/>
+              <circle cx="100" cy="26" r="2" fill="#fff"/>
+            </g>
+          </svg>
+
+          <svg class="paper-fish fish-c" viewBox="0 0 140 80" aria-hidden="true">
+            <filter id="rough-i3" x="-10%" y="-10%" width="120%" height="120%">
+              <feTurbulence type="fractalNoise" baseFrequency="2" numOctaves="2" seed="4" />
+              <feDisplacementMap in="SourceGraphic" scale="2" />
+            </filter>
+            <g filter="url(#rough-i3)">
+              <path d="M10 40 Q26 8 76 14 L108 6 L102 30 L134 40 L102 50 L108 74 L76 66 Q26 72 10 40 Z"
+                    fill="#3a8c5f"/>
+              <circle cx="98" cy="28" r="5" fill="#1a1a1a"/>
+            </g>
+          </svg>
+
+          <svg class="paper-coral" viewBox="0 0 240 120" aria-hidden="true">
+            <filter id="rough-c" x="-10%" y="-10%" width="120%" height="120%">
+              <feTurbulence type="fractalNoise" baseFrequency="2" numOctaves="2" seed="9" />
+              <feDisplacementMap in="SourceGraphic" scale="2" />
+            </filter>
+            <g filter="url(#rough-c)">
+              <path d="M20 120 Q30 50 50 70 Q66 30 84 70 Q102 40 120 70 Q140 30 160 70 Q180 40 200 70 Q218 50 220 120 Z"
+                    fill="#a85ec6"/>
+              <circle cx="58" cy="80" r="6" fill="#fff0d0"/>
+              <circle cx="120" cy="85" r="6" fill="#fff0d0"/>
+              <circle cx="180" cy="80" r="6" fill="#fff0d0"/>
+            </g>
+          </svg>
+
+          <div class="dots" aria-hidden="true">
+            <span style="--x:10%;--y:22%"></span>
+            <span style="--x:30%;--y:10%"></span>
+            <span style="--x:65%;--y:25%"></span>
+            <span style="--x:85%;--y:14%"></span>
+          </div>
+        </div>
+
+        <div class="actions" role="toolbar" aria-label="액션">
+          <button class="pbtn pbtn-red" type="button"><span>+</span>NEW</button>
+          <button class="pbtn pbtn-yellow" type="button"><span>●</span>FEED</button>
+          <button class="pbtn pbtn-green" type="button"><span>≋</span>CLEAN</button>
+          <button class="pbtn pbtn-purple" type="button"><span>♪</span>SOUND</button>
+        </div>
+      </section>
+
+      <section class="meta">
+        <article class="card card-rot-l">
+          <p class="tag">SCRAP No.01</p>
+          <h3>KOKO</h3>
+          <p>cut from <em>red paper, torn at the fin.</em></p>
+        </article>
+        <article class="card">
+          <p class="tag">SCRAP No.02</p>
+          <div class="swatches">
+            <span style="--c:#e8553b">vermilion</span>
+            <span style="--c:#f0b929">mustard</span>
+            <span style="--c:#3a8c5f" data-light>fern</span>
+            <span style="--c:#a85ec6" data-light>plum</span>
+            <span style="--c:#fff0d0">cream</span>
+            <span style="--c:#1a1a1a" data-light>ink</span>
+          </div>
+        </article>
+        <article class="card card-rot-r">
+          <p class="tag">SCRAP No.03</p>
+          <p class="t-mono">RUBIK MONO · poster</p>
+          <p class="t-indie">Indie Flower · marker</p>
+          <p class="t-rubik">Rubik · UI</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

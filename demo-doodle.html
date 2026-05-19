@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시안 J — Notebook Doodle · My Fishbowl</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Shadows+Into+Light&family=Architects+Daughter&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+    <link rel="stylesheet" href="/src/demos/doodle.css" />
+  </head>
+  <body>
+    <nav class="demo-nav" aria-label="시안 전환">
+      <a href="/demo-claymorphism.html">A</a><a href="/demo-serene.html">B</a><a href="/demo-retro.html">C</a><a href="/demo-editorial.html">D</a><a href="/demo-toon.html">E</a><a href="/demo-storybook.html">F</a><a href="/demo-kawaii.html">G</a><a href="/demo-anime.html">H</a><a href="/demo-collage.html">I</a><a href="/demo-doodle.html" aria-current="page">J</a><a href="/demo-sticker.html">K</a>
+      <a href="/demo-pikmin.html">L</a>
+      <a href="/demo-mario.html">M</a>
+      <a href="/demo-telemetry.html">N</a>
+    </nav>
+
+    <main class="page">
+      <header class="page-header">
+        <p class="kicker">— scratch pad / proposal J —</p>
+        <h1 class="display">my <u>fish-pond</u><br />(in pen)</h1>
+        <p class="lede">모눈종이 · 볼펜 낙서 · 메모 · 화살표 · 포스트잇</p>
+      </header>
+
+      <section class="stage">
+        <div class="notebook">
+          <div class="aquarium-bowl" aria-label="가상 어항">
+            <svg class="ink" viewBox="0 0 600 360" aria-hidden="true">
+              <filter id="wobble" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="1" />
+                <feDisplacementMap in="SourceGraphic" scale="2.5" />
+              </filter>
+
+              <g filter="url(#wobble)" stroke="#1e3a8a" stroke-width="2.5" fill="none" stroke-linecap="round">
+                <rect x="20" y="20" width="560" height="320" rx="14" />
+                <path d="M20 110 Q140 96 300 108 T580 102" />
+                <path d="M20 320 Q160 308 320 320 T580 312" />
+              </g>
+
+              <g filter="url(#wobble)" stroke="#1e3a8a" stroke-width="2.5" fill="#fff7e6">
+                <path d="M120 180 Q150 150 220 158 L260 142 L256 178 L290 188 L256 198 L260 234 L220 218 Q150 226 120 198 Z" />
+              </g>
+              <circle cx="246" cy="170" r="3.5" fill="#1e3a8a" filter="url(#wobble)" />
+              <path d="M195 178 Q210 174 225 178" stroke="#1e3a8a" stroke-width="1.8" fill="none" filter="url(#wobble)" />
+
+              <g filter="url(#wobble)" stroke="#dc2626" stroke-width="2.5" fill="#fff7e6">
+                <path d="M340 230 Q364 208 416 214 L444 200 L440 228 L468 236 L440 244 L444 270 L416 256 Q364 262 340 244 Z" />
+              </g>
+              <circle cx="434" cy="222" r="3" fill="#1e3a8a" filter="url(#wobble)" />
+
+              <g filter="url(#wobble)" stroke="#1e3a8a" stroke-width="2.5" fill="none">
+                <circle cx="80" cy="230" r="6" />
+                <circle cx="120" cy="260" r="4" />
+                <circle cx="500" cy="180" r="5" />
+                <circle cx="540" cy="220" r="6" />
+                <circle cx="160" cy="290" r="3" />
+              </g>
+
+              <g filter="url(#wobble)" stroke="#1e3a8a" stroke-width="2" fill="none">
+                <path d="M260 60 Q280 50 296 70 L300 78" />
+                <path d="M294 76 L302 80 L296 86" />
+              </g>
+              <text x="200" y="56" font-family="'Shadows Into Light', cursive" font-size="20" fill="#1e3a8a" filter="url(#wobble)">koko ↘</text>
+
+              <text x="430" y="298" font-family="'Shadows Into Light', cursive" font-size="18" fill="#dc2626" filter="url(#wobble)">red one!</text>
+              <g filter="url(#wobble)" stroke="#dc2626" stroke-width="1.6" fill="none">
+                <path d="M428 290 Q424 280 432 270" />
+              </g>
+            </svg>
+
+            <div class="sticky note-1">
+              <p>3pm — feed!</p>
+            </div>
+            <div class="sticky note-2">
+              <p>clean glass<br/>sat ✓</p>
+            </div>
+          </div>
+
+          <ul class="todo">
+            <li><span class="check">☑</span> 어항 그리기</li>
+            <li><span class="check">☑</span> 물고기 색 정하기</li>
+            <li><span class="check">☐</span> 친구 더 추가</li>
+            <li><span class="check">☐</span> 먹이 시간표</li>
+          </ul>
+        </div>
+
+        <div class="actions" role="toolbar" aria-label="액션">
+          <button class="dbtn" type="button">＋ add</button>
+          <button class="dbtn dbtn-red" type="button">● feed</button>
+          <button class="dbtn" type="button">≋ clean</button>
+          <button class="dbtn" type="button">♪ sound</button>
+        </div>
+      </section>
+
+      <section class="meta">
+        <article class="card">
+          <p class="tag">// notes</p>
+          <p><strong>koko</strong> — orange one, fast. <em>always hungry.</em></p>
+          <p>red one — shy, hides behind coral.</p>
+        </article>
+        <article class="card">
+          <p class="tag">// inks</p>
+          <div class="swatches">
+            <span style="--c:#1e3a8a" data-light>navy</span>
+            <span style="--c:#dc2626" data-light>red</span>
+            <span style="--c:#000" data-light>black</span>
+            <span style="--c:#fff7e6">paper</span>
+            <span style="--c:#fde047">marker</span>
+            <span style="--c:#f0abfc">marker2</span>
+          </div>
+        </article>
+        <article class="card">
+          <p class="tag">// type</p>
+          <p class="t-shadow">Shadows Into Light · scribble</p>
+          <p class="t-kalam">Kalam · sketchnotes</p>
+          <p class="t-arch">Architects Daughter · UI</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
