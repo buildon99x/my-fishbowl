@@ -257,18 +257,7 @@
   font: inherit;
 }
 
-.fish-input-widget {
-  position: fixed;
-  right: max(var(--safe-right), calc((100vw - 1120px) / 2 + var(--safe-right)));
-  bottom: calc(var(--dock-bottom) + var(--dock-height) + 12px + var(--keyboard-inset));
-  z-index: var(--z-panel);
-  width: min(676px, calc(100vw - var(--safe-left) - var(--safe-right)));
-  overflow: hidden;
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-xl);
-  background: var(--color-surface-soft);
-  box-shadow: 0 12px 32px rgba(10, 10, 10, 0.06);
-}
+/* fish-input-widget styling moved to components/bottom-sheet.css (S-029). */
 
 .fish-input-panel {
   max-height: min(780px, calc(100vh - 18px - 72px - 32px));

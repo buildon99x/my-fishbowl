@@ -22,7 +22,9 @@ export function bindActionClusterEvents(root, { fishInputState, propPanelState }
   });
 
   root.querySelector('[data-prop-add-fish]')?.addEventListener('click', () => {
-    fishInputState.isExpanded = !fishInputState.isExpanded;
+    const next = !fishInputState.isExpanded;
+    fishInputState.isExpanded = next;
+    fishInputState.sheetStage = next ? 'peek' : 'closed';
     render();
   });
 

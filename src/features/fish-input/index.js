@@ -1,5 +1,4 @@
-import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft, saveFishInputPosition } from './state.js';
-import { clamp } from '../../lib/utils.js';
+import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.js';
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 
@@ -134,46 +133,74 @@ function setupDrawingCanvas(root, state, render) {
   });
 }
 
-function bindFishInputDrag(panel, state) {
-  const header = panel.querySelector('[data-fish-input-drag-handle]');
-  if (!header) return;
+function bindBottomSheetGrabber(panel, state, render) {
+  const grabber = panel.querySelector('[data-fish-input-grabber]');
+  if (!grabber) return;
 
-  header.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('[data-toggle-fish-input]')) return;
-    e.preventDefault();
+  let startY = 0;
+  let dragging = false;
+  let startStage = 'peek';
 
-    const rect = panel.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-
-    panel.style.right = 'auto';
-    panel.style.bottom = 'auto';
-    panel.style.left = `${rect.left}px`;
-    panel.style.top = `${rect.top}px`;
-    header.style.cursor = 'grabbing';
-    header.setPointerCapture(e.pointerId);
-
-    function onMove(moveEvent) {
-      const x = clamp(moveEvent.clientX - offsetX, 0, window.innerWidth - panel.offsetWidth);
-      const y = clamp(moveEvent.clientY - offsetY, 0, window.innerHeight - panel.offsetHeight);
-      panel.style.left = `${x}px`;
-      panel.style.top = `${y}px`;
-    }
-
-    function onUp() {
-      header.releasePointerCapture(e.pointerId);
-      header.removeEventListener('pointermove', onMove);
-      header.removeEventListener('pointerup', onUp);
-      header.style.cursor = '';
-
-      const pos = { x: parseFloat(panel.style.left), y: parseFloat(panel.style.top) };
-      state.position = pos;
-      saveFishInputPosition(pos);
-    }
-
-    header.addEventListener('pointermove', onMove);
-    header.addEventListener('pointerup', onUp);
+  grabber.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    startY = e.clientY;
+    startStage = state.sheetStage === 'full' ? 'full' : 'peek';
+    grabber.setPointerCapture(e.pointerId);
   });
+
+  grabber.addEventListener('pointerup', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    grabber.releasePointerCapture(e.pointerId);
+    const dy = e.clientY - startY;
+    // Short tap = toggle peek<->full. Drag up >= 40 = full. Drag down >= 40 from peek = close.
+    if (Math.abs(dy) < 10) {
+      state.sheetStage = startStage === 'full' ? 'peek' : 'full';
+      render();
+      return;
+    }
+    if (dy <= -40) {
+      state.sheetStage = 'full';
+      render();
+      return;
+    }
+    if (dy >= 40) {
+      if (startStage === 'full') {
+        state.sheetStage = 'peek';
+      } else {
+        state.sheetStage = 'closed';
+        state.isExpanded = false;
+      }
+      render();
+    }
+  });
+
+  grabber.addEventListener('pointercancel', () => { dragging = false; });
+}
+
+function bindBackdrop(root, state, render) {
+  const backdrop = root.querySelector('[data-fish-input-backdrop]');
+  backdrop?.addEventListener('click', () => {
+    state.sheetStage = 'closed';
+    state.isExpanded = false;
+    render();
+  });
+}
+
+let visualViewportBound = false;
+function bindVisualViewportInset() {
+  if (visualViewportBound) return;
+  if (typeof window === 'undefined' || !window.visualViewport) return;
+  visualViewportBound = true;
+  const update = () => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const inset = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+    document.documentElement.style.setProperty('--keyboard-inset', `${inset}px`);
+  };
+  window.visualViewport.addEventListener('resize', update);
+  window.visualViewport.addEventListener('scroll', update);
+  update();
 }
 
 export function bindFishInputEvents(root, state, render, options = {}) {
@@ -184,7 +211,12 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   const registerButton = root.querySelector('[data-register-fish-image]');
 
   toggleButton?.addEventListener('click', () => {
-    updateState(state, { isExpanded: !state.isExpanded }, render);
+    const next = !state.isExpanded;
+    updateState(
+      state,
+      { isExpanded: next, sheetStage: next ? 'peek' : 'closed' },
+      render,
+    );
   });
 
   setupDrawingCanvas(root, state, render);
@@ -289,5 +321,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   });
 
   const panel = root.querySelector('.fish-input-widget');
-  if (panel) bindFishInputDrag(panel, state);
+  if (panel) bindBottomSheetGrabber(panel, state, render);
+  bindBackdrop(root, state, render);
+  bindVisualViewportInset();
 }
