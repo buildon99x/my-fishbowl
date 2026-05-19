@@ -12,28 +12,29 @@
   left: 22px;
   z-index: 20;
   margin: 0;
-  padding: var(--space-md) var(--space-lg);
-  border: 1px solid var(--color-hairline);
+  padding: var(--space-sm) var(--space-lg);
+  border: var(--border-thick) solid var(--color-ink);
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--color-surface-soft) 88%, transparent);
-  backdrop-filter: blur(10px);
+  background: var(--color-surface-card);
+  box-shadow: var(--shadow-toon);
+  transform: rotate(-1.5deg);
 }
 
 .eyebrow {
   margin-bottom: var(--space-xxs);
-  color: var(--color-muted);
-  font-size: var(--text-caption-uc);
-  font-weight: 600;
-  letter-spacing: var(--tracking-caption-uc);
+  color: var(--color-brand-pink);
+  font-family: var(--font-shout);
+  font-size: 16px;
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 
 .page-header h1 {
   font-family: var(--font-display);
-  font-size: clamp(24px, 3vw, var(--text-display-md));
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: var(--tracking-display-md);
+  font-size: clamp(22px, 2.4vw, 32px);
+  font-weight: 400;
+  line-height: 1.0;
+  letter-spacing: -0.3px;
   color: var(--color-ink);
 }
 

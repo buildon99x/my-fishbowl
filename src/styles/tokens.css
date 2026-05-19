@@ -1,35 +1,35 @@
 :root {
-  /* Brand & accent */
-  --color-primary: #0a0a0a;
-  --color-brand-pink: #ff4d8b;
-  --color-brand-teal: #1a3a3a;
-  --color-brand-lavender: #b8a4ed;
-  --color-brand-peach: #ffb084;
-  --color-brand-ochre: #e8b94a;
-  --color-brand-mint: #a4d4c5;
-  --color-brand-coral: #ff6b5a;
+  /* Brand & accent — Saturday Morning Toon palette */
+  --color-primary: #ff5e7a;
+  --color-brand-pink: #ff5e7a;
+  --color-brand-teal: #5cd6ff;
+  --color-brand-lavender: #a78bfa;
+  --color-brand-peach: #ffb37a;
+  --color-brand-ochre: #ffd23f;
+  --color-brand-mint: #6ee7a0;
+  --color-brand-coral: #ff5e7a;
 
   /* Surface */
-  --color-canvas: #fffaf0;
-  --color-surface-soft: #faf5e8;
-  --color-surface-card: #f5f0e0;
-  --color-surface-strong: #ebe6d6;
-  --color-surface-dark: #0a1a1a;
-  --color-surface-dark-elevated: #1a2a2a;
-  --color-hairline: #e5e5e5;
+  --color-canvas: #fff8e7;
+  --color-surface-soft: #fff3d2;
+  --color-surface-card: #ffffff;
+  --color-surface-strong: #ffeec7;
+  --color-surface-dark: #1a1a1a;
+  --color-surface-dark-elevated: #2a2a2a;
+  --color-hairline: #1a1a1a;
 
   /* Text */
-  --color-ink: #0a0a0a;
+  --color-ink: #1a1a1a;
   --color-body-strong: #1a1a1a;
-  --color-body: #3a3a3a;
-  --color-muted: #6a6a6a;
-  --color-muted-soft: #9a9a9a;
-  --color-on-primary: #ffffff;
+  --color-body: #1a1a1a;
+  --color-muted: #4a4a4a;
+  --color-muted-soft: #6a6a6a;
+  --color-on-primary: #fff8e7;
 
   /* Semantic */
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+  --color-success: #1cb85c;
+  --color-warning: #ffd23f;
+  --color-error: #ff3b3b;
 
   /* Spacing — 4px base */
   --space-xxs: 4px;
@@ -41,22 +41,35 @@
   --space-xxl: 48px;
   --space-section: 96px;
 
-  /* Radius */
+  /* Radius — bumped a touch to match comic chunkiness */
   --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
   --radius-pill: 9999px;
   --radius-full: 9999px;
 
+  /* Toon shadows — hard, no blur */
+  --shadow-toon-sm: 3px 3px 0 var(--color-ink);
+  --shadow-toon: 5px 5px 0 var(--color-ink);
+  --shadow-toon-lg: 7px 7px 0 var(--color-ink);
+  --shadow-toon-pressed: 1px 1px 0 var(--color-ink);
+
+  /* Border widths */
+  --border-thin: 2px;
+  --border-md: 3px;
+  --border-thick: 4px;
+
   /* Typography — family */
   --font-display:
-    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, sans-serif;
+    'Bowlby One', 'Pretendard Variable', Pretendard, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-shout:
+    'Bangers', 'Bowlby One', 'Pretendard Variable', sans-serif;
   --font-body:
-    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, sans-serif;
+    'Fredoka', 'Pretendard Variable', Pretendard, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Typography — scale (size / weight / line-height / letter-spacing) */
   --text-display-xl: 72px;
@@ -70,20 +83,20 @@
   --text-body-sm: 14px;
   --text-caption: 13px;
   --text-caption-uc: 12px;
-  --text-button: 14px;
+  --text-button: 15px;
   --text-nav-link: 14px;
 
-  /* Display tracking — Pretendard substitute for Plain Black */
-  --tracking-display-xl: -2.5px;
-  --tracking-display-lg: -2px;
-  --tracking-display-md: -1px;
-  --tracking-display-sm: -0.5px;
-  --tracking-title-lg: -0.3px;
+  /* Display tracking — Bowlby One sits well at neutral; pretendard fallback wants slight tightening */
+  --tracking-display-xl: -1.5px;
+  --tracking-display-lg: -1px;
+  --tracking-display-md: -0.5px;
+  --tracking-display-sm: -0.3px;
+  --tracking-title-lg: -0.2px;
   --tracking-caption-uc: 1.5px;
 }
 
 .display {
   font-family: var(--font-display);
-  font-weight: 500;
-  letter-spacing: -0.05em;
+  font-weight: 400;
+  letter-spacing: -0.02em;
 }
