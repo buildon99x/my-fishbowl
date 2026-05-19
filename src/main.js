@@ -46,9 +46,13 @@ import {
 } from './features/magic-moment/index.js';
 import {
   createOnboardingController,
-  renderHelpButton,
   renderOnboardingOverlay,
 } from './features/onboarding/index.js';
+import {
+  bindDrawerEvents,
+  renderDrawer,
+  renderMenuButton,
+} from './features/drawer/index.js';
 import { bindFishListEvents } from './features/fish-list/events.js';
 import {
   bindDefaultObjectsEvents,
@@ -195,11 +199,6 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
   root.innerHTML = `
     <main class="fishbowl-page">
-      <header class="page-header">
-        <p class="eyebrow">My Fishbowl</p>
-        <h1>${aquarium.name}</h1>
-      </header>
-
       <section class="aquarium-layout" aria-labelledby="aquarium-title">
         <div class="aquarium-shell">
           <div
@@ -221,9 +220,14 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
             ${cleaningState.cleaningMode ? renderCleaningOverlay(cleaningState) : ''}
           </div>
         </div>
-
-        ${renderAquariumStatus(aquarium, appState)}
       </section>
+
+      ${renderMenuButton()}
+      ${renderDrawer({
+        open: appState.drawerOpen,
+        aquariumName: aquarium.name,
+        statusHtml: renderAquariumStatus(aquarium, appState),
+      })}
 
       ${renderFishInputPanel(fishInputState)}
       ${renderPropPanel(appState.propPanel.editingTarget, aquarium, appState.propPanel)}
@@ -237,7 +241,6 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       ${renderDefaultObjectsModal(appState.defaultObjects)}
       ${renderUndoSnackbar(appState.undoDelete)}
       ${renderMuteToggle(appState.sound.getSettings().masterEnabled)}
-      ${renderHelpButton()}
       ${renderOnboardingOverlay(appState.onboarding.getState())}
       ${appState.sound.shouldShowModal() ? renderSoundModal() : ''}
     </main>
@@ -413,6 +416,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
   appState.sound.bindModal(root, { onResolved: render });
   appState.sound.bindMuteToggle(root, { render });
+  bindDrawerEvents(root, appState, { render });
 }
 
 
@@ -423,6 +427,7 @@ function initApp() {
   const feedingState = createFeedingState();
   const appState = {
     selectedFishId: null,
+    drawerOpen: false,
     feedingAnimationId: null,
     isFishListCollapsed: false,
     fishListScrollTop: 0,

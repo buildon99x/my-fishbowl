@@ -56,17 +56,6 @@ export function renderOnboardingOverlay(state) {
   `;
 }
 
-export function renderHelpButton() {
-  return `
-    <button
-      type="button"
-      class="onboarding-help-btn"
-      data-onboarding-help
-      aria-label="도움말 다시 보기"
-    >❓</button>
-  `;
-}
-
 export function renderCanvasOutlineGuide(visible) {
   if (!visible) return '';
   return `

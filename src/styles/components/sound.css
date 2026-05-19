@@ -80,8 +80,8 @@
 
 .sound-mute-toggle {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: var(--safe-top);
+  right: var(--safe-right);
   width: 48px;
   height: 48px;
   min-width: 48px;
@@ -91,7 +91,7 @@
   background: rgba(255, 255, 255, 0.9);
   font-size: 22px;
   cursor: pointer;
-  z-index: 150;
+  z-index: var(--z-chrome);
   display: flex;
   align-items: center;
   justify-content: center;

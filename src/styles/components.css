@@ -259,10 +259,10 @@
 
 .fish-input-widget {
   position: fixed;
-  right: max(18px, calc((100vw - 1120px) / 2 + 18px));
-  bottom: 18px;
-  z-index: 10;
-  width: min(676px, calc(100vw - 32px));
+  right: max(var(--safe-right), calc((100vw - 1120px) / 2 + var(--safe-right)));
+  bottom: calc(var(--dock-bottom) + var(--dock-height) + 12px + var(--keyboard-inset));
+  z-index: var(--z-panel);
+  width: min(676px, calc(100vw - var(--safe-left) - var(--safe-right)));
   overflow: hidden;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-xl);
@@ -577,10 +577,7 @@
 .prop-undo-snackbar {
   position: fixed;
   left: 50%;
-  /* 18px (dock bottom) + 68px (.prop-btn) + 12px gap = 98px. The mobile
-     override below handles the smaller dock so the toast never covers the
-     action cluster. */
-  bottom: 98px;
+  bottom: calc(var(--dock-bottom) + var(--dock-height) + 12px);
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
@@ -590,16 +587,10 @@
   background: var(--color-ink, #0a0a0a);
   color: #fff;
   font-size: 14px;
-  z-index: 1000;
+  z-index: var(--z-toast);
   box-shadow: 0 6px 20px rgba(0,0,0,0.18);
 }
 .prop-undo-snackbar .button { color: #fff; border-color: #fff; }
-@media (max-width: 760px) {
-  .prop-undo-snackbar {
-    /* 12px (mobile dock bottom) + 60px (.prop-btn mobile) + 12px = 84px */
-    bottom: 84px;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .prop-panel-status, .prop-type-option { transition: none !important; }
 }
