@@ -77,7 +77,13 @@ function renderEmptyState(propCount) {
     return '';
   }
 
-  return '<p class="aquarium-empty">오른쪽 아래 ➕ 버튼을 눌러 첫 친구를 만들어 보세요!</p>';
+  return `
+    <div class="aquarium-empty" role="status">
+      <span class="aquarium-empty-icon" aria-hidden="true">➕</span>
+      <p class="aquarium-empty-text">➕ 버튼을 눌러 첫 친구를 만들어 보세요!</p>
+      <span class="aquarium-empty-arrow" aria-hidden="true">↓</span>
+    </div>
+  `;
 }
 
 
@@ -457,7 +463,6 @@ function initApp() {
     selectedFishId: null,
     drawerOpen: false,
     feedingAnimationId: null,
-    isFishListCollapsed: false,
     fishListScrollTop: 0,
     movementController: null,
     bubbleController: null,
