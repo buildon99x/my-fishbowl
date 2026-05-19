@@ -77,6 +77,40 @@
   padding-right: 2px;
 }
 
+/* S-035: drawer 내부 fish-list 빈 상태. 어항 빈 상태(.aquarium-empty)와
+   동일한 시각 언어(아이콘 + 텍스트 + bounce 화살표)를 공유한다. */
+.fish-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-lg) var(--space-md);
+  color: var(--color-muted);
+}
+
+.fish-list-empty-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.fish-list-empty-text {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  text-align: center;
+}
+
+.fish-list-empty-arrow {
+  font-size: 20px;
+  line-height: 1;
+  animation: empty-state-bounce 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fish-list-empty-arrow {
+    animation: none;
+  }
+}
+
 .fish-list-item {
   display: grid;
   gap: var(--space-xs);

@@ -205,10 +205,11 @@
 .aquarium-empty-arrow {
   font-size: clamp(20px, 2.5vw, 32px);
   line-height: 1;
-  animation: aquarium-empty-bounce 1.6s ease-in-out infinite;
+  animation: empty-state-bounce 1.6s ease-in-out infinite;
 }
 
-@keyframes aquarium-empty-bounce {
+/* Shared keyframe — also used by .fish-list-empty-arrow in components.css. */
+@keyframes empty-state-bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(6px); }
 }
@@ -217,31 +218,4 @@
   .aquarium-empty-arrow {
     animation: none;
   }
-}
-
-/* drawer 내부 fish-list 빈 상태도 동일한 시각 언어를 사용 */
-.fish-list-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-lg) var(--space-md);
-  color: var(--color-muted);
-}
-
-.fish-list-empty-icon {
-  font-size: 32px;
-  line-height: 1;
-}
-
-.fish-list-empty-text {
-  margin: 0;
-  font-size: var(--text-body-sm);
-  text-align: center;
-}
-
-.fish-list-empty-arrow {
-  font-size: 20px;
-  line-height: 1;
-  animation: aquarium-empty-bounce 1.6s ease-in-out infinite;
 }
