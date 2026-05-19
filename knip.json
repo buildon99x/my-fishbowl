@@ -14,6 +14,7 @@
     "src/features/aquarium/storage/conflict-card.js",
     "src/features/aquarium/storage/sprite-fallback.js"
   ],
+  "ignoreExportsUsedInFile": true,
   "ignoreBinaries": ["knip", "depcheck"],
   "ignoreDependencies": ["@vercel/kv", "zod"]
 }

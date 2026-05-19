@@ -16,11 +16,14 @@ vi.mock('./remote.js', () => ({
 
 // ─── Imports (after mocks are declared) ─────────────────────────────────────
 import { fetchAquarium, putAquarium } from './remote.js';
-import { _setConflictState } from './sync.js';
-
-// We import the sync module dynamically in each describe block so we can reset
-// module state between tests via vi.resetModules().  For simplicity here we
-// import once and reset mock call history between tests.
+import {
+  _setConflictState,
+  conflictState,
+  loadAquariumThroughSync,
+  resolveConflict,
+  saveAquariumThroughSync,
+  syncState,
+} from './sync.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -45,8 +48,11 @@ function makeFish(id = 'fish-1') {
     name: '금붕어',
     type: 'fish',
     imageUrl: 'data:image/png;base64,abc',
-    x: 50, y: 50, size: 120,
-    vx: 0, vy: 0,
+    x: 50,
+    y: 50,
+    size: 120,
+    vx: 0,
+    vy: 0,
   };
 }
 
@@ -69,11 +75,6 @@ beforeEach(() => {
   // Stub crypto.randomUUID for model.js / createAquarium fallback.
   vi.stubGlobal('crypto', { randomUUID: vi.fn(() => 'uuid-stub') });
 
-  // Stub TextEncoder (needed by payloadTooBig in sync.js).
-  vi.stubGlobal('TextEncoder', class {
-    encode(str) { return { length: new Blob([str]).size }; }
-  });
-
   // Reset mock implementations.
   fetchAquarium.mockReset();
   putAquarium.mockReset();
@@ -82,7 +83,17 @@ beforeEach(() => {
   fetchAquarium.mockResolvedValue(null);
   putAquarium.mockResolvedValue({ etag: 'etag-1' });
 
-  // Clear timers so debounce does not bleed between tests.
+  // Reset shared syncState mutations from previous tests.
+  syncState.status = 'disabled'; // BACKEND_ENABLED=false in test env
+  syncState.lastSyncedAt = null;
+  syncState.lastError = null;
+  syncState.backoffMs = 0;
+  syncState.failureStreak = 0;
+
+  // Reset conflictState.
+  _setConflictState(null);
+
+  // Use fake timers so debounce does not bleed between tests.
   vi.useFakeTimers();
 });
 
@@ -96,11 +107,7 @@ afterEach(() => {
 
 describe('local-only mode (BACKEND_ENABLED=false)', () => {
   it('loadAquariumThroughSync loads from localStorage without calling remote', async () => {
-    // When import.meta.env.VITE_BACKEND_ENABLED is not 'true' (default in tests),
-    // sync.js should behave as local-only.
-    // We verify by loading and confirming remote was never called.
-    const { loadAquariumThroughSync } = await import('./sync.js');
-
+    // In test env VITE_BACKEND_ENABLED is falsy -> sync.js behaves as local-only.
     const aq = loadAquariumThroughSync();
 
     // Flush any microtasks / promises.
@@ -108,13 +115,11 @@ describe('local-only mode (BACKEND_ENABLED=false)', () => {
 
     expect(aq).toBeDefined();
     expect(aq.id).toBe('aq-1');
-    // In test env VITE_BACKEND_ENABLED is falsy → remote must not be called.
     expect(fetchAquarium).not.toHaveBeenCalled();
     expect(putAquarium).not.toHaveBeenCalled();
   });
 
   it('saveAquariumThroughSync writes to localStorage without calling remote', async () => {
-    const { saveAquariumThroughSync } = await import('./sync.js');
     const aq = makeAquarium({ name: 'updated' });
 
     saveAquariumThroughSync(aq);
@@ -130,99 +135,54 @@ describe('local-only mode (BACKEND_ENABLED=false)', () => {
 });
 
 describe('server-newer reconcile (informational)', () => {
-  /**
-   * When the server aquarium has a newer updatedAt the sync module should
-   * log a warning (surfaced to parent zone) but NOT auto-apply the server
-   * version — the child zone is unaffected.
-   *
-   * In our implementation reconcileWithServer just logs when server is newer;
-   * we verify the syncState transitions correctly.
-   */
-  it('sets syncState to idle after receiving server-newer response (no auto-apply)', async () => {
-    // Simulate BACKEND_ENABLED=true by directly calling reconcile internals.
-    // Since we cannot flip import.meta.env at runtime we call the exported
-    // functions and stub remote to return a newer server aquarium.
-
-    fetchAquarium.mockResolvedValue({
-      aquarium: makeAquarium({ updatedAt: '2099-01-01T00:00:00.000Z', name: 'server version' }),
-      etag: 'server-etag',
-    });
-
-    // We import sync here; in test env BACKEND_ENABLED is false so
-    // loadAquariumThroughSync won't call reconcile automatically.
-    // We test the internals by verifying the mock was set up correctly and
-    // that conflictState remains null (no auto-merge).
-    const { conflictState } = await import('./sync.js');
-
-    // conflictState should remain null — no conflict triggered by server-newer alone.
-    expect(conflictState).toBeNull();
-
-    // fetchAquarium not called automatically when BACKEND_ENABLED=false.
+  it('conflictState remains null when server is newer (no auto-apply)', () => {
+    // BACKEND_ENABLED=false in tests so reconcile never runs automatically.
+    // Confirm: nothing fires, syncState stays disabled, conflictState is null.
     expect(fetchAquarium).not.toHaveBeenCalled();
+    expect(syncState.status).toBe('disabled');
+    expect(conflictState).toBeNull();
   });
 });
 
 describe('conflict (412 etag_mismatch)', () => {
-  it('sets conflictState and syncState.status="conflict" on 412 from putAquarium', async () => {
-    // Import the module and grab references.
-    const syncModule = await import('./sync.js');
-    const { syncState } = syncModule;
-
-    // Simulate a 412 ApiError from remote.js.
+  it('sets syncState.status="conflict" on 412 during resolveConflict', async () => {
     const { ApiError } = await import('../../../services/api.js');
     const conflictError = new ApiError(
       412,
       'etag_mismatch',
       'ETag mismatch',
-      { aquarium: makeAquarium({ name: 'server version', updatedAt: '2099-01-01T00:00:00.000Z' }), etag: 'server-etag' },
+      {
+        aquarium: makeAquarium({ name: 'server version', updatedAt: '2099-01-01T00:00:00.000Z' }),
+        etag: 'server-etag',
+      },
     );
     putAquarium.mockRejectedValue(conflictError);
 
-    // Directly invoke the internal doPut via saveAquariumThroughSync + advance
-    // debounce timer (debounce is 60 s — we advance time).
-    // Because BACKEND_ENABLED=false in tests, saveAquariumThroughSync won't
-    // schedule a PUT.  We test handleSyncError directly by extracting it.
-    // Instead, we call doPut indirectly via the exported resolveConflict path
-    // (overwrite choice calls doPut).
-
-    // First manually set conflictState to something so resolveConflict runs.
-    // We rely on the fact that handleSyncError mutates the exported syncState.
-
-    // We cannot easily invoke doPut directly (private), so we verify handleSyncError
-    // through resolveConflict('overwrite') which calls doPut with the local aquarium.
-    // Pre-load conflictState.
-    const fakeConflict = {
+    // Inject conflict state so resolveConflict('overwrite') calls doPut.
+    _setConflictState({
       serverAquarium: makeAquarium({ name: 'server', updatedAt: '2099-01-01T00:00:00.000Z' }),
       localAquarium: makeAquarium({ name: 'local', fishes: [makeFish()] }),
       sourceEtag: 'old-etag',
-    };
+    });
 
-    // Patch module's conflictState directly (it's an exported let).
-    syncModule._setConflictState(fakeConflict);
-
-    putAquarium.mockRejectedValue(conflictError);
-
-    await syncModule.resolveConflict('overwrite');
+    // resolveConflict('overwrite') -> doPut(localAquarium) -> 412 -> handleSyncError.
+    await resolveConflict('overwrite');
     await vi.runAllTimersAsync();
 
-    // After a 412 during overwrite, conflictState should be re-set.
     expect(syncState.status).toBe('conflict');
     expect(syncState.lastError?.code).toBe('etag_mismatch');
   });
 });
 
-describe('network failure (503 × MAX_FAILURE_STREAK)', () => {
-  it('disables auto-sync after 5 consecutive backend_unavailable errors via handleSyncError path', async () => {
-    const syncModule = await import('./sync.js');
-    const { syncState, resolveConflict } = syncModule;
+describe('network failure (503 x 5)', () => {
+  it('disables auto-sync after 5 consecutive backend_unavailable errors', async () => {
     const { ApiError } = await import('../../../services/api.js');
-
     const err503 = new ApiError(503, 'backend_unavailable', 'Service Unavailable', null);
     putAquarium.mockRejectedValue(err503);
 
-    // Drive 5 overwrite conflict resolutions each of which calls doPut → 503.
+    // Drive 5 overwrite resolutions; each calls doPut -> 503.
     for (let i = 0; i < 5; i += 1) {
-      syncModule._setConflictState({
+      _setConflictState({
         serverAquarium: makeAquarium(),
         localAquarium: makeAquarium({ fishes: [makeFish()] }),
         sourceEtag: `etag-${i}`,
@@ -239,16 +199,14 @@ describe('network failure (503 × MAX_FAILURE_STREAK)', () => {
 
 describe('resolveConflict', () => {
   it('abandon: saves server aquarium to localStorage and does not call putAquarium', async () => {
-    const syncModule = await import('./sync.js');
-
     const serverAquarium = makeAquarium({ name: 'from server', fishes: [makeFish('s1')] });
-    syncModule._setConflictState({
+    _setConflictState({
       serverAquarium,
       localAquarium: makeAquarium({ name: 'local' }),
       sourceEtag: 'server-etag',
     });
 
-    await syncModule.resolveConflict('abandon');
+    await resolveConflict('abandon');
     await vi.runAllTimersAsync();
 
     // localStorage should now contain the server aquarium.
