@@ -36,10 +36,13 @@
 
 .prop-panel {
   position: fixed;
-  top: 18px;
-  right: calc(22px + min(280px, 100vw) + 12px);
+  /* Anchor to the left rail (below the page-header) so the panel no longer
+     depends on aquarium-status width. Previously the right-edge calc was
+     tuned for mobile-only (220px) and broke on desktop. */
+  top: 110px;
+  left: 22px;
   z-index: 10;
-  width: min(320px, calc(100vw - 32px));
+  width: min(320px, calc(100vw - 44px));
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-xl);
   background: var(--color-surface-soft);
@@ -390,6 +393,23 @@
   transform: translate(-50%, 0);
 }
 
+/* Touch devices have no hover state, so the tooltip would never appear.
+   Show it persistently — slightly smaller — so iPad users can read the
+   label without long-pressing. */
+@media (hover: none) {
+  .prop-btn-wrap::before {
+    opacity: 0.92;
+    transform: translate(-50%, 0);
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+}
+
+/* Hide the tooltip when the feed submenu is open (same anchor point). */
+.prop-btn-wrap:has(.prop-feed-submenu.is-visible)::before {
+  opacity: 0;
+}
+
 .prop-btn {
   display: flex;
   align-items: center;
@@ -593,8 +613,10 @@
   transition: background 0.12s ease, color 0.12s ease;
 }
 
-.prop-panel {
-    top: 18px;
-    right: calc(12px + min(220px, calc(100vw - 24px)) + 10px);
-    width: min(260px, calc(100vw - 32px));
+@media (max-width: 760px) {
+  .prop-panel {
+    top: 84px;
+    left: 12px;
+    width: min(260px, calc(100vw - 24px));
+  }
 }

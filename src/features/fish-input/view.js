@@ -38,7 +38,7 @@ export function renderFishInputPanel(state) {
             <span id="fish-input-title" class="prop-panel-name">오브젝트 추가</span>
           </div>
         </div>
-        <button class="prop-action-btn" type="button" data-toggle-fish-input aria-label="닫기" title="닫기">❌</button>
+        <button class="prop-action-btn" type="button" data-toggle-fish-input aria-label="닫기" title="닫기">×</button>
       </div>
 
       <div class="fish-input-panel">
