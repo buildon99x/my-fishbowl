@@ -1,6 +1,6 @@
 import { createAquarium, normalizeAquarium } from '../model.js';
 
-export const STORAGE_KEY = 'my-fishbowl:aquarium';
+const STORAGE_KEY = 'my-fishbowl:aquarium';
 
 /**
  * Loads the aquarium from localStorage.
