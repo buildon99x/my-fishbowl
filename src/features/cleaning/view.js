@@ -24,3 +24,14 @@ export function renderCleaningOverlay(cleaningState) {
     </div>
   `;
 }
+
+export function renderCleaningExitButton() {
+  return `
+    <button
+      type="button"
+      class="cleaning-exit-btn"
+      data-cleaning-exit
+      aria-label="청소 모드 끝내기"
+    >🧽 끝내기</button>
+  `;
+}

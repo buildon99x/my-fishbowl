@@ -168,6 +168,8 @@ export function renderActionCluster({ feedingState, fishInputState, propPanelSta
   const ctaArrow = defaultObjectsCtaPulse
     ? '<span class="default-objects-cta-arrow" aria-hidden="true">↓</span>'
     : '';
+  // CTA pulse now decorates the ➕ button (catalog tab opens by default).
+  const addBtnClass = `prop-btn${addFishActive ? ' is-active' : ''}${ctaPulseClass}`;
 
   const godModeButton = import.meta.env.DEV
     ? (() => {
@@ -211,21 +213,12 @@ export function renderActionCluster({ feedingState, fishInputState, propPanelSta
 
         <div class="prop-btn-wrap" data-tooltip="오브젝트 추가">
           <button
-            class="prop-btn ${addFishActive ? 'is-active' : ''}"
+            class="${addBtnClass}"
             type="button"
             data-prop-add-fish
             aria-pressed="${addFishActive}"
             aria-label="오브젝트 추가"
           >➕</button>
-        </div>
-
-        <div class="prop-btn-wrap" data-tooltip="기본 오브젝트">
-          <button
-            class="prop-btn prop-btn--default-objects${ctaPulseClass}"
-            type="button"
-            data-prop-default-objects
-            aria-label="기본 오브젝트"
-          >🎁</button>
           ${ctaArrow}
         </div>
 

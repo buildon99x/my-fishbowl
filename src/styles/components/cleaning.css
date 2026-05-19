@@ -122,3 +122,31 @@
     transform: translate(-50%, -50%) scale(1);
   }
 }
+
+/* S-031: sticky 끝내기 button (top-center) for cleaning mode */
+.cleaning-exit-btn {
+  position: fixed;
+  top: calc(var(--safe-top) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-overlay);
+  min-height: 44px;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-on-primary);
+  font-size: var(--text-body-md);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.cleaning-exit-btn:hover {
+  background: var(--color-body-strong);
+}
+
+.cleaning-exit-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-brand-ochre) 50%, transparent);
+  outline-offset: 2px;
+}

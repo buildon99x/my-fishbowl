@@ -214,7 +214,11 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     const next = !state.isExpanded;
     updateState(
       state,
-      { isExpanded: next, sheetStage: next ? 'peek' : 'closed' },
+      {
+        isExpanded: next,
+        sheetStage: next ? 'peek' : 'closed',
+        activeTab: next ? 'catalog' : state.activeTab,
+      },
       render,
     );
   });
@@ -230,6 +234,14 @@ export function bindFishInputEvents(root, state, render, options = {}) {
 
   movementSelect?.addEventListener('change', (event) => {
     state.movementEnabled = event.target.value !== 'off';
+  });
+
+  root.querySelectorAll('[data-fish-input-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset.fishInputTab === 'create' ? 'create' : 'catalog';
+      if (state.activeTab === next) return;
+      updateState(state, { activeTab: next }, render);
+    });
   });
 
   root.querySelectorAll('[data-fish-prop-type]').forEach((btn) => {

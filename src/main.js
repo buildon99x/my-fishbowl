@@ -28,6 +28,7 @@ import {
   bindCleaningEvents,
   createCleaningState,
   exitCleaningMode,
+  renderCleaningExitButton,
   renderCleaningOverlay,
   renderCleaningProgressBar,
   snapshotCanvas,
@@ -59,7 +60,6 @@ import {
   bindDefaultObjectsEvents,
   createDefaultObjectsState,
   markCtaPulseShown,
-  renderDefaultObjectsModal,
   shouldShowCtaPulse,
 } from './features/default-objects/index.js';
 import { renderAquariumStatus, renderUndoSnackbar } from './features/fish-list/view.js';
@@ -239,7 +239,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
         cleaningState: appState.cleaningState,
         defaultObjectsCtaPulse,
       })}
-      ${renderDefaultObjectsModal(appState.defaultObjects)}
+      ${cleaningState.cleaningMode ? renderCleaningExitButton() : ''}
       ${renderUndoSnackbar(appState.undoDelete)}
       ${renderMuteToggle(appState.sound.getSettings().masterEnabled)}
       ${renderOnboardingOverlay(appState.onboarding.getState())}
