@@ -27,8 +27,9 @@
 .fish-sprite.is-editing {
   cursor: move;
   /* S-034: pulsing halo links the panel on the right with the sprite the
-     user is editing. Stronger than is-selected so it survives selection
-     glow when both classes are present. */
+     user is editing. This filter REPLACES is-selected's ochre/peach
+     drop-shadow when both classes apply — editing is the stronger signal,
+     so the primary-color halo wins over the selection glow. */
   filter:
     drop-shadow(0 0 0 var(--color-on-primary))
     drop-shadow(0 0 12px color-mix(in srgb, var(--color-primary) 70%, transparent))

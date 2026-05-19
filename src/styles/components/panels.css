@@ -57,7 +57,9 @@
 /* Entrance animation: the panel is conditionally rendered (no DOM when
    editingTarget is null), so we use @starting-style to give it an
    off-screen initial transform that animates to translateX(0) on mount.
-   Exit is abrupt by design since the panel unmounts when target clears. */
+   Exit is abrupt by design since the panel unmounts when target clears.
+   Baseline: @starting-style is Chrome 117+ / Safari 17.5+ / Firefox 129+
+   (all 2024+). Older engines skip the entrance and just snap in. */
 @starting-style {
   .prop-panel {
     transform: translateX(110%);
