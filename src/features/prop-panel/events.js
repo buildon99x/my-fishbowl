@@ -8,7 +8,7 @@ function updateThumbTransforms(root, fish) {
   const transform = getFishThumbTransform(fish);
   const listThumb = root.querySelector(`[data-fish-id="${fish.id}"] .fish-list-thumb`);
   if (listThumb) listThumb.style.transform = transform;
-  const panelThumb = root.querySelector('.prop-panel-thumb');
+  const panelThumb = document.querySelector('.prop-panel-thumb');
   if (panelThumb) panelThumb.style.transform = transform;
 }
 
@@ -109,7 +109,7 @@ function bindCommonTransformEvents(root, panel, aquarium, target, saveAquarium, 
 }
 
 export function bindPropTypeSegmentedEvents(root, aquarium, appState, saveAquarium, render, feedingState) {
-  const panel = root.querySelector('.prop-panel');
+  const panel = document.querySelector('.prop-panel');
   if (!panel) return;
   const { editingTarget } = appState.propPanel;
   if (!editingTarget || (editingTarget.type !== 'fish' && editingTarget.type !== 'deco')) return;
@@ -134,7 +134,7 @@ export function bindPropTypeSegmentedEvents(root, aquarium, appState, saveAquari
 }
 
 export function bindDecoPropsEvents(root, aquarium, appState, saveAquarium, render) {
-  const panel = root.querySelector('.prop-panel');
+  const panel = document.querySelector('.prop-panel');
   if (!panel) return;
   const { editingTarget } = appState.propPanel;
   if (!editingTarget || editingTarget.type !== 'deco') return;
@@ -142,7 +142,7 @@ export function bindDecoPropsEvents(root, aquarium, appState, saveAquarium, rend
 }
 
 export function bindFishPropsEvents(root, aquarium, appState, saveAquarium, render) {
-  const panel = root.querySelector('.prop-panel');
+  const panel = document.querySelector('.prop-panel');
   if (!panel) return;
 
   const { editingTarget } = appState.propPanel;
@@ -171,7 +171,7 @@ export function bindFishPropsEvents(root, aquarium, appState, saveAquarium, rend
 }
 
 export function bindGodModePropsEvents(root, aquarium, appState, saveAquarium, render) {
-  const panel = root.querySelector('.prop-panel');
+  const panel = document.querySelector('.prop-panel');
   if (!panel) return;
 
   const { editingTarget, godModeState } = appState.propPanel;
@@ -218,7 +218,8 @@ export function bindGodModePropsEvents(root, aquarium, appState, saveAquarium, r
 }
 
 export function bindCommonPanelEvents(root, appState, render) {
-  root.querySelector('[data-close-prop-panel]')?.addEventListener('click', () => {
+  // Panel lives on document.body now (S-034 follow-up), not inside #app root.
+  document.querySelector('[data-close-prop-panel]')?.addEventListener('click', () => {
     appState.propPanel.editingTarget = null;
     render();
   });

@@ -72,6 +72,52 @@ const SELECTORS = {
   app: '#app',
 };
 
+// Keeps the prop-panel outer element stable across re-renders. The host
+// lives on document.body (NOT inside #app) so that renderApp's
+// `root.innerHTML = ...` does not destroy it. When the editing target is
+// unchanged we replace only the inner contents, so the CSS @starting-style
+// entrance animation does not re-trigger on every interaction (slider
+// drag, status update, flip, etc.). When the target changes we remount
+// fully so the new panel slides in.
+function getOrCreatePropPanelHost() {
+  let host = document.body.querySelector(':scope > [data-prop-panel-host]');
+  if (!host) {
+    host = document.createElement('div');
+    host.className = 'prop-panel-host';
+    host.dataset.propPanelHost = '';
+    document.body.appendChild(host);
+  }
+  return host;
+}
+
+function syncPropPanelMount(aquarium, appState) {
+  const host = getOrCreatePropPanelHost();
+  if (!host) return;
+  const target = appState.propPanel.editingTarget;
+  const currentKey = target ? `${target.type}:${target.id ?? '_'}` : null;
+  const lastKey = appState.propPanel._mountedKey;
+
+  if (!target) {
+    host.innerHTML = '';
+    appState.propPanel._mountedKey = null;
+    return;
+  }
+
+  const html = renderPropPanel(target, aquarium, appState.propPanel);
+  const existingPanel = host.querySelector('.prop-panel');
+
+  if (currentKey !== lastKey || !existingPanel) {
+    host.innerHTML = html;
+  } else {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    const fresh = temp.querySelector('.prop-panel');
+    if (fresh) existingPanel.innerHTML = fresh.innerHTML;
+    else host.innerHTML = html;
+  }
+  appState.propPanel._mountedKey = currentKey;
+}
+
 function renderEmptyState(propCount) {
   if (propCount > 0) {
     return '';
@@ -254,7 +300,6 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       })}
 
       ${renderFishInputPanel(fishInputState)}
-      ${renderPropPanel(appState.propPanel.editingTarget, aquarium, appState.propPanel)}
       ${renderActionCluster({
         feedingState,
         fishInputState,
@@ -270,6 +315,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     </main>
   `;
   restoreFishListScroll(root, appState);
+  syncPropPanelMount(aquarium, appState);
 
   // S-033: toggle a body-level flag so dock can hide while the ➕ sheet is
   // open. Only one chrome surface at a time.
