@@ -3,10 +3,8 @@
   width: 100%;
   min-height: 100svh;
   display: grid;
-  grid-template-areas:
-    "hero"
-    "dock";
-  grid-template-rows: 1fr auto;
+  grid-template-areas: "hero";
+  grid-template-rows: 1fr;
   overflow: hidden;
   padding: 0;
 }

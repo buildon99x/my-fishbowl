@@ -20,16 +20,20 @@
 }
 /* ── Action Button Cluster (S-033: grid dock area) ──────────── */
 
+/* Pinned to top-center so it can never be hidden by scroll or covered by
+   bottom sheets/drawers. Menu (top-left) and mute (top-right) leave the
+   center clear for the action cluster. */
 .prop-action-panel {
-  grid-area: dock;
-  justify-self: center;
-  align-self: end;
+  position: fixed;
+  top: var(--safe-top);
+  left: 50%;
+  z-index: var(--z-chrome);
+  transform: translateX(-50%);
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--space-sm);
-  padding-bottom: var(--dock-bottom);
-  max-width: calc(100vw - var(--safe-left) - var(--safe-right));
+  max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 120px);
 }
 
 /* ── Prop Editing Panel (S-034: right side sheet) ──────────── */
@@ -46,9 +50,7 @@
   right: var(--safe-right);
   z-index: var(--z-panel);
   width: min(360px, calc(100vw - var(--safe-left) - var(--safe-right)));
-  max-height: calc(
-    100svh - var(--safe-top) - var(--dock-height) - var(--dock-bottom) - var(--space-lg)
-  );
+  max-height: calc(100svh - var(--safe-top) - var(--safe-bottom) - var(--space-lg));
   display: flex;
   flex-direction: column;
   border: 1px solid var(--color-hairline);
@@ -418,14 +420,6 @@
   justify-content: center;
   gap: var(--space-xs);
   flex-wrap: nowrap;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.prop-btn-cluster::-webkit-scrollbar {
-  display: none;
 }
 
 .prop-btn-wrap {
@@ -609,10 +603,6 @@
 }
 
 @media (max-width: 760px) {
-  .prop-action-panel {
-    bottom: 12px;
-  }
-
   .prop-btn {
     width: 60px;
     height: 60px;
