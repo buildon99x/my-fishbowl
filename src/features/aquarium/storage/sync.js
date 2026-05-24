@@ -94,12 +94,23 @@ export async function flushRemoteWrite() {
     const { etag } = await putAquarium(aquarium, syncState.etag);
     markSynced(etag);
   } catch (error) {
+    // Restore the pending payload so a subsequent retry can re-send it.
+    if (pendingAquarium == null) pendingAquarium = aquarium;
+
     if (error instanceof ApiError && error.status === 412) {
       markFailure('conflict', error);
     } else if (error instanceof ApiError && error.status === 0) {
       markFailure('offline', error);
     } else {
       markFailure('error', error);
+    }
+
+    // Schedule a retry using exponential backoff (computed by markFailure).
+    if (syncState.backoffMs > 0 && syncState.failureStreak <= 5) {
+      remoteTimer = setTimeout(() => {
+        remoteTimer = null;
+        void flushRemoteWrite();
+      }, syncState.backoffMs);
     }
   }
 }

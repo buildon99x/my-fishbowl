@@ -1,7 +1,9 @@
+import { escapeHtml } from '../../../lib/utils.js';
+
 // Gray-silhouette placeholder shown while a sprite is loading or after it
 // fails to load. Keeps the aquarium layout stable instead of popping in.
 export function renderSpriteFallback({ width = 120, height = 120, label = '' } = {}) {
-  const aria = label ? ` aria-label="${label}"` : ' aria-hidden="true"';
+  const aria = label ? ` aria-label="${escapeHtml(label)}"` : ' aria-hidden="true"';
   return `
     <div
       class="sprite-fallback"

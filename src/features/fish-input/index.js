@@ -64,6 +64,9 @@ function floodFill(ctx, canvas, startX, startY, tolerance = 30) {
   const width = canvas.width;
   const height = canvas.height;
 
+  // Bounds guard — reject out-of-range seed coordinates.
+  if (startX < 0 || startX >= width || startY < 0 || startY >= height) return;
+
   const idx = (startY * width + startX) * 4;
   const targetR = data[idx];
   const targetG = data[idx + 1];

@@ -73,6 +73,25 @@ const SELECTORS = {
   app: '#app',
 };
 
+/**
+ * Validate and sanitise a sprite URL before inserting into a src attribute.
+ * Allows data URLs (local canvas drawings) and same-origin/https Blob URLs.
+ * Returns an empty string for anything else to prevent XSS via crafted URLs.
+ */
+function safeSpriteUrl(url) {
+  if (typeof url !== 'string' || url === '') return '';
+  if (url.startsWith('data:image/')) return url;
+  try {
+    const parsed = new URL(url, location.origin);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:' || parsed.protocol === 'blob:') {
+      return parsed.href;
+    }
+  } catch {
+    // malformed URL — fall through
+  }
+  return '';
+}
+
 function renderEmptyState(propCount) {
   if (propCount > 0) {
     return '';
@@ -97,9 +116,9 @@ function renderFishes(fishes, selectedFishId, editingPropId, fishEatingId, magic
         return `
         <img
           class="fish-sprite ${isDeco ? 'is-deco' : ''} ${fish.id === selectedFishId ? 'is-selected' : ''} ${fish.id === editingPropId ? 'is-editing' : ''} ${fish.id === fishEatingId ? 'is-eating' : ''}"
-          data-fish-sprite="${fish.id}"
+          data-fish-sprite="${escapeHtml(fish.id)}"
           data-prop-type="${isDeco ? 'deco' : 'fish'}"
-          src="${fish.imageUrl}"
+          src="${escapeHtml(safeSpriteUrl(fish.imageUrl))}"
           alt="${escapeHtml(fish.name)}"
           style="${cssVarsToInlineStyle(getFishSpriteStyleVars(fish))}"
         >

@@ -8,12 +8,13 @@ function generateUuid() {
     return crypto.randomUUID();
   }
 
-  // Fallback UUID v4 (non-crypto) for environments without crypto.randomUUID.
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
-    const random = (Math.random() * 16) | 0;
-    const value = char === 'x' ? random : (random & 0x3) | 0x8;
-    return value.toString(16);
-  });
+  // Fallback UUID v4 using crypto.getRandomValues (CSPRNG safe).
+  const b = new Uint8Array(16);
+  (crypto ?? globalThis.crypto).getRandomValues(b);
+  b[6] = (b[6] & 0x0f) | 0x40; // version 4
+  b[8] = (b[8] & 0x3f) | 0x80; // variant 10
+  const h = [...b].map((x) => x.toString(16).padStart(2, '0'));
+  return `${h.slice(0, 4).join('')}-${h.slice(4, 6).join('')}-${h.slice(6, 8).join('')}-${h.slice(8, 10).join('')}-${h.slice(10).join('')}`;
 }
 
 function isValidUuidV4(value) {
