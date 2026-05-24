@@ -84,9 +84,14 @@ function renderCreateTab(state) {
 
       <div class="draw-area">
         <div class="draw-toolbar">
-          <span>그리기</span>
+          <div class="draw-tool-group" role="radiogroup" aria-label="그리기 도구">
+            <button type="button" class="draw-tool-btn is-active" data-draw-tool="pen" aria-pressed="true">✏️ 펜</button>
+            <button type="button" class="draw-tool-btn" data-draw-tool="eraser" aria-pressed="false">🧽 지우개</button>
+            <button type="button" class="draw-tool-btn" data-draw-tool="fill" aria-pressed="false">🪣 배경 지우기</button>
+          </div>
           <div class="draw-toolbar-actions">
-            <button class="button button-secondary" type="button" data-clear-drawing>지우기</button>
+            <button type="button" class="button button-secondary" data-draw-undo disabled>↩️ 실행취소</button>
+            <button type="button" class="button button-secondary" data-clear-drawing>🗑️ 전체 지우기</button>
           </div>
         </div>
         <canvas

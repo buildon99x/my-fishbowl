@@ -15,6 +15,7 @@ body {
   min-width: 320px;
   margin: 0;
   background: var(--color-canvas);
+  font-size: var(--font-size-min);
 }
 
 button,
@@ -23,10 +24,38 @@ textarea {
   font: inherit;
 }
 
+input,
+select,
+textarea {
+  font-size: var(--font-size-min);
+}
+
+button,
+[role="button"],
+[role="radio"],
+[role="tab"] {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 h1,
 h2,
 p,
 dl,
 dd {
   margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

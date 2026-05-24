@@ -56,9 +56,48 @@ function getCanvasPoint(canvas, event) {
   };
 }
 
+const MAX_UNDO = 20;
+
+function floodFill(ctx, canvas, startX, startY, tolerance = 30) {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const width = canvas.width;
+  const height = canvas.height;
+
+  const idx = (startY * width + startX) * 4;
+  const targetR = data[idx];
+  const targetG = data[idx + 1];
+  const targetB = data[idx + 2];
+
+  const queue = [[startX, startY]];
+  const visited = new Uint8Array(width * height);
+
+  while (queue.length) {
+    const [x, y] = queue.shift();
+    if (x < 0 || x >= width || y < 0 || y >= height) continue;
+    const i = y * width + x;
+    if (visited[i]) continue;
+    visited[i] = 1;
+
+    const pi = i * 4;
+    const dr = Math.abs(data[pi] - targetR);
+    const dg = Math.abs(data[pi + 1] - targetG);
+    const db = Math.abs(data[pi + 2] - targetB);
+
+    if (dr + dg + db > tolerance) continue;
+
+    data[pi + 3] = 0;
+    queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
 function setupDrawingCanvas(root, state, render) {
   const canvas = root.querySelector('[data-fish-canvas]');
   const clearButton = root.querySelector('[data-clear-drawing]');
+  const undoButton = root.querySelector('[data-draw-undo]');
+  const toolButtons = root.querySelectorAll('[data-draw-tool]');
 
   if (!canvas) {
     return;
@@ -66,6 +105,24 @@ function setupDrawingCanvas(root, state, render) {
 
   const context = canvas.getContext('2d');
   let isDrawing = false;
+  let currentTool = 'pen';
+  const undoStack = [];
+
+  function pushUndo() {
+    if (undoStack.length >= MAX_UNDO) undoStack.shift();
+    undoStack.push(context.getImageData(0, 0, canvas.width, canvas.height));
+    if (undoButton) undoButton.disabled = false;
+  }
+
+  function applyToolSettings() {
+    if (currentTool === 'eraser') {
+      context.globalCompositeOperation = 'destination-out';
+      context.lineWidth = 20;
+    } else {
+      context.globalCompositeOperation = 'source-over';
+      context.lineWidth = 7;
+    }
+  }
 
   context.lineCap = 'round';
   context.lineJoin = 'round';
@@ -76,10 +133,41 @@ function setupDrawingCanvas(root, state, render) {
       .trim() || '#0a0a0a';
   paintStoredSprite(canvas, state.spriteDataUrl);
 
+  toolButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      currentTool = btn.dataset.drawTool;
+      toolButtons.forEach((b) => {
+        b.setAttribute('aria-pressed', 'false');
+        b.classList.remove('is-active');
+      });
+      btn.setAttribute('aria-pressed', 'true');
+      btn.classList.add('is-active');
+    });
+  });
+
   canvas.addEventListener('pointerdown', (event) => {
+    const point = getCanvasPoint(canvas, event);
+
+    if (currentTool === 'fill') {
+      pushUndo();
+      floodFill(context, canvas, Math.round(point.x), Math.round(point.y));
+      updateState(
+        state,
+        {
+          spriteDataUrl: canvas.toDataURL('image/png'),
+          status: 'preview',
+          message: '그림 미리보기가 준비됐어요.',
+          source: 'drawing',
+        },
+        render,
+      );
+      return;
+    }
+
     isDrawing = true;
     canvas.setPointerCapture(event.pointerId);
-    const point = getCanvasPoint(canvas, event);
+    pushUndo();
+    applyToolSettings();
 
     context.beginPath();
     context.moveTo(point.x, point.y);
@@ -103,6 +191,7 @@ function setupDrawingCanvas(root, state, render) {
 
     isDrawing = false;
     canvas.releasePointerCapture(event.pointerId);
+    context.globalCompositeOperation = 'source-over';
     updateState(
       state,
       {
@@ -118,8 +207,27 @@ function setupDrawingCanvas(root, state, render) {
   canvas.addEventListener('pointerup', finishDrawing);
   canvas.addEventListener('pointercancel', finishDrawing);
 
+  undoButton?.addEventListener('click', () => {
+    if (!undoStack.length) return;
+    const snap = undoStack.pop();
+    context.putImageData(snap, 0, 0);
+    if (undoButton) undoButton.disabled = undoStack.length === 0;
+    updateState(
+      state,
+      {
+        spriteDataUrl: canvas.toDataURL('image/png'),
+        status: undoStack.length === 0 ? 'idle' : 'preview',
+        message: undoStack.length === 0 ? '' : '그림 미리보기가 준비됐어요.',
+        source: undoStack.length === 0 ? '' : 'drawing',
+      },
+      render,
+    );
+  });
+
   clearButton?.addEventListener('click', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
+    undoStack.length = 0;
+    if (undoButton) undoButton.disabled = true;
     updateState(
       state,
       {

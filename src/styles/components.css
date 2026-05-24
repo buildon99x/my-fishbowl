@@ -333,6 +333,37 @@
   gap: var(--space-sm);
 }
 
+.draw-tool-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.draw-tool-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.draw-tool-btn:hover {
+  background: var(--color-surface-card);
+}
+
+.draw-tool-btn.is-active,
+.draw-tool-btn[aria-pressed='true'] {
+  background: var(--color-ink);
+  color: var(--color-canvas);
+  border-color: var(--color-ink);
+}
+
 .fish-drawing-canvas,
 .preview-area {
   width: 100%;
