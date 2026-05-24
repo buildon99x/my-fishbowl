@@ -67,6 +67,7 @@ import { captureFishListScroll, restoreFishListScroll } from './features/fish-li
 import { bindFishSpriteDrag } from './features/fish-edit/drag.js';
 import { escapeHtml } from './lib/utils.js';
 import { cssVarsToInlineStyle, getFishSpriteStyleVars } from './lib/fishSpriteStyle.js';
+import { initI18n } from './lib/i18n.js';
 
 const SELECTORS = {
   app: '#app',
@@ -522,5 +523,8 @@ function initApp() {
 
   });
 }
+
+// Initialise i18n (non-blocking — app renders immediately with stored/auto-detected locale).
+initI18n().catch(() => {});
 
 initApp();

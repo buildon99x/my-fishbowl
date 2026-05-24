@@ -1,6 +1,5 @@
-// Public storage surface. External modules import from this directory and
-// receive the same loadAquarium / saveAquarium API the original storage.js had.
+// Public storage surface — preserves the same loadAquarium/saveAquarium API.
+// Backend-specific helpers (reconcile, conflict-card, sprite-fallback) are
+// consumed directly by their callers when BACKEND_ENABLED=true; they are
+// intentionally not re-exported here to keep the public surface minimal.
 export { loadAquarium, saveAquarium } from './sync.js';
-export { reconcileAquarium, flushRemoteWrite, syncState } from './sync.js';
-export { renderConflictCard, bindConflictCard } from './conflict-card.js';
-export { renderSpriteFallback, attachSpriteFallback } from './sprite-fallback.js';

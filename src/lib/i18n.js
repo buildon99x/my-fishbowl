@@ -10,15 +10,9 @@ export function getCurrentLang() { return currentLang; }
 export function getSupportedLangs() { return [...SUPPORTED_LANGS]; }
 
 export async function loadLocale(lang) {
-  // Dynamic import for locale JSON
-  try {
-    const mod = await import(`../locales/${lang}.json`, { assert: { type: 'json' } });
-    return mod.default;
-  } catch {
-    // fallback: fetch
-    const res = await fetch(`/locales/${lang}.json`);
-    return res.json();
-  }
+  const res = await fetch(`/locales/${lang}.json`);
+  if (!res.ok) throw new Error(`Failed to load locale: ${lang}`);
+  return res.json();
 }
 
 export async function setLang(lang) {
