@@ -73,8 +73,11 @@
   gap: 8px;
   max-height: min(44vh, 420px);
   margin-top: 14px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   padding-right: 2px;
+  scrollbar-gutter: stable;
 }
 
 /* S-035: drawer 내부 fish-list 빈 상태. 어항 빈 상태(.aquarium-empty)와
@@ -296,10 +299,9 @@
 .text-input:focus,
 .file-input:focus,
 .select-input:focus {
-  outline: none;
-  border-color: var(--color-ink);
-  border-width: 2px;
-  padding: calc(var(--space-sm) - 1px) calc(var(--space-md) - 1px);
+  border: 1px solid var(--color-brand-teal);
+  outline: 2px solid var(--color-brand-teal);
+  outline-offset: 0px;
 }
 
 .file-input {
@@ -456,7 +458,7 @@
 
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.48;
+  opacity: 0.35;
 }
 
 .button-primary {
@@ -616,7 +618,7 @@
 .prop-undo-snackbar {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--dock-bottom) + var(--dock-height) + 12px);
+  bottom: calc(var(--dock-bottom) + var(--dock-height) + 72px);
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
