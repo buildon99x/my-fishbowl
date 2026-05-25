@@ -27,7 +27,7 @@ vi.mock('./remote.js', () => ({
 }));
 
 import { fetchAquarium, putAquarium } from './remote.js';
-import { reconcileAquarium, syncState, __resetSync } from './sync.js';
+import { reconcileAquarium, syncState, __resetSync, flushRemoteWrite, saveAquarium } from './sync.js';
 import { STORAGE_KEY } from './local.js';
 
 const memory = new Map();
@@ -118,5 +118,43 @@ describe('reconcileAquarium', () => {
     expect(result.name).toBe('local-fallback');
     expect(putAquarium).not.toHaveBeenCalled();
     expect(syncState.status).toBe('offline');
+  });
+});
+
+describe('flushRemoteWrite', () => {
+  beforeEach(() => {
+    memory.clear();
+    vi.clearAllMocks();
+    __resetSync();
+  });
+
+  it('flush failure restores pendingAquarium for retry', async () => {
+    const aquarium = makeAquarium('2026-05-24T10:00:00.000Z', { name: 'pending' });
+    seedLocal(aquarium);
+
+    // Queue a pending write via saveAquarium (sets pendingAquarium internally)
+    saveAquarium(aquarium);
+    putAquarium.mockRejectedValue(new MockApiError(0, 'network_error', 'offline'));
+
+    await flushRemoteWrite();
+
+    // After failure, status should be offline and backoff should be set
+    expect(syncState.status).toBe('offline');
+    expect(syncState.failureStreak).toBe(1);
+    expect(syncState.backoffMs).toBeGreaterThan(0);
+  });
+
+  it('flush success marks status as synced', async () => {
+    const aquarium = makeAquarium('2026-05-24T11:00:00.000Z', { name: 'success' });
+    seedLocal(aquarium);
+
+    saveAquarium(aquarium);
+    putAquarium.mockResolvedValue({ aquarium, etag: 'etag-flush-1' });
+
+    await flushRemoteWrite();
+
+    expect(syncState.status).toBe('synced');
+    expect(syncState.etag).toBe('etag-flush-1');
+    expect(syncState.failureStreak).toBe(0);
   });
 });
