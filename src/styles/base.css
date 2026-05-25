@@ -9,6 +9,7 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -36,6 +37,9 @@ button,
 [role="tab"] {
   min-height: var(--touch-target-min);
   min-width: var(--touch-target-min);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 :focus-visible {

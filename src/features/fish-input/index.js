@@ -158,6 +158,9 @@ function setupDrawingCanvas(root, state, render) {
   });
 
   canvas.addEventListener('pointerdown', (event) => {
+    // Reject non-primary touches (palm rejection for iPad).
+    if (event.pointerType === 'touch' && !event.isPrimary) return;
+
     const point = getCanvasPoint(canvas, event);
 
     if (currentTool === 'fill') {
@@ -189,6 +192,7 @@ function setupDrawingCanvas(root, state, render) {
     if (!isDrawing) {
       return;
     }
+    if (event.pointerType === 'touch' && !event.isPrimary) return;
 
     const point = getCanvasPoint(canvas, event);
 
@@ -197,6 +201,7 @@ function setupDrawingCanvas(root, state, render) {
   });
 
   function finishDrawing(event) {
+    if (event.pointerType === 'touch' && !event.isPrimary) return;
     if (!isDrawing) {
       return;
     }
@@ -262,6 +267,7 @@ function bindBottomSheetGrabber(panel, state, render) {
   let startStage = 'peek';
 
   grabber.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch' && !e.isPrimary) return;
     dragging = true;
     startY = e.clientY;
     startStage = state.sheetStage === 'full' ? 'full' : 'peek';
@@ -269,6 +275,7 @@ function bindBottomSheetGrabber(panel, state, render) {
   });
 
   grabber.addEventListener('pointerup', (e) => {
+    if (e.pointerType === 'touch' && !e.isPrimary) return;
     if (!dragging) return;
     dragging = false;
     grabber.releasePointerCapture(e.pointerId);

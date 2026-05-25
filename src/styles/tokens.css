@@ -97,6 +97,7 @@
 
   /* Accessibility */
   --touch-target-min: 44px;
+  --touch-target-primary: 52px;
   --font-size-min: 1rem;
   --color-focus: #0057ff;
 

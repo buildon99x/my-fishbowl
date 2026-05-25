@@ -247,6 +247,7 @@
 .fish-input-panel {
   max-height: min(780px, calc(100vh - 18px - 72px - 32px));
   overflow: auto;
+  overscroll-behavior: contain;
   padding: var(--space-lg);
 }
 
@@ -340,8 +341,8 @@
 }
 
 .draw-tool-btn {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 52px;
+  min-height: 52px;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
   padding: var(--space-xs) var(--space-sm);
@@ -351,6 +352,9 @@
   background: var(--color-canvas);
   color: var(--color-ink);
   transition: background-color 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .draw-tool-btn:hover {
@@ -363,7 +367,7 @@
   color: var(--color-canvas);
   border-color: var(--color-ink);
   font-weight: 600;
-  transform: scale(0.95); /* 눌린 느낌 */
+  transform: scale(0.92); /* 눌린 느낌 */
 }
 
 /* Draw toolbar — disabled state */
@@ -388,7 +392,7 @@
 }
 
 .draw-size-slider {
-  width: 64px;
+  width: 80px;
   accent-color: var(--color-ink, #0a0a0a);
   cursor: pointer;
 }
@@ -456,6 +460,7 @@
 }
 
 .button-primary {
+  min-height: 52px;
   color: var(--color-on-primary);
   background: var(--color-primary);
 }
