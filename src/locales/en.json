@@ -29,5 +29,7 @@
   "sheet.expand": "Expand/Collapse sheet",
   "catalog.hint": "Tap a card to add it to your aquarium.",
   "fish.hint.swim": "Swims and eats food",
-  "deco.hint.stay": "Stays still. Decorates your aquarium"
+  "deco.hint.stay": "Stays still. Decorates your aquarium",
+  "img.file.label": "Image File",
+  "draw.label": "Draw"
 }

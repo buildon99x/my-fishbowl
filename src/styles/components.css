@@ -336,7 +336,7 @@
 .draw-tool-group {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm, 8px); /* xs→sm으로 더 여유있게 */
 }
 
 .draw-tool-btn {
@@ -362,6 +362,35 @@
   background: var(--color-ink);
   color: var(--color-canvas);
   border-color: var(--color-ink);
+  font-weight: 600;
+  transform: scale(0.95); /* 눌린 느낌 */
+}
+
+/* Draw toolbar — disabled state */
+.draw-toolbar-actions button:disabled,
+.draw-tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Draw toolbar — pen size control */
+.draw-size-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs, 4px);
+}
+
+.draw-size-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.draw-size-slider {
+  width: 64px;
+  accent-color: var(--color-ink, #0a0a0a);
+  cursor: pointer;
 }
 
 .fish-drawing-canvas,

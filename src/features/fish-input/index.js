@@ -1,6 +1,7 @@
 import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.js';
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
+import { setLang, getCurrentLang } from '../../lib/i18n.js';
 
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
@@ -120,7 +121,7 @@ function setupDrawingCanvas(root, state, render) {
   function applyToolSettings() {
     if (currentTool === 'eraser') {
       context.globalCompositeOperation = 'destination-out';
-      context.lineWidth = 20;
+      context.lineWidth = 12; // was 20 — more precise for kids
     } else {
       context.globalCompositeOperation = 'source-over';
       context.lineWidth = 7;
@@ -148,6 +149,14 @@ function setupDrawingCanvas(root, state, render) {
     });
   });
 
+  const sizeSlider = root.querySelector('[data-draw-size]');
+  sizeSlider?.addEventListener('input', (e) => {
+    const size = Number(e.target.value);
+    if (currentTool !== 'eraser') {
+      context.lineWidth = size;
+    }
+  });
+
   canvas.addEventListener('pointerdown', (event) => {
     const point = getCanvasPoint(canvas, event);
 
@@ -159,7 +168,7 @@ function setupDrawingCanvas(root, state, render) {
         {
           spriteDataUrl: canvas.toDataURL('image/png'),
           status: 'preview',
-          message: '그림 미리보기가 준비됐어요.',
+          message: '배경을 지웠어요! 필요하면 실행취소를 눌러요.',
           source: 'drawing',
         },
         render,
@@ -320,6 +329,13 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   const nameInput = root.querySelector('[data-fish-name]');
   const movementSelect = root.querySelector('[data-fish-movement]');
   const registerButton = root.querySelector('[data-register-fish-image]');
+  const langToggle = root.querySelector('[data-lang-toggle]');
+
+  langToggle?.addEventListener('click', async () => {
+    const next = getCurrentLang() === 'ko' ? 'en' : 'ko';
+    await setLang(next);
+    render();
+  });
 
   toggleButton?.addEventListener('click', () => {
     const next = !state.isExpanded;

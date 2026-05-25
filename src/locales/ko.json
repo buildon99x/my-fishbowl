@@ -29,5 +29,7 @@
   "sheet.expand": "시트 펼치기/접기",
   "catalog.hint": "원하는 카드를 탭하면 어항에 들어가요.",
   "fish.hint.swim": "헤엄치고 먹이를 먹어요",
-  "deco.hint.stay": "가만히 있어요. 배경을 꾸며요"
+  "deco.hint.stay": "가만히 있어요. 배경을 꾸며요",
+  "img.file.label": "이미지 파일",
+  "draw.label": "그리기"
 }
