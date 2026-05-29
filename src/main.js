@@ -65,7 +65,7 @@ import {
 import { renderAquariumStatus, renderUndoSnackbar } from './features/fish-list/view.js';
 import { captureFishListScroll, restoreFishListScroll } from './features/fish-list/scroll.js';
 import { bindFishSpriteDrag } from './features/fish-edit/drag.js';
-import { escapeHtml } from './lib/utils.js';
+import { escapeHtml, safeSpriteUrl } from './lib/utils.js';
 import { cssVarsToInlineStyle, getFishSpriteStyleVars } from './lib/fishSpriteStyle.js';
 import { initI18n } from './lib/i18n.js';
 
@@ -73,24 +73,6 @@ const SELECTORS = {
   app: '#app',
 };
 
-/**
- * Validate and sanitise a sprite URL before inserting into a src attribute.
- * Allows data URLs (local canvas drawings) and same-origin/https Blob URLs.
- * Returns an empty string for anything else to prevent XSS via crafted URLs.
- */
-function safeSpriteUrl(url) {
-  if (typeof url !== 'string' || url === '') return '';
-  if (url.startsWith('data:image/')) return url;
-  try {
-    const parsed = new URL(url, location.origin);
-    if (parsed.protocol === 'https:' || parsed.protocol === 'http:' || parsed.protocol === 'blob:') {
-      return parsed.href;
-    }
-  } catch {
-    // malformed URL — fall through
-  }
-  return '';
-}
 
 function renderEmptyState(propCount) {
   if (propCount > 0) {

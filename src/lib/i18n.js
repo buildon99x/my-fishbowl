@@ -24,7 +24,7 @@ export async function setLang(lang) {
 }
 
 export function t(key, vars = {}) {
-  const str = translations[key] ?? key;
+  const str = String(translations[key] ?? key);
   return str.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
 }
 

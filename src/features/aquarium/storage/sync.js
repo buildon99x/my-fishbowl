@@ -21,6 +21,7 @@ export const syncState = {
 
 let remoteTimer = null;
 let pendingAquarium = null;
+let isFlushing = false;
 
 function resetSyncState() {
   syncState.status = 'idle';
@@ -69,10 +70,10 @@ export function saveAquarium(aquarium) {
 }
 
 function scheduleRemoteWrite(aquarium) {
-  pendingAquarium = aquarium;
+  pendingAquarium = aquarium;  // Always capture latest
 
-  if (remoteTimer) {
-    return;
+  if (remoteTimer || isFlushing) {
+    return;  // Already scheduled or in-flight; pendingAquarium is updated above
   }
 
   remoteTimer = setTimeout(() => {
@@ -85,16 +86,20 @@ export async function flushRemoteWrite() {
   if (!BACKEND_ENABLED || pendingAquarium == null) {
     return;
   }
+  if (isFlushing) {
+    return;  // Already in flight; scheduleRemoteWrite will re-queue when done
+  }
 
   const aquarium = pendingAquarium;
   pendingAquarium = null;
+  isFlushing = true;         // Set BEFORE await
   syncState.status = 'syncing';
 
   try {
     const { etag } = await putAquarium(aquarium, syncState.etag);
     markSynced(etag);
   } catch (error) {
-    // Restore the pending payload so a subsequent retry can re-send it.
+    // Restore pending only if no newer save arrived during flight
     if (pendingAquarium == null) pendingAquarium = aquarium;
 
     if (error instanceof ApiError && error.status === 412) {
@@ -111,6 +116,15 @@ export async function flushRemoteWrite() {
         remoteTimer = null;
         void flushRemoteWrite();
       }, syncState.backoffMs);
+    }
+  } finally {
+    isFlushing = false;      // Always clear
+    // If a new save arrived during flight and no timer is pending, schedule flush
+    if (pendingAquarium != null && !remoteTimer) {
+      remoteTimer = setTimeout(() => {
+        remoteTimer = null;
+        void flushRemoteWrite();
+      }, REMOTE_DEBOUNCE_MS);
     }
   }
 }
@@ -154,7 +168,7 @@ export async function reconcileAquarium() {
   const remoteAquarium = normalizeAquarium(remote.aquarium);
 
   // server-newer: adopt the server copy.
-  if (!localExists || getUpdatedAt(remoteAquarium) >= getUpdatedAt(local)) {
+  if (!localExists || getUpdatedAt(remoteAquarium) > getUpdatedAt(local)) {
     saveLocalAquarium(remoteAquarium);
     markSynced(remote.etag);
     return remoteAquarium;
@@ -184,5 +198,6 @@ export function __resetSync() {
     remoteTimer = null;
   }
   pendingAquarium = null;
+  isFlushing = false;
   resetSyncState();
 }

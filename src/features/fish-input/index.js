@@ -74,10 +74,11 @@ function floodFill(ctx, canvas, startX, startY, tolerance = 30) {
   const targetB = data[idx + 2];
 
   const queue = [[startX, startY]];
+  let head = 0;
   const visited = new Uint8Array(width * height);
 
-  while (queue.length) {
-    const [x, y] = queue.shift();
+  while (head < queue.length) {
+    const [x, y] = queue[head++];
     if (x < 0 || x >= width || y < 0 || y >= height) continue;
     const i = y * width + x;
     if (visited[i]) continue;
@@ -340,7 +341,9 @@ export function bindFishInputEvents(root, state, render, options = {}) {
 
   langToggle?.addEventListener('click', async () => {
     const next = getCurrentLang() === 'ko' ? 'en' : 'ko';
-    await setLang(next);
+    try {
+      await setLang(next);
+    } catch { /* keep current language on failure */ }
     render();
   });
 

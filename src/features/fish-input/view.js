@@ -1,4 +1,4 @@
-import { escapeHtml } from '../../lib/utils.js';
+import { escapeHtml, safeSpriteUrl } from '../../lib/utils.js';
 import { renderDefaultObjectsCatalog } from '../default-objects/view.js';
 import { t } from '../../lib/i18n.js';
 
@@ -123,7 +123,7 @@ function renderCreateTab(state) {
         <span class="preview-type-badge" data-prop-type-badge>${typeBadgeIcon} ${typeBadgeText}</span>
         ${
           hasSprite
-            ? `<img class="fish-preview-image" src="${state.spriteDataUrl}" alt="오브젝트 미리보기">`
+            ? `<img class="fish-preview-image" src="${escapeHtml(safeSpriteUrl(state.spriteDataUrl))}" alt="오브젝트 미리보기">`
             : `<span class="preview-empty">${t('preview.empty')}</span>`
         }
       </div>

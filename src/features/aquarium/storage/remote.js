@@ -28,5 +28,5 @@ export async function putAquarium(aquarium, etag) {
     body: aquarium,
   });
 
-  return { aquarium: data ?? aquarium, etag: nextEtag ?? etag };
+  return { aquarium: data ?? aquarium, etag: nextEtag ?? null };
 }
