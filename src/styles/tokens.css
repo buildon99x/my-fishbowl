@@ -95,6 +95,12 @@
   --drawer-width-open: 320px;
   --keyboard-inset: 0px;
 
+  /* Accessibility */
+  --touch-target-min: 44px;
+  --touch-target-primary: 52px;
+  --font-size-min: 1rem;
+  --color-focus: #0057ff;
+
   /* z-index scale */
   --z-chrome: 20;
   --z-panel: 30;

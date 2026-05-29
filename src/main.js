@@ -35,7 +35,7 @@ import {
 } from './features/cleaning/index.js';
 import { renderDecoration } from './features/aquarium/decoration.js';
 import { addUserPropToAquarium } from './features/aquarium/fish-actions.js';
-import { loadAquarium, saveAquarium } from './features/aquarium/storage.js';
+import { loadAquarium, saveAquarium } from './features/aquarium/storage/index.js';
 import {
   createSoundController,
   renderMuteToggle,
@@ -65,12 +65,14 @@ import {
 import { renderAquariumStatus, renderUndoSnackbar } from './features/fish-list/view.js';
 import { captureFishListScroll, restoreFishListScroll } from './features/fish-list/scroll.js';
 import { bindFishSpriteDrag } from './features/fish-edit/drag.js';
-import { escapeHtml } from './lib/utils.js';
+import { escapeHtml, safeSpriteUrl } from './lib/utils.js';
 import { cssVarsToInlineStyle, getFishSpriteStyleVars } from './lib/fishSpriteStyle.js';
+import { initI18n } from './lib/i18n.js';
 
 const SELECTORS = {
   app: '#app',
 };
+
 
 function renderEmptyState(propCount) {
   if (propCount > 0) {
@@ -96,9 +98,9 @@ function renderFishes(fishes, selectedFishId, editingPropId, fishEatingId, magic
         return `
         <img
           class="fish-sprite ${isDeco ? 'is-deco' : ''} ${fish.id === selectedFishId ? 'is-selected' : ''} ${fish.id === editingPropId ? 'is-editing' : ''} ${fish.id === fishEatingId ? 'is-eating' : ''}"
-          data-fish-sprite="${fish.id}"
+          data-fish-sprite="${escapeHtml(fish.id)}"
           data-prop-type="${isDeco ? 'deco' : 'fish'}"
-          src="${fish.imageUrl}"
+          src="${escapeHtml(safeSpriteUrl(fish.imageUrl))}"
           alt="${escapeHtml(fish.name)}"
           style="${cssVarsToInlineStyle(getFishSpriteStyleVars(fish))}"
         >
@@ -522,5 +524,8 @@ function initApp() {
 
   });
 }
+
+// Initialise i18n (non-blocking — app renders immediately with stored/auto-detected locale).
+initI18n().catch(() => {});
 
 initApp();

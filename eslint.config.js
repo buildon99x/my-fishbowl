@@ -30,6 +30,8 @@ export default [
         webkitAudioContext: 'readonly',
         navigator: 'readonly',
         fetch: 'readonly',
+        URL: 'readonly',
+        location: 'readonly',
         HTMLElement: 'readonly',
         SVGElement: 'readonly',
       },

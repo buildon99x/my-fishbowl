@@ -34,8 +34,9 @@ body[data-activity="idle"] .prop-action-panel {
    keyboard users can't focus invisible controls behind the sheet, while
    the delayed visibility transition lets the fade-out animate. */
 .prop-action-panel {
+  opacity: 1;
   visibility: visible;
-  transition: opacity 0.18s ease, visibility 0s linear 0s;
+  transition: opacity 0.18s ease, visibility 0s;
 }
 
 body[data-sheet-open="true"] .prop-action-panel {

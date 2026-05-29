@@ -90,6 +90,7 @@
     max-height: 70svh;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     transform: translateY(0);
+    z-index: calc(var(--z-panel, 30) + 2);
   }
 
   @starting-style {
@@ -183,6 +184,7 @@
 .prop-panel-body {
   padding: var(--space-md);
   overflow-y: auto;
+  overscroll-behavior: contain;
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -222,12 +224,12 @@
 
 .prop-control-input {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--touch-target-min);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-sm);
   font: inherit;
-  font-size: var(--text-body-sm);
+  font-size: var(--font-size-min);
   color: var(--color-ink);
   background: var(--color-canvas);
   box-sizing: border-box;
@@ -240,12 +242,12 @@
 
 .prop-control-number {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--touch-target-min);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-sm);
   font: inherit;
-  font-size: var(--text-body-sm);
+  font-size: var(--font-size-min);
   color: var(--color-ink);
   background: var(--color-canvas);
   box-sizing: border-box;
@@ -444,6 +446,7 @@
   background: color-mix(in srgb, var(--color-surface-soft) 95%, transparent);
   backdrop-filter: blur(8px);
   box-shadow: 0 4px 12px rgba(10, 10, 10, 0.08);
+  z-index: 10;
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 4px);
@@ -484,7 +487,7 @@
   font-size: 29px;
   line-height: 1;
   background: color-mix(in srgb, var(--color-surface-soft) 90%, transparent);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(6px);
   box-shadow: 0 4px 14px rgba(10, 10, 10, 0.08);
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
@@ -522,7 +525,7 @@
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--color-surface-soft) 95%, transparent);
   backdrop-filter: blur(8px);
-  z-index: 1;
+  z-index: 100;
 }
 
 .prop-btn-wrap:hover .prop-feed-submenu,
@@ -538,7 +541,7 @@
 }
 
 .prop-food-type-select {
-  min-height: 36px;
+  min-height: var(--touch-target-min);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-xs);
@@ -546,7 +549,7 @@
   background: color-mix(in srgb, var(--color-surface-soft) 95%, transparent);
   backdrop-filter: blur(8px);
   font: inherit;
-  font-size: var(--text-caption-uc);
+  font-size: var(--font-size-min);
   cursor: pointer;
 }
 
@@ -663,8 +666,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
   border: none;
   border-radius: var(--radius-sm);
   padding: 0;

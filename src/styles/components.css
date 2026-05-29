@@ -73,8 +73,11 @@
   gap: 8px;
   max-height: min(44vh, 420px);
   margin-top: 14px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   padding-right: 2px;
+  scrollbar-gutter: stable;
 }
 
 /* S-035: drawer 내부 fish-list 빈 상태. 어항 빈 상태(.aquarium-empty)와
@@ -149,7 +152,7 @@
 
 .fish-list-name {
   overflow: hidden;
-  font-size: var(--text-caption);
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-ink);
   text-overflow: ellipsis;
@@ -157,6 +160,7 @@
 }
 
 .fish-list-time {
+  display: none;
   color: var(--color-muted);
   font-size: var(--text-caption-uc);
   font-weight: 500;
@@ -247,6 +251,7 @@
 .fish-input-panel {
   max-height: min(780px, calc(100vh - 18px - 72px - 32px));
   overflow: auto;
+  overscroll-behavior: contain;
   padding: var(--space-lg);
 }
 
@@ -255,8 +260,9 @@
 }
 
 .fish-input-status p {
-  color: var(--color-muted);
-  font-size: var(--text-body-sm);
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .fish-input-grid {
@@ -295,10 +301,9 @@
 .text-input:focus,
 .file-input:focus,
 .select-input:focus {
-  outline: none;
-  border-color: var(--color-ink);
-  border-width: 2px;
-  padding: calc(var(--space-sm) - 1px) calc(var(--space-md) - 1px);
+  border: 1px solid var(--color-brand-teal);
+  outline: 2px solid var(--color-brand-teal);
+  outline-offset: 0px;
 }
 
 .file-input {
@@ -333,6 +338,113 @@
   gap: var(--space-sm);
 }
 
+.draw-tool-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 8px); /* xs→sm으로 더 여유있게 */
+}
+
+.draw-tool-btn {
+  min-width: 52px;
+  min-height: 52px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.draw-tool-btn:hover {
+  background: var(--color-surface-card);
+}
+
+.draw-tool-btn.is-active,
+.draw-tool-btn[aria-pressed='true'] {
+  background: var(--color-ink);
+  color: var(--color-canvas);
+  border-color: var(--color-ink);
+  font-weight: 600;
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px var(--color-brand-teal, #06b6d4);
+}
+
+/* Draw toolbar — disabled state */
+.draw-toolbar-actions button:disabled,
+.draw-tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Draw toolbar — pen size control */
+.draw-size-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs, 4px);
+}
+
+.draw-size-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.draw-size-slider {
+  width: 80px;
+  accent-color: var(--color-ink, #0a0a0a);
+  cursor: pointer;
+}
+
+.draw-size-control.is-inactive {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.button.is-confirm-pending {
+  background: var(--color-error, #ef4444);
+  color: #fff;
+  border-color: var(--color-error, #ef4444);
+}
+
+.draw-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.draw-color-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background-color: var(--swatch-color);
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.draw-color-btn.is-active {
+  border-color: var(--color-ink);
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink);
+}
+
+.draw-color-btn:hover {
+  transform: scale(1.1);
+}
+
 .fish-drawing-canvas,
 .preview-area {
   width: 100%;
@@ -353,6 +465,11 @@
   display: block;
   touch-action: none;
   cursor: crosshair;
+}
+
+.fish-drawing-canvas.is-processing {
+  cursor: wait;
+  opacity: 0.85;
 }
 
 .preview-area {
@@ -392,10 +509,11 @@
 
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.48;
+  opacity: 0.35;
 }
 
 .button-primary {
+  min-height: 52px;
   color: var(--color-on-primary);
   background: var(--color-primary);
 }
@@ -405,7 +523,8 @@
 }
 
 .button-secondary {
-  min-height: 36px;
+  min-height: 44px;
+  min-width: 44px;
   padding: var(--space-xs) var(--space-sm);
   color: var(--color-ink);
   border-color: var(--color-hairline);
@@ -455,13 +574,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 10px 16px;
   border: 1px solid transparent;
   border-radius: calc(var(--radius-md) - 4px);
   background: transparent;
   color: var(--color-ink);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  min-height: 44px;
   opacity: 0.7;
 }
 .prop-type-option.is-active {
@@ -551,7 +671,7 @@
 .prop-undo-snackbar {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--dock-bottom) + var(--dock-height) + 12px);
+  bottom: calc(var(--dock-bottom) + var(--dock-height) + 72px);
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
@@ -568,3 +688,38 @@
 @media (prefers-reduced-motion: reduce) {
   .prop-panel-status, .prop-type-option { transition: none !important; }
 }
+
+.draw-size-presets {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.draw-size-preset-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid var(--color-border, #d1d5db);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  touch-action: manipulation;
+}
+
+.draw-size-preset-btn.is-active {
+  border-color: var(--color-ink);
+  background: var(--color-surface-soft, #f1efe8);
+}
+
+.draw-size-preset-btn::before {
+  content: '';
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.draw-size-preset-btn[data-size-label="thin"]::before { width: 4px; height: 4px; }
+.draw-size-preset-btn[data-size-label="medium"]::before { width: 8px; height: 8px; }
+.draw-size-preset-btn[data-size-label="thick"]::before { width: 14px; height: 14px; }
