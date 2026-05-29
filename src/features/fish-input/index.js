@@ -120,12 +120,20 @@ function setupDrawingCanvas(root, state, render) {
   }
 
   function applyToolSettings() {
+    const sizeControl = root.querySelector('.draw-size-control');
     if (currentTool === 'eraser') {
       context.globalCompositeOperation = 'destination-out';
-      context.lineWidth = 12; // was 20 — more precise for kids
+      const sliderVal = root.querySelector('[data-draw-size]');
+      context.lineWidth = sliderVal ? Number(sliderVal.value) : 12;
+      sizeControl?.classList.remove('is-inactive');
+    } else if (currentTool === 'fill') {
+      context.globalCompositeOperation = 'source-over';
+      sizeControl?.classList.add('is-inactive');
     } else {
       context.globalCompositeOperation = 'source-over';
-      context.lineWidth = 7;
+      const sliderVal = root.querySelector('[data-draw-size]');
+      context.lineWidth = sliderVal ? Number(sliderVal.value) : 7;
+      sizeControl?.classList.remove('is-inactive');
     }
   }
 
@@ -147,15 +155,30 @@ function setupDrawingCanvas(root, state, render) {
       });
       btn.setAttribute('aria-pressed', 'true');
       btn.classList.add('is-active');
+      applyToolSettings();
     });
   });
 
   const sizeSlider = root.querySelector('[data-draw-size]');
   sizeSlider?.addEventListener('input', (e) => {
     const size = Number(e.target.value);
-    if (currentTool !== 'eraser') {
+    if (currentTool !== 'fill') {
       context.lineWidth = size;
     }
+  });
+
+  // Color swatch binding
+  const colorBtns = root.querySelectorAll('[data-color]');
+  colorBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const color = btn.dataset.color;
+      context.strokeStyle = color;
+      // Update active state
+      colorBtns.forEach((b) => {
+        b.classList.toggle('is-active', b === btn);
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+    });
   });
 
   canvas.addEventListener('pointerdown', (event) => {
@@ -172,7 +195,7 @@ function setupDrawingCanvas(root, state, render) {
         {
           spriteDataUrl: canvas.toDataURL('image/png'),
           status: 'preview',
-          message: '배경을 지웠어요! 필요하면 실행취소를 눌러요.',
+          message: '배경을 지웠어요! 마음에 들면 아래 \'추가\' 버튼을 눌러요. 🐟',
           source: 'drawing',
         },
         render,
@@ -215,7 +238,7 @@ function setupDrawingCanvas(root, state, render) {
       {
         spriteDataUrl: canvas.toDataURL('image/png'),
         status: 'preview',
-        message: '그림 미리보기가 준비됐어요.',
+        message: '완성됐어요! 아래 \'추가\' 버튼을 눌러요. 🐟',
         source: 'drawing',
       },
       render,
@@ -235,7 +258,7 @@ function setupDrawingCanvas(root, state, render) {
       {
         spriteDataUrl: canvas.toDataURL('image/png'),
         status: undoStack.length === 0 ? 'idle' : 'preview',
-        message: undoStack.length === 0 ? '' : '그림 미리보기가 준비됐어요.',
+        message: undoStack.length === 0 ? '' : '완성됐어요! 아래 \'추가\' 버튼을 눌러요. 🐟',
         source: undoStack.length === 0 ? '' : 'drawing',
       },
       render,
@@ -243,6 +266,12 @@ function setupDrawingCanvas(root, state, render) {
   });
 
   clearButton?.addEventListener('click', () => {
+    const confirmed = window.confirm(
+      getCurrentLang() === 'ko'
+        ? '전부 지울까요? 이전으로 되돌릴 수 없어요.'
+        : 'Clear everything? You cannot undo this.'
+    );
+    if (!confirmed) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
     undoStack.length = 0;
     if (undoButton) undoButton.disabled = true;
@@ -296,6 +325,15 @@ function bindBottomSheetGrabber(panel, state, render) {
       if (startStage === 'full') {
         state.sheetStage = 'peek';
       } else {
+        const hasUnsavedDrawing = state.spriteDataUrl && state.status === 'preview';
+        if (hasUnsavedDrawing) {
+          const ok = window.confirm(
+            getCurrentLang() === 'ko'
+              ? '그림이 저장되지 않았어요. 닫을까요?'
+              : 'Your drawing is not saved. Close anyway?'
+          );
+          if (!ok) return;
+        }
         state.sheetStage = 'closed';
         state.isExpanded = false;
       }
@@ -309,6 +347,15 @@ function bindBottomSheetGrabber(panel, state, render) {
 function bindBackdrop(root, state, render) {
   const backdrop = root.querySelector('[data-fish-input-backdrop]');
   backdrop?.addEventListener('click', () => {
+    const hasUnsavedDrawing = state.spriteDataUrl && state.status === 'preview';
+    if (hasUnsavedDrawing) {
+      const ok = window.confirm(
+        getCurrentLang() === 'ko'
+          ? '그림이 저장되지 않았어요. 닫을까요?'
+          : 'Your drawing is not saved. Close anyway?'
+      );
+      if (!ok) return;
+    }
     state.sheetStage = 'closed';
     state.isExpanded = false;
     render();
@@ -377,7 +424,9 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     btn.addEventListener('click', () => {
       const next = btn.dataset.fishInputTab === 'create' ? 'create' : 'catalog';
       if (state.activeTab === next) return;
-      updateState(state, { activeTab: next }, render);
+      const patch = { activeTab: next };
+      if (next === 'create') patch.sheetStage = 'full';
+      updateState(state, patch, render);
     });
   });
 
@@ -402,7 +451,9 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: 'PNG, JPG, JPEG, WEBP 파일만 등록할 수 있어요.',
+          message: getCurrentLang() === 'ko'
+            ? '이 파일은 사진이 아니에요. 📷 사진 파일을 선택해 주세요!'
+            : "That's not a picture file! Try a photo (JPG or PNG).",
           source: '',
         },
         render,
@@ -431,7 +482,9 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: '이미지를 처리할 수 없어요. 다른 파일을 선택해 주세요.',
+          message: getCurrentLang() === 'ko'
+            ? '이 사진을 열 수 없어요. 다른 사진을 골라 주세요! 😊'
+            : "Oops, I can't open this picture. Try a different one!",
           source: '',
         },
         render,

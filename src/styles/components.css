@@ -369,7 +369,8 @@
   color: var(--color-canvas);
   border-color: var(--color-ink);
   font-weight: 600;
-  transform: scale(0.92); /* 눌린 느낌 */
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px var(--color-brand-teal, #06b6d4);
 }
 
 /* Draw toolbar — disabled state */
@@ -397,6 +398,43 @@
   width: 80px;
   accent-color: var(--color-ink, #0a0a0a);
   cursor: pointer;
+}
+
+.draw-size-control.is-inactive {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.draw-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.draw-color-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background-color: var(--swatch-color);
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.draw-color-btn.is-active {
+  border-color: var(--color-ink);
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink);
+}
+
+.draw-color-btn:hover {
+  transform: scale(1.1);
 }
 
 .fish-drawing-canvas,
@@ -472,7 +510,8 @@
 }
 
 .button-secondary {
-  min-height: 36px;
+  min-height: 44px;
+  min-width: 44px;
   padding: var(--space-xs) var(--space-sm);
   color: var(--color-ink);
   border-color: var(--color-hairline);

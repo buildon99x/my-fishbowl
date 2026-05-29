@@ -91,6 +91,16 @@ function renderCreateTab(state) {
             <button type="button" class="draw-tool-btn" data-draw-tool="eraser" aria-pressed="false">${t('draw.tool.eraser')}</button>
             <button type="button" class="draw-tool-btn" data-draw-tool="fill" aria-pressed="false">${t('draw.tool.fill')}</button>
           </div>
+          <div class="draw-color-row" role="group" aria-label="펜 색깔">
+            <button class="draw-color-btn is-active" data-color="#1a1a1a" style="--swatch-color: #1a1a1a" aria-label="검정" aria-pressed="true" type="button"></button>
+            <button class="draw-color-btn" data-color="#ef4444" style="--swatch-color: #ef4444" aria-label="빨강" aria-pressed="false" type="button"></button>
+            <button class="draw-color-btn" data-color="#f97316" style="--swatch-color: #f97316" aria-label="주황" aria-pressed="false" type="button"></button>
+            <button class="draw-color-btn" data-color="#eab308" style="--swatch-color: #eab308" aria-label="노랑" aria-pressed="false" type="button"></button>
+            <button class="draw-color-btn" data-color="#22c55e" style="--swatch-color: #22c55e" aria-label="초록" aria-pressed="false" type="button"></button>
+            <button class="draw-color-btn" data-color="#3b82f6" style="--swatch-color: #3b82f6" aria-label="파랑" aria-pressed="false" type="button"></button>
+            <button class="draw-color-btn" data-color="#a855f7" style="--swatch-color: #a855f7" aria-label="보라" aria-pressed="false" type="button"></button>
+            <button class="draw-color-btn" data-color="#ffffff" style="--swatch-color: #ffffff; border-color: #d1d5db" aria-label="흰색" aria-pressed="false" type="button"></button>
+          </div>
           <div class="draw-size-control">
             <label class="draw-size-label" for="draw-size">굵기</label>
             <input
