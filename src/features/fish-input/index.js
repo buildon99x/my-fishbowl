@@ -184,6 +184,7 @@ function setupDrawingCanvas(root, state, render) {
     const point = getCanvasPoint(canvas, event);
 
     if (currentTool === 'fill') {
+      if (canvas.classList.contains('is-processing')) return;
       pushUndo();
       canvas.classList.add('is-processing');
       canvas.style.cursor = 'wait';
@@ -274,7 +275,7 @@ function setupDrawingCanvas(root, state, render) {
     if (!clearPending) {
       // First tap: show confirm state
       clearPending = true;
-      clearButton.textContent = getCurrentLang() === 'ko' ? '정말요? 한번 더!' : 'Sure? Tap again!';
+      clearButton.textContent = t('draw.clear.confirm');
       clearButton.classList.add('is-confirm-pending');
       clearConfirmTimer = setTimeout(() => {
         clearPending = false;

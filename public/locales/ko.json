@@ -19,6 +19,7 @@
   "draw.tool.fill": "✂️ 배경 지우기",
   "draw.undo": "↩️ 실행취소",
   "draw.clear": "🗑️ 전체 지우기",
+  "draw.clear.confirm": "정말요? 한번 더!",
   "register": "등록",
   "close": "닫기",
   "status.idle": "이미지를 고르거나 직접 그려 보세요.",

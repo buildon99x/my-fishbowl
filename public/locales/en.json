@@ -19,6 +19,7 @@
   "draw.tool.fill": "✂️ Remove Background",
   "draw.undo": "↩️ Undo",
   "draw.clear": "🗑️ Clear All",
+  "draw.clear.confirm": "Sure? Tap again!",
   "register": "Add",
   "close": "Close",
   "status.idle": "Choose an image or draw one.",
