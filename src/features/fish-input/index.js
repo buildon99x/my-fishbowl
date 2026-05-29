@@ -119,27 +119,28 @@ function setupDrawingCanvas(root, state, render) {
     if (undoButton) undoButton.disabled = false;
   }
 
-  const sizeSliderEl = root.querySelector('[data-draw-size]');
+  let currentPresetSize = 8;
+  const sizePresetBtns = root.querySelectorAll('[data-draw-size-preset]');
 
   function applyToolSettings() {
     const sizeControl = root.querySelector('.draw-size-control');
     if (currentTool === 'eraser') {
       context.globalCompositeOperation = 'destination-out';
-      context.lineWidth = sizeSliderEl ? Number(sizeSliderEl.value) : 16;
+      context.lineWidth = currentPresetSize;
       sizeControl?.classList.remove('is-inactive');
     } else if (currentTool === 'fill') {
       context.globalCompositeOperation = 'source-over';
       sizeControl?.classList.add('is-inactive');
     } else {
       context.globalCompositeOperation = 'source-over';
-      context.lineWidth = sizeSliderEl ? Number(sizeSliderEl.value) : 12;
+      context.lineWidth = currentPresetSize;
       sizeControl?.classList.remove('is-inactive');
     }
   }
 
   context.lineCap = 'round';
   context.lineJoin = 'round';
-  context.lineWidth = 12;
+  context.lineWidth = 8;
   context.strokeStyle =
     getComputedStyle(document.documentElement)
       .getPropertyValue('--color-ink')
@@ -159,11 +160,15 @@ function setupDrawingCanvas(root, state, render) {
     });
   });
 
-  sizeSliderEl?.addEventListener('input', (e) => {
-    const size = Number(e.target.value);
-    if (currentTool !== 'fill') {
-      context.lineWidth = size;
-    }
+  sizePresetBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      currentPresetSize = Number(btn.dataset.drawSizePreset);
+      if (currentTool !== 'fill') context.lineWidth = currentPresetSize;
+      sizePresetBtns.forEach((b) => {
+        b.classList.toggle('is-active', b === btn);
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+    });
   });
 
   const colorBtns = root.querySelectorAll('[data-color]');

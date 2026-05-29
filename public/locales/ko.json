@@ -16,7 +16,7 @@
   "tab.create": "✏️ 직접 만들기",
   "draw.tool.pen": "✏️ 펜",
   "draw.tool.eraser": "🧽 지우개",
-  "draw.tool.fill": "✂️ 배경 지우기",
+  "draw.tool.fill": "🪣 색 채우기",
   "draw.undo": "↩️ 실행취소",
   "draw.clear": "🗑️ 전체 지우기",
   "draw.clear.confirm": "정말요? 한번 더!",

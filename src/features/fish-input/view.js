@@ -102,17 +102,11 @@ function renderCreateTab(state) {
             <button class="draw-color-btn" data-color="#ffffff" style="--swatch-color: #ffffff; border-color: #d1d5db" aria-label="흰색" aria-pressed="false" type="button"></button>
           </div>
           <div class="draw-size-control">
-            <label class="draw-size-label" for="draw-size">굵기</label>
-            <input
-              id="draw-size"
-              class="draw-size-slider"
-              type="range"
-              min="4"
-              max="30"
-              value="12"
-              data-draw-size
-              aria-label="펜 굵기"
-            >
+            <div class="draw-size-presets" role="group" aria-label="펜 굵기">
+              <button type="button" class="draw-size-preset-btn is-active" data-draw-size-preset="8" data-size-label="thin" aria-pressed="true" aria-label="가늘게"></button>
+              <button type="button" class="draw-size-preset-btn" data-draw-size-preset="14" data-size-label="medium" aria-pressed="false" aria-label="보통"></button>
+              <button type="button" class="draw-size-preset-btn" data-draw-size-preset="22" data-size-label="thick" aria-pressed="false" aria-label="굵게"></button>
+            </div>
           </div>
           <div class="draw-toolbar-actions">
             <button type="button" class="button button-secondary" data-draw-undo disabled>${t('draw.undo')}</button>

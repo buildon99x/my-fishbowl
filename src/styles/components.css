@@ -152,7 +152,7 @@
 
 .fish-list-name {
   overflow: hidden;
-  font-size: var(--text-caption);
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-ink);
   text-overflow: ellipsis;
@@ -160,6 +160,7 @@
 }
 
 .fish-list-time {
+  display: none;
   color: var(--color-muted);
   font-size: var(--text-caption-uc);
   font-weight: 500;
@@ -259,8 +260,9 @@
 }
 
 .fish-input-status p {
-  color: var(--color-muted);
-  font-size: var(--text-body-sm);
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .fish-input-grid {
@@ -572,13 +574,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 10px 16px;
   border: 1px solid transparent;
   border-radius: calc(var(--radius-md) - 4px);
   background: transparent;
   color: var(--color-ink);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  min-height: 44px;
   opacity: 0.7;
 }
 .prop-type-option.is-active {
@@ -685,3 +688,38 @@
 @media (prefers-reduced-motion: reduce) {
   .prop-panel-status, .prop-type-option { transition: none !important; }
 }
+
+.draw-size-presets {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.draw-size-preset-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid var(--color-border, #d1d5db);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  touch-action: manipulation;
+}
+
+.draw-size-preset-btn.is-active {
+  border-color: var(--color-ink);
+  background: var(--color-surface-soft, #f1efe8);
+}
+
+.draw-size-preset-btn::before {
+  content: '';
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.draw-size-preset-btn[data-size-label="thin"]::before { width: 4px; height: 4px; }
+.draw-size-preset-btn[data-size-label="medium"]::before { width: 8px; height: 8px; }
+.draw-size-preset-btn[data-size-label="thick"]::before { width: 14px; height: 14px; }
