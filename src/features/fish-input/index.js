@@ -119,20 +119,20 @@ function setupDrawingCanvas(root, state, render) {
     if (undoButton) undoButton.disabled = false;
   }
 
+  const sizeSliderEl = root.querySelector('[data-draw-size]');
+
   function applyToolSettings() {
     const sizeControl = root.querySelector('.draw-size-control');
     if (currentTool === 'eraser') {
       context.globalCompositeOperation = 'destination-out';
-      const sliderVal = root.querySelector('[data-draw-size]');
-      context.lineWidth = sliderVal ? Number(sliderVal.value) : 16;
+      context.lineWidth = sizeSliderEl ? Number(sizeSliderEl.value) : 16;
       sizeControl?.classList.remove('is-inactive');
     } else if (currentTool === 'fill') {
       context.globalCompositeOperation = 'source-over';
       sizeControl?.classList.add('is-inactive');
     } else {
       context.globalCompositeOperation = 'source-over';
-      const sliderVal = root.querySelector('[data-draw-size]');
-      context.lineWidth = sliderVal ? Number(sliderVal.value) : 12;
+      context.lineWidth = sizeSliderEl ? Number(sizeSliderEl.value) : 12;
       sizeControl?.classList.remove('is-inactive');
     }
   }
@@ -159,21 +159,18 @@ function setupDrawingCanvas(root, state, render) {
     });
   });
 
-  const sizeSlider = root.querySelector('[data-draw-size]');
-  sizeSlider?.addEventListener('input', (e) => {
+  sizeSliderEl?.addEventListener('input', (e) => {
     const size = Number(e.target.value);
     if (currentTool !== 'fill') {
       context.lineWidth = size;
     }
   });
 
-  // Color swatch binding
   const colorBtns = root.querySelectorAll('[data-color]');
   colorBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const color = btn.dataset.color;
       context.strokeStyle = color;
-      // Update active state
       colorBtns.forEach((b) => {
         b.classList.toggle('is-active', b === btn);
         b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
@@ -182,7 +179,6 @@ function setupDrawingCanvas(root, state, render) {
   });
 
   canvas.addEventListener('pointerdown', (event) => {
-    // Reject non-primary touches (palm rejection for iPad).
     if (event.pointerType === 'touch' && !event.isPrimary) return;
 
     const point = getCanvasPoint(canvas, event);
@@ -191,7 +187,6 @@ function setupDrawingCanvas(root, state, render) {
       pushUndo();
       canvas.classList.add('is-processing');
       canvas.style.cursor = 'wait';
-      // Use setTimeout(0) to allow browser to repaint the cursor/class before the heavy sync op
       setTimeout(() => {
         floodFill(context, canvas, Math.round(point.x), Math.round(point.y));
         canvas.classList.remove('is-processing');
@@ -265,7 +260,7 @@ function setupDrawingCanvas(root, state, render) {
       {
         spriteDataUrl: canvas.toDataURL('image/png'),
         status: undoStack.length === 0 ? 'idle' : 'preview',
-        message: undoStack.length === 0 ? '' : '완성됐어요! 아래 \'추가\' 버튼을 눌러요. 🐟',
+        message: undoStack.length === 0 ? '' : t('status.draw.done'),
         source: undoStack.length === 0 ? '' : 'drawing',
       },
       render,
