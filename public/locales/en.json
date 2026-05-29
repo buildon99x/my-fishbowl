@@ -23,6 +23,8 @@
   "close": "Close",
   "status.idle": "Choose an image or draw one.",
   "status.preview": "Done! Tap the 'Add' button below. 🐟",
+  "status.fill.done": "Background removed! Tap 'Add' below when ready. 🐟",
+  "status.draw.done": "Done! Tap the 'Add' button below. 🐟",
   "status.invalid": "This file cannot be added.",
   "preview": "Preview",
   "preview.empty": "No image yet",

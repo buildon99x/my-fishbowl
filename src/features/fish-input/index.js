@@ -1,7 +1,7 @@
 import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.js';
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
-import { setLang, getCurrentLang } from '../../lib/i18n.js';
+import { setLang, getCurrentLang, t } from '../../lib/i18n.js';
 
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
@@ -124,7 +124,7 @@ function setupDrawingCanvas(root, state, render) {
     if (currentTool === 'eraser') {
       context.globalCompositeOperation = 'destination-out';
       const sliderVal = root.querySelector('[data-draw-size]');
-      context.lineWidth = sliderVal ? Number(sliderVal.value) : 12;
+      context.lineWidth = sliderVal ? Number(sliderVal.value) : 16;
       sizeControl?.classList.remove('is-inactive');
     } else if (currentTool === 'fill') {
       context.globalCompositeOperation = 'source-over';
@@ -132,14 +132,14 @@ function setupDrawingCanvas(root, state, render) {
     } else {
       context.globalCompositeOperation = 'source-over';
       const sliderVal = root.querySelector('[data-draw-size]');
-      context.lineWidth = sliderVal ? Number(sliderVal.value) : 7;
+      context.lineWidth = sliderVal ? Number(sliderVal.value) : 12;
       sizeControl?.classList.remove('is-inactive');
     }
   }
 
   context.lineCap = 'round';
   context.lineJoin = 'round';
-  context.lineWidth = 7;
+  context.lineWidth = 12;
   context.strokeStyle =
     getComputedStyle(document.documentElement)
       .getPropertyValue('--color-ink')
@@ -189,17 +189,24 @@ function setupDrawingCanvas(root, state, render) {
 
     if (currentTool === 'fill') {
       pushUndo();
-      floodFill(context, canvas, Math.round(point.x), Math.round(point.y));
-      updateState(
-        state,
-        {
-          spriteDataUrl: canvas.toDataURL('image/png'),
-          status: 'preview',
-          message: '배경을 지웠어요! 마음에 들면 아래 \'추가\' 버튼을 눌러요. 🐟',
-          source: 'drawing',
-        },
-        render,
-      );
+      canvas.classList.add('is-processing');
+      canvas.style.cursor = 'wait';
+      // Use setTimeout(0) to allow browser to repaint the cursor/class before the heavy sync op
+      setTimeout(() => {
+        floodFill(context, canvas, Math.round(point.x), Math.round(point.y));
+        canvas.classList.remove('is-processing');
+        canvas.style.cursor = '';
+        updateState(
+          state,
+          {
+            spriteDataUrl: canvas.toDataURL('image/png'),
+            status: 'preview',
+            message: t('status.fill.done'),
+            source: 'drawing',
+          },
+          render,
+        );
+      }, 0);
       return;
     }
 
@@ -238,7 +245,7 @@ function setupDrawingCanvas(root, state, render) {
       {
         spriteDataUrl: canvas.toDataURL('image/png'),
         status: 'preview',
-        message: '완성됐어요! 아래 \'추가\' 버튼을 눌러요. 🐟',
+        message: t('status.draw.done'),
         source: 'drawing',
       },
       render,
@@ -265,26 +272,31 @@ function setupDrawingCanvas(root, state, render) {
     );
   });
 
+  let clearPending = false;
+  let clearConfirmTimer = null;
+
   clearButton?.addEventListener('click', () => {
-    const confirmed = window.confirm(
-      getCurrentLang() === 'ko'
-        ? '전부 지울까요? 이전으로 되돌릴 수 없어요.'
-        : 'Clear everything? You cannot undo this.'
-    );
-    if (!confirmed) return;
+    if (!clearPending) {
+      // First tap: show confirm state
+      clearPending = true;
+      clearButton.textContent = getCurrentLang() === 'ko' ? '정말요? 한번 더!' : 'Sure? Tap again!';
+      clearButton.classList.add('is-confirm-pending');
+      clearConfirmTimer = setTimeout(() => {
+        clearPending = false;
+        clearButton.textContent = t('draw.clear');
+        clearButton.classList.remove('is-confirm-pending');
+      }, 2500);
+      return;
+    }
+    // Second tap: actually clear
+    clearPending = false;
+    if (clearConfirmTimer) { window.clearTimeout(clearConfirmTimer); clearConfirmTimer = null; }
+    clearButton.textContent = t('draw.clear');
+    clearButton.classList.remove('is-confirm-pending');
     context.clearRect(0, 0, canvas.width, canvas.height);
     undoStack.length = 0;
     if (undoButton) undoButton.disabled = true;
-    updateState(
-      state,
-      {
-        spriteDataUrl: '',
-        status: 'idle',
-        message: '',
-        source: '',
-      },
-      render,
-    );
+    updateState(state, { spriteDataUrl: '', status: 'idle', message: '', source: '' }, render);
   });
 }
 
@@ -325,15 +337,6 @@ function bindBottomSheetGrabber(panel, state, render) {
       if (startStage === 'full') {
         state.sheetStage = 'peek';
       } else {
-        const hasUnsavedDrawing = state.spriteDataUrl && state.status === 'preview';
-        if (hasUnsavedDrawing) {
-          const ok = window.confirm(
-            getCurrentLang() === 'ko'
-              ? '그림이 저장되지 않았어요. 닫을까요?'
-              : 'Your drawing is not saved. Close anyway?'
-          );
-          if (!ok) return;
-        }
         state.sheetStage = 'closed';
         state.isExpanded = false;
       }
@@ -347,15 +350,6 @@ function bindBottomSheetGrabber(panel, state, render) {
 function bindBackdrop(root, state, render) {
   const backdrop = root.querySelector('[data-fish-input-backdrop]');
   backdrop?.addEventListener('click', () => {
-    const hasUnsavedDrawing = state.spriteDataUrl && state.status === 'preview';
-    if (hasUnsavedDrawing) {
-      const ok = window.confirm(
-        getCurrentLang() === 'ko'
-          ? '그림이 저장되지 않았어요. 닫을까요?'
-          : 'Your drawing is not saved. Close anyway?'
-      );
-      if (!ok) return;
-    }
     state.sheetStage = 'closed';
     state.isExpanded = false;
     render();

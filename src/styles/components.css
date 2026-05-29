@@ -405,18 +405,24 @@
   pointer-events: none;
 }
 
+.button.is-confirm-pending {
+  background: var(--color-error, #ef4444);
+  color: #fff;
+  border-color: var(--color-error, #ef4444);
+}
+
 .draw-color-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   align-items: center;
 }
 
 .draw-color-btn {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   border: 2px solid transparent;
   background-color: var(--swatch-color);
@@ -429,7 +435,7 @@
 
 .draw-color-btn.is-active {
   border-color: var(--color-ink);
-  transform: scale(1.2);
+  transform: scale(1.1);
   box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink);
 }
 
@@ -457,6 +463,11 @@
   display: block;
   touch-action: none;
   cursor: crosshair;
+}
+
+.fish-drawing-canvas.is-processing {
+  cursor: wait;
+  opacity: 0.85;
 }
 
 .preview-area {

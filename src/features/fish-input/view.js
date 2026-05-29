@@ -107,9 +107,9 @@ function renderCreateTab(state) {
               id="draw-size"
               class="draw-size-slider"
               type="range"
-              min="2"
-              max="20"
-              value="7"
+              min="4"
+              max="30"
+              value="12"
               data-draw-size
               aria-label="펜 굵기"
             >

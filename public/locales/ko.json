@@ -23,6 +23,8 @@
   "close": "닫기",
   "status.idle": "이미지를 고르거나 직접 그려 보세요.",
   "status.preview": "완성됐어요! 아래 '추가' 버튼을 눌러요. 🐟",
+  "status.fill.done": "배경을 지웠어요! 마음에 들면 아래 '추가' 버튼을 눌러요. 🐟",
+  "status.draw.done": "완성됐어요! 아래 '추가' 버튼을 눌러요. 🐟",
   "status.invalid": "이 파일은 등록할 수 없어요.",
   "preview": "미리보기",
   "preview.empty": "아직 이미지가 없어요",
