@@ -34,6 +34,8 @@ export default [
         location: 'readonly',
         HTMLElement: 'readonly',
         SVGElement: 'readonly',
+        EventTarget: 'readonly',
+        Event: 'readonly',
       },
     },
     rules: {

@@ -170,56 +170,43 @@ export function bindCleaningEvents(root, aquarium, appState, { render, save }) {
     cursor.style.display = 'block';
   }
 
-  overlay.addEventListener('mouseenter', (e) => moveCursor(e.clientX, e.clientY));
+  // Unified Pointer Events handle mouse, touch, and pen identically. The
+  // overlay has `touch-action: none` (cleaning.css) so touch-drag brushes
+  // instead of scrolling. Pointer capture keeps the brush active when the
+  // pointer strays outside the overlay mid-stroke.
+  overlay.addEventListener('pointerenter', (e) => moveCursor(e.clientX, e.clientY));
 
-  overlay.addEventListener('mousemove', (e) => {
-    moveCursor(e.clientX, e.clientY);
-    if (cleaningState.cleaning) onBrush(e.clientX, e.clientY);
-  });
-
-  overlay.addEventListener('mouseleave', () => {
-    if (cursor) cursor.style.display = 'none';
-    cleaningState.cleaning = false;
-  });
-
-  overlay.addEventListener('mousedown', (e) => {
+  overlay.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    try { overlay.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     cleaningState.cleaning = true;
+    moveCursor(e.clientX, e.clientY);
     onBrush(e.clientX, e.clientY);
+    if (e.pointerType === 'touch') addTouchRipple(overlay, e.clientX, e.clientY);
   });
 
-  overlay.addEventListener('mouseup', () => {
+  overlay.addEventListener('pointermove', (e) => {
+    moveCursor(e.clientX, e.clientY);
+    if (!cleaningState.cleaning) return;
+    onBrush(e.clientX, e.clientY);
+    if (e.pointerType === 'touch') addTouchRipple(overlay, e.clientX, e.clientY);
+  });
+
+  function endStroke(e) {
     cleaningState.cleaning = false;
-  });
+    try { overlay.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+  }
 
-  overlay.addEventListener(
-    'touchstart',
-    (e) => {
-      e.preventDefault();
-      cleaningState.cleaning = true;
-      const touch = e.touches[0];
-      onBrush(touch.clientX, touch.clientY);
-      addTouchRipple(overlay, touch.clientX, touch.clientY);
-    },
-    { passive: false },
-  );
+  overlay.addEventListener('pointerup', endStroke);
+  overlay.addEventListener('pointercancel', endStroke);
 
-  overlay.addEventListener(
-    'touchmove',
-    (e) => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      onBrush(touch.clientX, touch.clientY);
-      addTouchRipple(overlay, touch.clientX, touch.clientY);
-    },
-    { passive: false },
-  );
-
-  overlay.addEventListener('touchend', () => {
-    cleaningState.cleaning = false;
-  });
-
-  overlay.addEventListener('touchcancel', () => {
+  overlay.addEventListener('pointerleave', (e) => {
+    // While a stroke is captured, the pointer can cross the overlay edge and
+    // keep brushing — capture still routes move/up here, so don't end it.
+    let captured = false;
+    try { captured = overlay.hasPointerCapture?.(e.pointerId) ?? false; } catch { /* ignore */ }
+    if (cleaningState.cleaning && captured) return;
+    if (cursor) cursor.style.display = 'none';
     cleaningState.cleaning = false;
   });
 }
