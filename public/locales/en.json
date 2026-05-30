@@ -52,8 +52,13 @@
   "register.done.deco": "{name} found its spot! ✨",
   "preview": "Preview",
   "preview.empty": "No image yet",
+  "preview.alt": "Object preview",
   "sheet.expand": "Expand/Collapse sheet",
   "catalog.hint": "Tap a card to add it to your aquarium.",
   "fish.hint.swim": "Swims and eats food",
-  "deco.hint.stay": "Stays still. Decorates your aquarium"
+  "deco.hint.stay": "Stays still. Decorates your aquarium",
+  "prop.type.label": "Choose a type",
+  "draw.canvas.label": "Draw an object",
+  "lang.toggle.label": "Change language / 언어 변경",
+  "tab.group.label": "How to add"
 }

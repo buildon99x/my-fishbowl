@@ -44,4 +44,14 @@ describe('no hardcoded Hangul in fish-input runtime messages', () => {
     const hangulInStrings = codeOnly.match(/(['"`])[^'"`]*[가-힣][^'"`]*\1/g) || [];
     expect(hangulInStrings).toEqual([]);
   });
+
+  it('view.js has no hardcoded Hangul in aria-label or alt attributes', () => {
+    const src = readFileSync(fileURLToPath(new URL('./view.js', import.meta.url)), 'utf8');
+    // Strip line and block comments before checking.
+    const noLineComments = src.replace(/\/\/.*$/gm, '');
+    const noBlockComments = noLineComments.replace(/\/\*[\s\S]*?\*\//g, '');
+    // Any aria-label/alt="..." containing Hangul characters is a violation.
+    const hardcoded = noBlockComments.match(/(?:aria-label|alt)="[^"]*[가-힣][^"]*"/g) || [];
+    expect(hardcoded).toEqual([]);
+  });
 });

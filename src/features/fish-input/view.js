@@ -27,7 +27,7 @@ function renderCreateTab(state) {
       <p>${escapeHtml(statusMessage)}</p>
     </div>
 
-    <div class="prop-type-segmented" role="radiogroup" aria-label="종류를 골라요" data-fish-prop-type-group>
+    <div class="prop-type-segmented" role="radiogroup" aria-label="${t('prop.type.label')}" data-fish-prop-type-group>
       <button
         class="prop-type-option ${isFish ? 'is-active' : ''}"
         type="button"
@@ -123,7 +123,7 @@ function renderCreateTab(state) {
           width="720"
           height="480"
           data-fish-canvas
-          aria-label="오브젝트 그리기"
+          aria-label="${t('draw.canvas.label')}"
         ></canvas>
       </div>
 
@@ -134,7 +134,7 @@ function renderCreateTab(state) {
         <span class="preview-type-badge" data-prop-type-badge>${typeBadgeIcon} ${typeBadgeText}</span>
         ${
           hasSprite
-            ? `<img class="fish-preview-image" src="${escapeHtml(safeSpriteUrl(state.spriteDataUrl))}" alt="오브젝트 미리보기">`
+            ? `<img class="fish-preview-image" src="${escapeHtml(safeSpriteUrl(state.spriteDataUrl))}" alt="${t('preview.alt')}">`
             : `<span class="preview-empty">${t('preview.empty')}</span>`
         }
       </div>`
@@ -181,11 +181,11 @@ export function renderFishInputPanel(state) {
             <span id="fish-input-title" class="prop-panel-name">${t('add.object')}</span>
           </div>
         </div>
-        <button class="prop-action-btn lang-toggle-btn" type="button" data-lang-toggle aria-label="언어 변경 / Change language" title="한국어 / English">🌐</button>
+        <button class="prop-action-btn lang-toggle-btn" type="button" data-lang-toggle aria-label="${t('lang.toggle.label')}" title="한국어 / English">🌐</button>
         <button class="prop-action-btn" type="button" data-toggle-fish-input aria-label="${t('close')}" title="${t('close')}">×</button>
       </header>
 
-      <div class="fish-input-tabs" role="tablist" aria-label="추가 방식">
+      <div class="fish-input-tabs" role="tablist" aria-label="${t('tab.group.label')}">
         <button
           type="button"
           class="fish-input-tab ${!isCreate ? 'is-active' : ''}"

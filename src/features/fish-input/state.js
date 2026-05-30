@@ -18,6 +18,11 @@ export function createFishInputState() {
     movementEnabled: draft?.movementEnabled !== false,
     // A restored draft already holds drawn/uploaded content, so register is allowed.
     hasContent: Boolean(draft?.spriteDataUrl),
+    // Undo/redo history (ImageData snapshots). Held on state so it survives the
+    // full-DOM re-render that fires on every stroke/sheet interaction; never
+    // serialized (saveFishDraft only persists explicit fields).
+    undoStack: [],
+    redoStack: [],
     isExpanded: false,
     sheetStage: 'closed',
     activeTab: 'catalog',

@@ -3,7 +3,7 @@ import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 import { setLang, getCurrentLang, t } from '../../lib/i18n.js';
 import { buildRegisterMessage } from './messages.js';
-import { applyRedo, applyUndo, canRegister, capHistory, midpoint } from './draw-logic.js';
+import { MAX_HISTORY, applyRedo, applyUndo, canRegister, capHistory, midpoint } from './draw-logic.js';
 
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
@@ -58,8 +58,6 @@ function getCanvasPoint(canvas, event) {
     y: (event.clientY - rect.top) * scaleY,
   };
 }
-
-const MAX_UNDO = 20;
 
 function floodFill(ctx, canvas, startX, startY, tolerance = 30) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -116,23 +114,27 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
   let lastPoint = null;
   let lastMid = null;
   let currentTool = 'pen';
-  let undoStack = [];
-  let redoStack = [];
+
+  // Undo/redo history lives on `state` so it survives the full-DOM re-render
+  // that fires on every stroke and sheet interaction (the canvas node and this
+  // closure are rebuilt each render; the history must not be).
+  state.undoStack = state.undoStack ?? [];
+  state.redoStack = state.redoStack ?? [];
 
   function snapshot() {
     return context.getImageData(0, 0, canvas.width, canvas.height);
   }
 
   function syncHistoryButtons() {
-    if (undoButton) undoButton.disabled = undoStack.length === 0;
-    if (redoButton) redoButton.disabled = redoStack.length === 0;
+    if (undoButton) undoButton.disabled = state.undoStack.length === 0;
+    if (redoButton) redoButton.disabled = state.redoStack.length === 0;
   }
 
   // Snapshot the canvas before a new mutation. Any fresh edit invalidates the
   // redo timeline, matching standard drawing-app behaviour.
   function pushUndo() {
-    undoStack = capHistory([...undoStack, snapshot()], MAX_UNDO);
-    redoStack = [];
+    state.undoStack = capHistory([...state.undoStack, snapshot()], MAX_HISTORY);
+    state.redoStack = [];
     state.hasContent = true;
     syncHistoryButtons();
   }
@@ -164,6 +166,8 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
       .getPropertyValue('--color-ink')
       .trim() || '#0a0a0a';
   paintStoredSprite(canvas, state.spriteDataUrl);
+  // Restore button-disabled state from the (re-render-surviving) history.
+  syncHistoryButtons();
 
   toolButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -299,10 +303,10 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
   function applyHistory(result) {
     if (!result.snapshot) return;
     context.putImageData(result.snapshot, 0, 0);
-    undoStack = result.undoStack;
-    redoStack = result.redoStack;
+    state.undoStack = result.undoStack;
+    state.redoStack = result.redoStack;
     syncHistoryButtons();
-    const blank = undoStack.length === 0;
+    const blank = state.undoStack.length === 0;
     // Redo-forward from a blank canvas must re-mark content so register re-enables.
     state.hasContent = !blank;
     updateState(
@@ -318,13 +322,13 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
   }
 
   undoButton?.addEventListener('click', () => {
-    if (!undoStack.length) return;
-    applyHistory(applyUndo(undoStack, redoStack, snapshot()));
+    if (!state.undoStack.length) return;
+    applyHistory(applyUndo(state.undoStack, state.redoStack, snapshot()));
   });
 
   redoButton?.addEventListener('click', () => {
-    if (!redoStack.length) return;
-    applyHistory(applyRedo(undoStack, redoStack, snapshot()));
+    if (!state.redoStack.length) return;
+    applyHistory(applyRedo(state.undoStack, state.redoStack, snapshot()));
   });
 
   let clearPending = false;
@@ -349,8 +353,8 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
     clearButton.textContent = t('draw.clear');
     clearButton.classList.remove('is-confirm-pending');
     context.clearRect(0, 0, canvas.width, canvas.height);
-    undoStack = [];
-    redoStack = [];
+    state.undoStack = [];
+    state.redoStack = [];
     state.hasContent = false;
     syncHistoryButtons();
     updateState(state, { spriteDataUrl: '', status: 'idle', message: '', source: '' }, render);
