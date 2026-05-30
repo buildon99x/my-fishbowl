@@ -117,6 +117,7 @@
 .fish-list-item {
   display: grid;
   gap: var(--space-xs);
+  min-height: 64px;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
   padding: var(--space-sm);
@@ -178,8 +179,8 @@
    buttons replace 편집/감추기/삭제 text labels; aria-label provides the
    accessible name. */
 .fish-action-button {
-  width: 44px;
-  height: 44px;
+  width: var(--touch-target-child);
+  height: var(--touch-target-child);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -358,8 +359,8 @@
 }
 
 .draw-tool-btn {
-  min-width: 52px;
-  min-height: 52px;
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
   padding: var(--space-xs) var(--space-sm);
@@ -417,15 +418,18 @@
 .draw-color-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--touch-target-child-spacing);
   align-items: center;
 }
 
+/* Visible swatch stays 36px (so the 8-swatch row footprint doesn't grow and
+   reintroduce the draw-tab scroll), while a ::before overlay expands the tap
+   target to 56px (S-024 child-recommended). border:2px keeps the white
+   swatch's edge visible via the inline border-color in view.js. */
 .draw-color-btn {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  position: relative;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 2px solid transparent;
   background-color: var(--swatch-color);
@@ -434,6 +438,13 @@
   padding: 0;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+.draw-color-btn::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
 }
 
 .draw-color-btn.is-active {
@@ -702,8 +713,8 @@
 }
 
 .draw-size-preset-btn {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
   border: 2px solid var(--color-border, #d1d5db);
   border-radius: var(--radius-md);
   background: var(--color-canvas);

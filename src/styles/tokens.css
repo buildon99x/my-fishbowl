@@ -98,6 +98,12 @@
   /* Accessibility */
   --touch-target-min: 44px;
   --touch-target-primary: 52px;
+  /* S-024 (high-value subset): child-area targets. Applied only on named
+     child selectors — NOT on --touch-target-min, so base.css does not
+     cascade-enlarge parent-area controls. */
+  --touch-target-child: 48px;
+  --touch-target-child-recommended: 56px;
+  --touch-target-child-spacing: 12px;
   --font-size-min: 1rem;
   --color-focus: #0057ff;
 

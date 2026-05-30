@@ -161,6 +161,7 @@ export function renderFishInputPanel(state) {
       class="fish-input-widget bottom-sheet"
       data-sheet-stage="${stage}"
       data-active-tab="${activeTab}"
+      data-touch-area="child"
       aria-labelledby="fish-input-title"
       role="dialog"
       aria-modal="false"
