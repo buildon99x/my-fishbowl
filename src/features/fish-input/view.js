@@ -86,31 +86,37 @@ function renderCreateTab(state) {
 
       <div class="draw-area">
         <div class="draw-toolbar">
-          <div class="draw-tool-group" role="radiogroup" aria-label="${t('draw.label')}">
-            <button type="button" class="draw-tool-btn is-active" data-draw-tool="pen" aria-pressed="true">${t('draw.tool.pen')}</button>
-            <button type="button" class="draw-tool-btn" data-draw-tool="eraser" aria-pressed="false">${t('draw.tool.eraser')}</button>
-            <button type="button" class="draw-tool-btn" data-draw-tool="fill" aria-pressed="false">${t('draw.tool.fill')}</button>
-          </div>
-          <div class="draw-color-row" role="group" aria-label="펜 색깔">
-            <button class="draw-color-btn is-active" data-color="#1a1a1a" style="--swatch-color: #1a1a1a" aria-label="검정" aria-pressed="true" type="button"></button>
-            <button class="draw-color-btn" data-color="#ef4444" style="--swatch-color: #ef4444" aria-label="빨강" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#f97316" style="--swatch-color: #f97316" aria-label="주황" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#eab308" style="--swatch-color: #eab308" aria-label="노랑" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#22c55e" style="--swatch-color: #22c55e" aria-label="초록" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#3b82f6" style="--swatch-color: #3b82f6" aria-label="파랑" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#a855f7" style="--swatch-color: #a855f7" aria-label="보라" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#ffffff" style="--swatch-color: #ffffff; border-color: #d1d5db" aria-label="흰색" aria-pressed="false" type="button"></button>
-          </div>
-          <div class="draw-size-control">
-            <div class="draw-size-presets" role="group" aria-label="펜 굵기">
-              <button type="button" class="draw-size-preset-btn is-active" data-draw-size-preset="8" data-size-label="thin" aria-pressed="true" aria-label="가늘게"></button>
-              <button type="button" class="draw-size-preset-btn" data-draw-size-preset="14" data-size-label="medium" aria-pressed="false" aria-label="보통"></button>
-              <button type="button" class="draw-size-preset-btn" data-draw-size-preset="22" data-size-label="thick" aria-pressed="false" aria-label="굵게"></button>
+          <div class="draw-toolbar-row draw-toolbar-row--tools">
+            <div class="draw-tool-group" role="radiogroup" aria-label="${t('draw.label')}">
+              <button type="button" class="draw-tool-btn is-active" data-draw-tool="pen" aria-pressed="true">${t('draw.tool.pen')}</button>
+              <button type="button" class="draw-tool-btn" data-draw-tool="eraser" aria-pressed="false">${t('draw.tool.eraser')}</button>
+              <button type="button" class="draw-tool-btn" data-draw-tool="fill" aria-pressed="false">${t('draw.tool.fill')}</button>
             </div>
           </div>
-          <div class="draw-toolbar-actions">
-            <button type="button" class="button button-secondary" data-draw-undo disabled>${t('draw.undo')}</button>
-            <button type="button" class="button button-secondary" data-clear-drawing>${t('draw.clear')}</button>
+          <div class="draw-toolbar-row draw-toolbar-row--colors">
+            <div class="draw-color-row" role="group" aria-label="${t('draw.colorLabel')}">
+              <button class="draw-color-btn is-active" data-color="#1a1a1a" style="--swatch-color: #1a1a1a" aria-label="검정" aria-pressed="true" type="button"></button>
+              <button class="draw-color-btn" data-color="#ef4444" style="--swatch-color: #ef4444" aria-label="빨강" aria-pressed="false" type="button"></button>
+              <button class="draw-color-btn" data-color="#f97316" style="--swatch-color: #f97316" aria-label="주황" aria-pressed="false" type="button"></button>
+              <button class="draw-color-btn" data-color="#eab308" style="--swatch-color: #eab308" aria-label="노랑" aria-pressed="false" type="button"></button>
+              <button class="draw-color-btn" data-color="#22c55e" style="--swatch-color: #22c55e" aria-label="초록" aria-pressed="false" type="button"></button>
+              <button class="draw-color-btn" data-color="#3b82f6" style="--swatch-color: #3b82f6" aria-label="파랑" aria-pressed="false" type="button"></button>
+              <button class="draw-color-btn" data-color="#a855f7" style="--swatch-color: #a855f7" aria-label="보라" aria-pressed="false" type="button"></button>
+              <button class="draw-color-btn" data-color="#ffffff" style="--swatch-color: #ffffff; border-color: #d1d5db" aria-label="흰색" aria-pressed="false" type="button"></button>
+            </div>
+          </div>
+          <div class="draw-toolbar-row draw-toolbar-row--size-actions">
+            <div class="draw-size-control">
+              <div class="draw-size-presets" role="group" aria-label="${t('draw.sizeLabel')}">
+                <button type="button" class="draw-size-preset-btn is-active" data-draw-size-preset="8" data-size-label="thin" aria-pressed="true" aria-label="가늘게"></button>
+                <button type="button" class="draw-size-preset-btn" data-draw-size-preset="14" data-size-label="medium" aria-pressed="false" aria-label="보통"></button>
+                <button type="button" class="draw-size-preset-btn" data-draw-size-preset="22" data-size-label="thick" aria-pressed="false" aria-label="굵게"></button>
+              </div>
+            </div>
+            <div class="draw-toolbar-actions">
+              <button type="button" class="button button-secondary" data-draw-undo disabled>${t('draw.undo')}</button>
+              <button type="button" class="button button-secondary" data-clear-drawing>${t('draw.clear')}</button>
+            </div>
           </div>
         </div>
         <canvas

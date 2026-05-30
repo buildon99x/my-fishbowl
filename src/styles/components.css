@@ -326,10 +326,23 @@
 }
 
 .draw-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: var(--space-sm);
+}
+
+.draw-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.draw-toolbar-row--size-actions {
+  justify-content: space-between;
+}
+
+.draw-toolbar-row--size-actions .draw-toolbar-actions {
+  margin-left: auto;
 }
 
 .draw-toolbar-actions {
@@ -371,8 +384,8 @@
   color: var(--color-canvas);
   border-color: var(--color-ink);
   font-weight: 600;
-  transform: scale(1.05);
-  box-shadow: 0 0 0 3px var(--color-brand-teal, #06b6d4);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-focus);
 }
 
 /* Draw toolbar — disabled state */
@@ -388,18 +401,6 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs, 4px);
-}
-
-.draw-size-label {
-  font-size: 0.75rem;
-  color: var(--color-muted);
-  white-space: nowrap;
-}
-
-.draw-size-slider {
-  width: 80px;
-  accent-color: var(--color-ink, #0a0a0a);
-  cursor: pointer;
 }
 
 .draw-size-control.is-inactive {
@@ -437,12 +438,12 @@
 
 .draw-color-btn.is-active {
   border-color: var(--color-ink);
-  transform: scale(1.1);
-  box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-focus);
 }
 
 .draw-color-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.06);
 }
 
 .fish-drawing-canvas,
@@ -557,6 +558,15 @@
 
   .preview-area {
     grid-column: 1;
+  }
+
+  .draw-toolbar-row--size-actions {
+    justify-content: flex-start;
+  }
+
+  .draw-toolbar-row--size-actions .draw-toolbar-actions {
+    margin-left: 0;
+    width: 100%;
   }
 }
 
@@ -712,6 +722,16 @@
 .draw-size-preset-btn.is-active {
   border-color: var(--color-ink);
   background: var(--color-surface-soft, #f1efe8);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draw-tool-btn.is-active,
+  .draw-color-btn.is-active,
+  .draw-size-preset-btn.is-active {
+    transform: none;
+  }
 }
 
 .draw-size-preset-btn::before {
