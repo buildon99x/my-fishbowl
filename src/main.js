@@ -290,6 +290,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     fishInputState,
     render,
     {
+      playHaptic: (pattern) => appState.sound?.playHaptic?.(pattern),
       onRegister: (draft) => {
         const previewCanvas = root.querySelector('[data-fish-canvas]');
         const sourceRect = previewCanvas?.getBoundingClientRect();

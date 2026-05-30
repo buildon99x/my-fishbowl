@@ -16,6 +16,8 @@ export function createFishInputState() {
     source: draft?.source ?? '',
     type: normalizeType(draft?.type),
     movementEnabled: draft?.movementEnabled !== false,
+    // A restored draft already holds drawn/uploaded content, so register is allowed.
+    hasContent: Boolean(draft?.spriteDataUrl),
     isExpanded: false,
     sheetStage: 'closed',
     activeTab: 'catalog',
@@ -50,6 +52,9 @@ export function saveFishDraft(state) {
     localStorage.setItem(FISH_DRAFT_STORAGE_KEY, JSON.stringify(draft));
   } catch (error) {
     console.warn('Fish image draft could not be saved.', error);
+    // Surface storage pressure to the caller so the UI can warn the child that
+    // their work may not have been saved, instead of failing silently.
+    draft.storageError = true;
   }
 
   return draft;

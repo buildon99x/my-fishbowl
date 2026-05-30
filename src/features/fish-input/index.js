@@ -2,6 +2,8 @@ import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 import { setLang, getCurrentLang, t } from '../../lib/i18n.js';
+import { buildRegisterMessage } from './messages.js';
+import { applyRedo, applyUndo, canRegister, capHistory, midpoint } from './draw-logic.js';
 
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
@@ -98,10 +100,11 @@ function floodFill(ctx, canvas, startX, startY, tolerance = 30) {
   ctx.putImageData(imageData, 0, 0);
 }
 
-function setupDrawingCanvas(root, state, render) {
+function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
   const canvas = root.querySelector('[data-fish-canvas]');
   const clearButton = root.querySelector('[data-clear-drawing]');
   const undoButton = root.querySelector('[data-draw-undo]');
+  const redoButton = root.querySelector('[data-draw-redo]');
   const toolButtons = root.querySelectorAll('[data-draw-tool]');
 
   if (!canvas) {
@@ -110,13 +113,28 @@ function setupDrawingCanvas(root, state, render) {
 
   const context = canvas.getContext('2d');
   let isDrawing = false;
+  let lastPoint = null;
+  let lastMid = null;
   let currentTool = 'pen';
-  const undoStack = [];
+  let undoStack = [];
+  let redoStack = [];
 
+  function snapshot() {
+    return context.getImageData(0, 0, canvas.width, canvas.height);
+  }
+
+  function syncHistoryButtons() {
+    if (undoButton) undoButton.disabled = undoStack.length === 0;
+    if (redoButton) redoButton.disabled = redoStack.length === 0;
+  }
+
+  // Snapshot the canvas before a new mutation. Any fresh edit invalidates the
+  // redo timeline, matching standard drawing-app behaviour.
   function pushUndo() {
-    if (undoStack.length >= MAX_UNDO) undoStack.shift();
-    undoStack.push(context.getImageData(0, 0, canvas.width, canvas.height));
-    if (undoButton) undoButton.disabled = false;
+    undoStack = capHistory([...undoStack, snapshot()], MAX_UNDO);
+    redoStack = [];
+    state.hasContent = true;
+    syncHistoryButtons();
   }
 
   let currentPresetSize = 8;
@@ -157,6 +175,7 @@ function setupDrawingCanvas(root, state, render) {
       btn.setAttribute('aria-pressed', 'true');
       btn.classList.add('is-active');
       applyToolSettings();
+      playHaptic('light');
     });
   });
 
@@ -168,6 +187,7 @@ function setupDrawingCanvas(root, state, render) {
         b.classList.toggle('is-active', b === btn);
         b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
       });
+      playHaptic('light');
     });
   });
 
@@ -180,6 +200,7 @@ function setupDrawingCanvas(root, state, render) {
         b.classList.toggle('is-active', b === btn);
         b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
       });
+      playHaptic('light');
     });
   });
 
@@ -197,6 +218,7 @@ function setupDrawingCanvas(root, state, render) {
         floodFill(context, canvas, Math.round(point.x), Math.round(point.y));
         canvas.classList.remove('is-processing');
         canvas.style.cursor = '';
+        playHaptic('magic-b');
         updateState(
           state,
           {
@@ -216,8 +238,15 @@ function setupDrawingCanvas(root, state, render) {
     pushUndo();
     applyToolSettings();
 
+    // Draw a dot at the press point so a single tap (no drag) still leaves a
+    // mark — essential for young children. A following drag continues from the
+    // same point via quadratic smoothing, so there is no double-draw.
+    lastPoint = point;
+    lastMid = point;
     context.beginPath();
-    context.moveTo(point.x, point.y);
+    context.arc(point.x, point.y, context.lineWidth / 2, 0, Math.PI * 2);
+    context.fillStyle = context.strokeStyle;
+    context.fill();
   });
 
   canvas.addEventListener('pointermove', (event) => {
@@ -228,8 +257,17 @@ function setupDrawingCanvas(root, state, render) {
 
     const point = getCanvasPoint(canvas, event);
 
-    context.lineTo(point.x, point.y);
+    // Quadratic-curve smoothing: draw through the midpoint between the last two
+    // sampled points, using the previous point as the control point. Produces
+    // smooth strokes instead of jagged polylines at ~60Hz pointer sampling.
+    const mid = midpoint(lastPoint, point);
+    context.beginPath();
+    context.moveTo(lastMid.x, lastMid.y);
+    context.quadraticCurveTo(lastPoint.x, lastPoint.y, mid.x, mid.y);
     context.stroke();
+
+    lastPoint = point;
+    lastMid = mid;
   });
 
   function finishDrawing(event) {
@@ -256,21 +294,37 @@ function setupDrawingCanvas(root, state, render) {
   canvas.addEventListener('pointerup', finishDrawing);
   canvas.addEventListener('pointercancel', finishDrawing);
 
-  undoButton?.addEventListener('click', () => {
-    if (!undoStack.length) return;
-    const snap = undoStack.pop();
-    context.putImageData(snap, 0, 0);
-    if (undoButton) undoButton.disabled = undoStack.length === 0;
+  // Apply a history transition (undo or redo): paint the returned snapshot,
+  // sync the two stacks + button states, and reflect emptiness in app state.
+  function applyHistory(result) {
+    if (!result.snapshot) return;
+    context.putImageData(result.snapshot, 0, 0);
+    undoStack = result.undoStack;
+    redoStack = result.redoStack;
+    syncHistoryButtons();
+    const blank = undoStack.length === 0;
+    // Redo-forward from a blank canvas must re-mark content so register re-enables.
+    state.hasContent = !blank;
     updateState(
       state,
       {
         spriteDataUrl: canvas.toDataURL('image/png'),
-        status: undoStack.length === 0 ? 'idle' : 'preview',
-        message: undoStack.length === 0 ? '' : t('status.draw.done'),
-        source: undoStack.length === 0 ? '' : 'drawing',
+        status: blank ? 'idle' : 'preview',
+        message: blank ? '' : t('status.draw.done'),
+        source: blank ? '' : 'drawing',
       },
       render,
     );
+  }
+
+  undoButton?.addEventListener('click', () => {
+    if (!undoStack.length) return;
+    applyHistory(applyUndo(undoStack, redoStack, snapshot()));
+  });
+
+  redoButton?.addEventListener('click', () => {
+    if (!redoStack.length) return;
+    applyHistory(applyRedo(undoStack, redoStack, snapshot()));
   });
 
   let clearPending = false;
@@ -295,8 +349,10 @@ function setupDrawingCanvas(root, state, render) {
     clearButton.textContent = t('draw.clear');
     clearButton.classList.remove('is-confirm-pending');
     context.clearRect(0, 0, canvas.width, canvas.height);
-    undoStack.length = 0;
-    if (undoButton) undoButton.disabled = true;
+    undoStack = [];
+    redoStack = [];
+    state.hasContent = false;
+    syncHistoryButtons();
     updateState(state, { spriteDataUrl: '', status: 'idle', message: '', source: '' }, render);
   });
 }
@@ -402,12 +458,13 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     );
   });
 
-  setupDrawingCanvas(root, state, render);
+  const playHaptic = options.playHaptic ?? (() => {});
+  setupDrawingCanvas(root, state, render, playHaptic);
 
   nameInput?.addEventListener('input', (event) => {
     state.name = event.target.value;
     if (registerButton) {
-      registerButton.disabled = !state.spriteDataUrl || state.status === 'invalid';
+      registerButton.disabled = !canRegister(state);
     }
   });
 
@@ -441,14 +498,14 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     }
 
     if (!isSupportedImageFile(file)) {
+      // Reset so re-selecting the same file still fires a change event.
+      event.target.value = '';
       updateState(
         state,
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: getCurrentLang() === 'ko'
-            ? '이 파일은 사진이 아니에요. 📷 사진 파일을 선택해 주세요!'
-            : "That's not a picture file! Try a photo (JPG or PNG).",
+          message: t('status.file.notImage'),
           source: '',
         },
         render,
@@ -465,7 +522,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl,
           status: 'preview',
-          message: '업로드한 이미지 미리보기가 준비됐어요.',
+          message: t('status.upload.ready'),
           source: 'upload',
         },
         render,
@@ -477,23 +534,24 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: getCurrentLang() === 'ko'
-            ? '이 사진을 열 수 없어요. 다른 사진을 골라 주세요! 😊'
-            : "Oops, I can't open this picture. Try a different one!",
+          message: t('status.file.cannotOpen'),
           source: '',
         },
         render,
       );
+    } finally {
+      // Reset so re-selecting the same file re-triggers processing.
+      event.target.value = '';
     }
   });
 
   registerButton?.addEventListener('click', () => {
-    if (!state.spriteDataUrl || state.status === 'invalid') {
+    if (!canRegister(state)) {
       updateState(
         state,
         {
           status: state.status === 'invalid' ? 'invalid' : 'idle',
-          message: '먼저 이미지를 추가해 주세요.',
+          message: t('status.needImage'),
         },
         render,
       );
@@ -504,9 +562,9 @@ export function bindFishInputEvents(root, state, render, options = {}) {
 
     options.onRegister?.(draft);
     const displayName = draft.name || DEFAULT_FISH_NAME;
-    const message = draft.type === 'deco'
-      ? `${displayName}이(가) 자리를 잡았어요!`
-      : `${displayName}이(가) 헤엄칠 준비를 마쳤어요!`;
+    const message = draft.storageError
+      ? t('status.storageFull')
+      : buildRegisterMessage(draft.type, displayName, t);
     updateState(
       state,
       {
