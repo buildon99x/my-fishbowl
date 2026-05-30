@@ -247,13 +247,9 @@
 }
 
 /* fish-input-widget styling moved to components/bottom-sheet.css (S-029). */
-
-.fish-input-panel {
-  max-height: min(780px, calc(100vh - 18px - 72px - 32px));
-  overflow: auto;
-  overscroll-behavior: contain;
-  padding: var(--space-lg);
-}
+/* Scroll + padding are owned by .bottom-sheet-body (it shares this element);
+   .fish-input-panel must NOT re-declare max-height/overflow or a second scroll
+   container is created on the same node (competing max-heights). */
 
 .fish-input-status {
   margin-bottom: var(--space-md);
@@ -319,6 +315,10 @@
 
 .draw-area {
   grid-column: 1 / -1;
+  /* Surface the drawing canvas + toolbar at the top of the create tab so it is
+     immediately usable without scrolling; metadata inputs sit below and the
+     register button lives in the always-visible sticky footer. */
+  order: -1;
 }
 
 .preview-area {
@@ -337,11 +337,11 @@
   gap: var(--space-sm);
 }
 
-.draw-toolbar-row--size-actions {
+.draw-toolbar-row--controls {
   justify-content: space-between;
 }
 
-.draw-toolbar-row--size-actions .draw-toolbar-actions {
+.draw-toolbar-row--controls .draw-toolbar-actions {
   margin-left: auto;
 }
 
@@ -548,25 +548,21 @@
     width: calc(100vw - 24px);
   }
 
-  .fish-input-panel {
-    max-height: min(860px, calc(100vh - 92px));
-  }
-
   .fish-input-grid {
     grid-template-columns: 1fr;
+    gap: var(--space-sm);
   }
 
   .preview-area {
     grid-column: 1;
   }
 
-  .draw-toolbar-row--size-actions {
+  .draw-toolbar-row--controls {
     justify-content: flex-start;
   }
 
-  .draw-toolbar-row--size-actions .draw-toolbar-actions {
-    margin-left: 0;
-    width: 100%;
+  .draw-toolbar-row--controls .draw-toolbar-actions {
+    margin-left: auto;
   }
 }
 
