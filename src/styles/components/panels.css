@@ -18,30 +18,31 @@
   background: url('../../../assets/food/bloodworm.svg') center / contain no-repeat;
   filter: drop-shadow(0 2px 4px rgba(120, 20, 10, 0.35));
 }
-/* ── Action Button Cluster (S-033: grid dock area) ──────────── */
+/* ── Action Button Cluster (top-center floating dock) ──────────── */
 
 .prop-action-panel {
-  grid-area: dock;
-  justify-self: center;
-  align-self: end;
+  position: fixed;
+  top: var(--dock-top);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-dock);
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--space-sm);
-  padding-bottom: var(--dock-bottom);
-  max-width: calc(100vw - var(--safe-left) - var(--safe-right));
+  max-width: calc(100vw - 2 * (var(--safe-left) + 64px));
 }
 
 /* ── Prop Editing Panel (S-034: right side sheet) ──────────── */
 
 .prop-panel {
   position: fixed;
-  top: var(--safe-top);
+  top: calc(var(--dock-top) + var(--dock-height) + var(--space-sm));
   right: var(--safe-right);
   z-index: var(--z-panel);
   width: min(360px, calc(100vw - var(--safe-left) - var(--safe-right)));
   max-height: calc(
-    100svh - var(--safe-top) - var(--dock-height) - var(--dock-bottom) - var(--space-lg)
+    100svh - var(--dock-top) - var(--dock-height) - var(--space-sm) - var(--safe-bottom) - var(--space-lg)
   );
   display: flex;
   flex-direction: column;
@@ -413,15 +414,9 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.prop-btn-cluster::-webkit-scrollbar {
-  display: none;
+  overflow: visible;
 }
 
 .prop-btn-wrap {
@@ -434,7 +429,7 @@
 .prop-btn-wrap::before {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: calc(100% + 10px);
+  top: calc(100% + 10px);
   left: 50%;
   white-space: nowrap;
   border: 1px solid var(--color-hairline);
@@ -449,7 +444,7 @@
   z-index: 10;
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, 4px);
+  transform: translate(-50%, -4px);
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
@@ -515,7 +510,7 @@
 .prop-feed-submenu {
   display: none;
   position: absolute;
-  bottom: calc(100% + 10px);
+  top: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
   align-items: center;
@@ -606,10 +601,6 @@
 }
 
 @media (max-width: 760px) {
-  .prop-action-panel {
-    bottom: 12px;
-  }
-
   .prop-btn {
     width: 60px;
     height: 60px;

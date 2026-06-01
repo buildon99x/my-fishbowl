@@ -90,7 +90,7 @@
 
 .long-press-toast {
   position: fixed;
-  bottom: calc(var(--dock-bottom) + var(--dock-height) + 60px);
+  bottom: calc(var(--safe-bottom) + 24px);
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-toast);

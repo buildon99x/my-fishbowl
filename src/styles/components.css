@@ -671,7 +671,7 @@
 .prop-undo-snackbar {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--dock-bottom) + var(--dock-height) + 72px);
+  bottom: calc(var(--safe-bottom) + 24px);
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;

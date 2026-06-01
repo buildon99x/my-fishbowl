@@ -91,6 +91,7 @@
   --safe-right: max(16px, env(safe-area-inset-right));
   --dock-height: 68px;
   --dock-bottom: calc(var(--safe-bottom) + 2px);
+  --dock-top: calc(var(--safe-top) + 2px);
   --drawer-width: 0px;
   --drawer-width-open: 320px;
   --keyboard-inset: 0px;
