@@ -49,6 +49,9 @@ function paintStoredSprite(canvas, spriteDataUrl) {
 
   loadImage(spriteDataUrl)
     .then((image) => {
+      // Always paint the sprite in normal mode — the restored tool may be the
+      // eraser (destination-out), which would otherwise erase instead of draw.
+      context.globalCompositeOperation = 'source-over';
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
     })
@@ -100,7 +103,8 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
   let isDrawing = false;
   let lastPoint = null;
   let lastMid = null;
-  let currentTool = 'pen';
+  // Seed from state so the selection survives the per-stroke re-render.
+  let currentTool = state.drawTool ?? 'pen';
 
   // Undo/redo history lives on `state` so it survives the full-DOM re-render
   // that fires on every stroke and sheet interaction (the canvas node and this
@@ -126,7 +130,7 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
     syncHistoryButtons();
   }
 
-  let currentPresetSize = 8;
+  let currentPresetSize = state.drawSize ?? 8;
   const sizePresetBtns = root.querySelectorAll('[data-draw-size-preset]');
 
   function applyToolSettings() {
@@ -147,11 +151,10 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
 
   context.lineCap = 'round';
   context.lineJoin = 'round';
-  context.lineWidth = 8;
-  context.strokeStyle =
-    getComputedStyle(document.documentElement)
-      .getPropertyValue('--color-ink')
-      .trim() || '#0a0a0a';
+  // Restore stroke style/width and composite op from the surviving selection so
+  // tool/color/size persist across the per-stroke re-render.
+  context.strokeStyle = state.drawColor ?? '#1a1a1a';
+  applyToolSettings();
   paintStoredSprite(canvas, state.spriteDataUrl);
   // Restore button-disabled state from the (re-render-surviving) history.
   syncHistoryButtons();
@@ -159,6 +162,7 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
   toolButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       currentTool = btn.dataset.drawTool;
+      state.drawTool = currentTool;
       toolButtons.forEach((b) => {
         b.setAttribute('aria-pressed', 'false');
         b.classList.remove('is-active');
@@ -173,6 +177,7 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
   sizePresetBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       currentPresetSize = Number(btn.dataset.drawSizePreset);
+      state.drawSize = currentPresetSize;
       if (currentTool !== 'fill') context.lineWidth = currentPresetSize;
       sizePresetBtns.forEach((b) => {
         b.classList.toggle('is-active', b === btn);
@@ -187,6 +192,7 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
     btn.addEventListener('click', () => {
       const color = btn.dataset.color;
       context.strokeStyle = color;
+      state.drawColor = color;
       colorBtns.forEach((b) => {
         b.classList.toggle('is-active', b === btn);
         b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');

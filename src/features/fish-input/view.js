@@ -2,6 +2,18 @@ import { escapeHtml, safeSpriteUrl } from '../../lib/utils.js';
 import { renderDefaultObjectsCatalog } from '../default-objects/view.js';
 import { t } from '../../lib/i18n.js';
 
+// Swatch hex → locale key suffix (draw.color.*), kept beside the palette markup.
+const COLOR_NAMES = {
+  '#1a1a1a': 'black',
+  '#ef4444': 'red',
+  '#f97316': 'orange',
+  '#eab308': 'yellow',
+  '#22c55e': 'green',
+  '#3b82f6': 'blue',
+  '#a855f7': 'purple',
+  '#ffffff': 'white',
+};
+
 function getStatusText(status) {
   const map = {
     idle: t('status.idle'),
@@ -21,6 +33,18 @@ function renderCreateTab(state) {
   const typeBadgeIcon = isFish ? '🐟' : '🪨';
   const typeBadgeText = isFish ? t('add.fish') : t('add.deco');
   const typeHint = isFish ? t('fish.hint.swim') : t('deco.hint.stay');
+
+  // Reflect the persisted drawing selection so the toolbar's active state
+  // survives the per-stroke re-render (defaults match createFishInputState).
+  const drawTool = state.drawTool ?? 'pen';
+  const drawColor = state.drawColor ?? '#1a1a1a';
+  const drawSize = state.drawSize ?? 8;
+  const toolBtn = (tool) =>
+    `class="draw-tool-btn ${drawTool === tool ? 'is-active' : ''}" data-draw-tool="${tool}" aria-pressed="${drawTool === tool}"`;
+  const sizeBtn = (size, label) =>
+    `class="draw-size-preset-btn ${drawSize === size ? 'is-active' : ''}" data-draw-size-preset="${size}" data-size-label="${label}" aria-pressed="${drawSize === size}" aria-label="${t(`draw.size.${label}`)}"`;
+  const colorBtn = (hex, extraStyle = '') =>
+    `class="draw-color-btn ${drawColor === hex ? 'is-active' : ''}" data-color="${hex}" style="--swatch-color: ${hex}${extraStyle}" aria-label="${t(`draw.color.${COLOR_NAMES[hex]}`)}" aria-pressed="${drawColor === hex}" type="button"`;
 
   return `
     <div class="fish-input-status" aria-live="polite">
@@ -88,15 +112,15 @@ function renderCreateTab(state) {
         <div class="draw-toolbar">
           <div class="draw-toolbar-row draw-toolbar-row--controls">
             <div class="draw-tool-group" role="radiogroup" aria-label="${t('draw.label')}">
-              <button type="button" class="draw-tool-btn is-active" data-draw-tool="pen" aria-pressed="true">${t('draw.tool.pen')}</button>
-              <button type="button" class="draw-tool-btn" data-draw-tool="eraser" aria-pressed="false">${t('draw.tool.eraser')}</button>
-              <button type="button" class="draw-tool-btn" data-draw-tool="fill" aria-pressed="false">${t('draw.tool.fill')}</button>
+              <button type="button" ${toolBtn('pen')}>${t('draw.tool.pen')}</button>
+              <button type="button" ${toolBtn('eraser')}>${t('draw.tool.eraser')}</button>
+              <button type="button" ${toolBtn('fill')}>${t('draw.tool.fill')}</button>
             </div>
             <div class="draw-size-control">
               <div class="draw-size-presets" role="group" aria-label="${t('draw.sizeLabel')}">
-                <button type="button" class="draw-size-preset-btn is-active" data-draw-size-preset="8" data-size-label="thin" aria-pressed="true" aria-label="${t('draw.size.thin')}"></button>
-                <button type="button" class="draw-size-preset-btn" data-draw-size-preset="14" data-size-label="medium" aria-pressed="false" aria-label="${t('draw.size.medium')}"></button>
-                <button type="button" class="draw-size-preset-btn" data-draw-size-preset="22" data-size-label="thick" aria-pressed="false" aria-label="${t('draw.size.thick')}"></button>
+                <button type="button" ${sizeBtn(8, 'thin')}></button>
+                <button type="button" ${sizeBtn(14, 'medium')}></button>
+                <button type="button" ${sizeBtn(22, 'thick')}></button>
               </div>
             </div>
             <div class="draw-toolbar-actions">
@@ -107,14 +131,14 @@ function renderCreateTab(state) {
           </div>
           <div class="draw-toolbar-row draw-toolbar-row--colors">
             <div class="draw-color-row" role="group" aria-label="${t('draw.colorLabel')}">
-              <button class="draw-color-btn is-active" data-color="#1a1a1a" style="--swatch-color: #1a1a1a" aria-label="${t('draw.color.black')}" aria-pressed="true" type="button"></button>
-              <button class="draw-color-btn" data-color="#ef4444" style="--swatch-color: #ef4444" aria-label="${t('draw.color.red')}" aria-pressed="false" type="button"></button>
-              <button class="draw-color-btn" data-color="#f97316" style="--swatch-color: #f97316" aria-label="${t('draw.color.orange')}" aria-pressed="false" type="button"></button>
-              <button class="draw-color-btn" data-color="#eab308" style="--swatch-color: #eab308" aria-label="${t('draw.color.yellow')}" aria-pressed="false" type="button"></button>
-              <button class="draw-color-btn" data-color="#22c55e" style="--swatch-color: #22c55e" aria-label="${t('draw.color.green')}" aria-pressed="false" type="button"></button>
-              <button class="draw-color-btn" data-color="#3b82f6" style="--swatch-color: #3b82f6" aria-label="${t('draw.color.blue')}" aria-pressed="false" type="button"></button>
-              <button class="draw-color-btn" data-color="#a855f7" style="--swatch-color: #a855f7" aria-label="${t('draw.color.purple')}" aria-pressed="false" type="button"></button>
-              <button class="draw-color-btn" data-color="#ffffff" style="--swatch-color: #ffffff; border-color: #d1d5db" aria-label="${t('draw.color.white')}" aria-pressed="false" type="button"></button>
+              <button ${colorBtn('#1a1a1a')}></button>
+              <button ${colorBtn('#ef4444')}></button>
+              <button ${colorBtn('#f97316')}></button>
+              <button ${colorBtn('#eab308')}></button>
+              <button ${colorBtn('#22c55e')}></button>
+              <button ${colorBtn('#3b82f6')}></button>
+              <button ${colorBtn('#a855f7')}></button>
+              <button ${colorBtn('#ffffff', '; border-color: #d1d5db')}></button>
             </div>
           </div>
         </div>

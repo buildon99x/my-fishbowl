@@ -23,6 +23,13 @@ export function createFishInputState() {
     // serialized (saveFishDraft only persists explicit fields).
     undoStack: [],
     redoStack: [],
+    // Selected drawing tool/color/size. Like the history stacks, these live on
+    // state so the user's selection survives the full-DOM re-render that fires
+    // after every stroke (the canvas closure is rebuilt each render). Not
+    // serialized — session UI state, not draft content.
+    drawTool: 'pen',
+    drawColor: '#1a1a1a',
+    drawSize: 8,
     isExpanded: false,
     sheetStage: 'closed',
     activeTab: 'catalog',

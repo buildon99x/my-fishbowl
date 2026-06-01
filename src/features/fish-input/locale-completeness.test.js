@@ -36,7 +36,16 @@ function extractKeys(source) {
   return [...keys];
 }
 
-const usedKeys = extractKeys(viewSource);
+// Dynamically-built keys (t(`draw.color.${...}`) / t(`draw.size.${...}`)) are
+// not captured by the single-quote extractor, so list their families here to
+// keep them under the same drift guard.
+const dynamicKeys = [
+  'draw.color.black', 'draw.color.red', 'draw.color.orange', 'draw.color.yellow',
+  'draw.color.green', 'draw.color.blue', 'draw.color.purple', 'draw.color.white',
+  'draw.size.thin', 'draw.size.medium', 'draw.size.thick',
+];
+
+const usedKeys = [...new Set([...extractKeys(viewSource), ...dynamicKeys])];
 
 describe('fish-input locale completeness', () => {
   it('extracts at least the draw.* keys it relies on', () => {
