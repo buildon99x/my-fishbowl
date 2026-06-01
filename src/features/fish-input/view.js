@@ -1,6 +1,7 @@
 import { escapeHtml, safeSpriteUrl } from '../../lib/utils.js';
 import { renderDefaultObjectsCatalog } from '../default-objects/view.js';
 import { t } from '../../lib/i18n.js';
+import { statusFallbackKey } from './draw-logic.js';
 
 // Swatch hex → locale key suffix (draw.color.*), kept beside the palette markup.
 const COLOR_NAMES = {
@@ -15,12 +16,7 @@ const COLOR_NAMES = {
 };
 
 function getStatusText(status) {
-  const map = {
-    idle: t('status.idle'),
-    preview: t('status.preview'),
-    invalid: t('status.invalid'),
-  };
-  return map[status] ?? map.idle;
+  return t(statusFallbackKey(status));
 }
 
 function renderCreateTab(state) {

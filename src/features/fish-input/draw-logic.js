@@ -167,4 +167,13 @@ export function canRegister(state) {
   return true;
 }
 
+/**
+ * The i18n key for the fallback status line when state.message is empty.
+ * Pure so both the view and the in-place draw updater resolve it identically.
+ */
+export function statusFallbackKey(status) {
+  if (status === 'preview' || status === 'invalid') return `status.${status}`;
+  return 'status.idle';
+}
+
 export { MAX_HISTORY };

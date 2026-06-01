@@ -8,6 +8,7 @@ import {
   floodFillPixels,
   midpoint,
   parseColorToRgb,
+  statusFallbackKey,
 } from './draw-logic.js';
 
 describe('midpoint', () => {
@@ -175,5 +176,18 @@ describe('floodFillPixels', () => {
   it('respects out-of-range seeds', () => {
     const data = buf([[0, 0, 0, 0]]);
     expect(floodFillPixels(data, 1, 1, 5, 5, { fillRGBA: [1, 2, 3, 255] })).toBe(0);
+  });
+});
+
+describe('statusFallbackKey', () => {
+  it('maps preview and invalid to their own keys', () => {
+    expect(statusFallbackKey('preview')).toBe('status.preview');
+    expect(statusFallbackKey('invalid')).toBe('status.invalid');
+  });
+
+  it('falls back to idle for idle/unknown/empty', () => {
+    expect(statusFallbackKey('idle')).toBe('status.idle');
+    expect(statusFallbackKey('')).toBe('status.idle');
+    expect(statusFallbackKey(undefined)).toBe('status.idle');
   });
 });

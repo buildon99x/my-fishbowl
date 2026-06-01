@@ -12,6 +12,7 @@ import {
   floodFillPixels,
   midpoint,
   parseColorToRgb,
+  statusFallbackKey,
 } from './draw-logic.js';
 
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -88,7 +89,7 @@ function floodFill(ctx, canvas, startX, startY, fillRgb, tolerance = 30) {
   return filled;
 }
 
-function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
+function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   const canvas = root.querySelector('[data-fish-canvas]');
   const clearButton = root.querySelector('[data-clear-drawing]');
   const undoButton = root.querySelector('[data-draw-undo]');
@@ -119,6 +120,23 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
   function syncHistoryButtons() {
     if (undoButton) undoButton.disabled = state.undoStack.length === 0;
     if (redoButton) redoButton.disabled = state.redoStack.length === 0;
+  }
+
+  // Commit a drawing mutation WITHOUT a full renderApp. A full render replaces
+  // root.innerHTML, tearing down the canvas and repainting it asynchronously
+  // (paintStoredSprite → loadImage); during that blank window a fast next
+  // stroke would lose prior content or get wiped mid-draw. The drawing path
+  // doesn't render a preview (view shows it only for source==='upload'), so the
+  // only things a post-stroke render needs are the register button + status
+  // line — patch those in place and leave the live canvas (and its pixels)
+  // untouched.
+  const registerButton = root.querySelector('[data-register-fish-image]');
+  const statusEl = root.querySelector('.fish-input-status p');
+  function commitDrawing(patch) {
+    Object.assign(state, patch);
+    if (registerButton) registerButton.disabled = !canRegister(state);
+    if (statusEl) statusEl.textContent = state.message || t(statusFallbackKey(state.status));
+    syncHistoryButtons();
   }
 
   // Snapshot the canvas before a new mutation. Any fresh edit invalidates the
@@ -230,16 +248,12 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
           return;
         }
         playHaptic('magic-b');
-        updateState(
-          state,
-          {
-            spriteDataUrl: canvas.toDataURL('image/png'),
-            status: 'preview',
-            message: t('status.fill.done'),
-            source: 'drawing',
-          },
-          render,
-        );
+        commitDrawing({
+          spriteDataUrl: canvas.toDataURL('image/png'),
+          status: 'preview',
+          message: t('status.fill.done'),
+          source: 'drawing',
+        });
       }, 0);
       return;
     }
@@ -290,16 +304,12 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
     isDrawing = false;
     canvas.releasePointerCapture(event.pointerId);
     context.globalCompositeOperation = 'source-over';
-    updateState(
-      state,
-      {
-        spriteDataUrl: canvas.toDataURL('image/png'),
-        status: 'preview',
-        message: t('status.draw.done'),
-        source: 'drawing',
-      },
-      render,
-    );
+    commitDrawing({
+      spriteDataUrl: canvas.toDataURL('image/png'),
+      status: 'preview',
+      message: t('status.draw.done'),
+      source: 'drawing',
+    });
   }
 
   canvas.addEventListener('pointerup', finishDrawing);
@@ -316,16 +326,12 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
     const blank = state.undoStack.length === 0;
     // Redo-forward from a blank canvas must re-mark content so register re-enables.
     state.hasContent = !blank;
-    updateState(
-      state,
-      {
-        spriteDataUrl: canvas.toDataURL('image/png'),
-        status: blank ? 'idle' : 'preview',
-        message: blank ? '' : t('status.draw.done'),
-        source: blank ? '' : 'drawing',
-      },
-      render,
-    );
+    commitDrawing({
+      spriteDataUrl: canvas.toDataURL('image/png'),
+      status: blank ? 'idle' : 'preview',
+      message: blank ? '' : t('status.draw.done'),
+      source: blank ? '' : 'drawing',
+    });
   }
 
   undoButton?.addEventListener('click', () => {
@@ -363,8 +369,7 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
     state.undoStack = [];
     state.redoStack = [];
     state.hasContent = false;
-    syncHistoryButtons();
-    updateState(state, { spriteDataUrl: '', status: 'idle', message: '', source: '' }, render);
+    commitDrawing({ spriteDataUrl: '', status: 'idle', message: '', source: '' });
   });
 }
 
@@ -470,7 +475,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   });
 
   const playHaptic = options.playHaptic ?? (() => {});
-  setupDrawingCanvas(root, state, render, playHaptic);
+  setupDrawingCanvas(root, state, playHaptic);
 
   nameInput?.addEventListener('input', (event) => {
     state.name = event.target.value;
