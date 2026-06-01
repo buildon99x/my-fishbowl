@@ -60,5 +60,7 @@
   "prop.type.label": "종류를 골라요",
   "draw.canvas.label": "오브젝트 그리기",
   "lang.toggle.label": "언어 변경 / Change language",
-  "tab.group.label": "추가 방식"
+  "tab.group.label": "추가 방식",
+  "cleaning.hint": "🧽 문질러서 청소해요",
+  "cleaning.done": "✨ 청소 완료!"
 }

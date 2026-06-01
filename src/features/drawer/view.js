@@ -6,6 +6,7 @@ export function renderMenuButton() {
       type="button"
       class="drawer-menu-btn chrome"
       data-drawer-open
+      data-self-sound
       aria-label="메뉴 열기"
       aria-controls="app-drawer"
     >☰</button>
@@ -33,6 +34,7 @@ export function renderDrawer({ open, aquariumName, statusHtml }) {
             type="button"
             class="drawer-close-btn"
             data-drawer-close
+            data-self-sound
             aria-label="메뉴 닫기"
           >×</button>
         </header>

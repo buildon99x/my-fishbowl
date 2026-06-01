@@ -60,5 +60,7 @@
   "prop.type.label": "Choose a type",
   "draw.canvas.label": "Draw an object",
   "lang.toggle.label": "Change language / 언어 변경",
-  "tab.group.label": "How to add"
+  "tab.group.label": "How to add",
+  "cleaning.hint": "🧽 Scrub to clean",
+  "cleaning.done": "✨ All clean!"
 }

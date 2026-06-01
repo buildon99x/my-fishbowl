@@ -218,4 +218,9 @@
   .aquarium-empty-arrow {
     animation: none;
   }
+
+  .sway-plant,
+  .garden-eel {
+    animation: none;
+  }
 }

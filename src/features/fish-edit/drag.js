@@ -44,6 +44,10 @@ function showLongPressToast(root) {
 function openPropPanel(appState, fishId, type) {
   appState.propPanel.editingTarget = { id: fishId, type };
   appState.selectedFishId = fishId;
+  // The panel opens by tapping a fish sprite (<img>, not a <button>), so the
+  // global tap-sound listener doesn't fire — give this path its own cue.
+  appState.sound?.playSound?.('ui.panel-open');
+  appState.sound?.playHaptic?.('light');
 }
 
 function dismissPropPanel(appState) {
