@@ -40,7 +40,7 @@
   "close": "Close",
   "status.idle": "Choose an image or draw one.",
   "status.preview": "Done! Tap the 'Add' button below. 🐟",
-  "status.fill.done": "Background removed! Tap 'Add' below when ready. 🐟",
+  "status.fill.done": "Filled with color! Tap 'Add' below when ready. 🐟",
   "status.draw.done": "Done! Tap the 'Add' button below. 🐟",
   "status.invalid": "This file cannot be added.",
   "status.upload.ready": "Your picture is ready to preview! 🐟",

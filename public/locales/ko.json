@@ -40,7 +40,7 @@
   "close": "닫기",
   "status.idle": "이미지를 고르거나 직접 그려 보세요.",
   "status.preview": "완성됐어요! 아래 '추가' 버튼을 눌러요. 🐟",
-  "status.fill.done": "배경을 지웠어요! 마음에 들면 아래 '추가' 버튼을 눌러요. 🐟",
+  "status.fill.done": "색을 채웠어요! 마음에 들면 아래 '추가' 버튼을 눌러요. 🐟",
   "status.draw.done": "완성됐어요! 아래 '추가' 버튼을 눌러요. 🐟",
   "status.invalid": "이 파일은 등록할 수 없어요.",
   "status.upload.ready": "업로드한 이미지 미리보기가 준비됐어요.",

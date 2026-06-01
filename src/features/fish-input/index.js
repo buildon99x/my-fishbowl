@@ -3,7 +3,16 @@ import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 import { setLang, getCurrentLang, t } from '../../lib/i18n.js';
 import { buildRegisterMessage } from './messages.js';
-import { MAX_HISTORY, applyRedo, applyUndo, canRegister, capHistory, midpoint } from './draw-logic.js';
+import {
+  MAX_HISTORY,
+  applyRedo,
+  applyUndo,
+  canRegister,
+  capHistory,
+  floodFillPixels,
+  midpoint,
+  parseColorToRgb,
+} from './draw-logic.js';
 
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
@@ -59,43 +68,21 @@ function getCanvasPoint(canvas, event) {
   };
 }
 
-function floodFill(ctx, canvas, startX, startY, tolerance = 30) {
+// Thin canvas wrapper around the pure floodFillPixels: fills the contiguous
+// same-color region under the seed with `fillRgb` (the current pen color) at
+// full opacity. Returns the number of pixels filled (0 = no-op).
+function floodFill(ctx, canvas, startX, startY, fillRgb, tolerance = 30) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-  const width = canvas.width;
-  const height = canvas.height;
-
-  // Bounds guard — reject out-of-range seed coordinates.
-  if (startX < 0 || startX >= width || startY < 0 || startY >= height) return;
-
-  const idx = (startY * width + startX) * 4;
-  const targetR = data[idx];
-  const targetG = data[idx + 1];
-  const targetB = data[idx + 2];
-
-  const queue = [[startX, startY]];
-  let head = 0;
-  const visited = new Uint8Array(width * height);
-
-  while (head < queue.length) {
-    const [x, y] = queue[head++];
-    if (x < 0 || x >= width || y < 0 || y >= height) continue;
-    const i = y * width + x;
-    if (visited[i]) continue;
-    visited[i] = 1;
-
-    const pi = i * 4;
-    const dr = Math.abs(data[pi] - targetR);
-    const dg = Math.abs(data[pi + 1] - targetG);
-    const db = Math.abs(data[pi + 2] - targetB);
-
-    if (dr + dg + db > tolerance) continue;
-
-    data[pi + 3] = 0;
-    queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-  }
-
-  ctx.putImageData(imageData, 0, 0);
+  const filled = floodFillPixels(
+    imageData.data,
+    canvas.width,
+    canvas.height,
+    startX,
+    startY,
+    { tolerance, fillRGBA: [fillRgb[0], fillRgb[1], fillRgb[2], 255] },
+  );
+  if (filled > 0) ctx.putImageData(imageData, 0, 0);
+  return filled;
 }
 
 function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
@@ -215,13 +202,27 @@ function setupDrawingCanvas(root, state, render, playHaptic = () => {}) {
 
     if (currentTool === 'fill') {
       if (canvas.classList.contains('is-processing')) return;
+      const fillRgb = parseColorToRgb(context.strokeStyle) ?? [10, 10, 10];
       pushUndo();
       canvas.classList.add('is-processing');
       canvas.style.cursor = 'wait';
       setTimeout(() => {
-        floodFill(context, canvas, Math.round(point.x), Math.round(point.y));
+        const filled = floodFill(
+          context,
+          canvas,
+          Math.round(point.x),
+          Math.round(point.y),
+          fillRgb,
+        );
         canvas.classList.remove('is-processing');
         canvas.style.cursor = '';
+        if (filled === 0) {
+          // Seed already the fill color — drop the undo snapshot we pushed so
+          // a no-op fill doesn't leave a dead undo step.
+          state.undoStack = state.undoStack.slice(0, -1);
+          syncHistoryButtons();
+          return;
+        }
         playHaptic('magic-b');
         updateState(
           state,
