@@ -126,7 +126,7 @@
 /* S-031: sticky 끝내기 button (top-center) for cleaning mode */
 .cleaning-exit-btn {
   position: fixed;
-  top: calc(var(--safe-top) + 12px);
+  top: calc(var(--dock-top) + var(--dock-height) + var(--space-sm));
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-overlay);
