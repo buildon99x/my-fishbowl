@@ -2,6 +2,18 @@ import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 import { setLang, getCurrentLang, t } from '../../lib/i18n.js';
+import { buildRegisterMessage } from './messages.js';
+import {
+  MAX_HISTORY,
+  applyRedo,
+  applyUndo,
+  canRegister,
+  capHistory,
+  floodFillPixels,
+  midpoint,
+  parseColorToRgb,
+  statusFallbackKey,
+} from './draw-logic.js';
 
 const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
@@ -38,6 +50,9 @@ function paintStoredSprite(canvas, spriteDataUrl) {
 
   loadImage(spriteDataUrl)
     .then((image) => {
+      // Always paint the sprite in normal mode — the restored tool may be the
+      // eraser (destination-out), which would otherwise erase instead of draw.
+      context.globalCompositeOperation = 'source-over';
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
     })
@@ -57,51 +72,28 @@ function getCanvasPoint(canvas, event) {
   };
 }
 
-const MAX_UNDO = 20;
-
-function floodFill(ctx, canvas, startX, startY, tolerance = 30) {
+// Thin canvas wrapper around the pure floodFillPixels: fills the contiguous
+// same-color region under the seed with `fillRgb` (the current pen color) at
+// full opacity. Returns the number of pixels filled (0 = no-op).
+function floodFill(ctx, canvas, startX, startY, fillRgb, tolerance = 30) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-  const width = canvas.width;
-  const height = canvas.height;
-
-  // Bounds guard — reject out-of-range seed coordinates.
-  if (startX < 0 || startX >= width || startY < 0 || startY >= height) return;
-
-  const idx = (startY * width + startX) * 4;
-  const targetR = data[idx];
-  const targetG = data[idx + 1];
-  const targetB = data[idx + 2];
-
-  const queue = [[startX, startY]];
-  let head = 0;
-  const visited = new Uint8Array(width * height);
-
-  while (head < queue.length) {
-    const [x, y] = queue[head++];
-    if (x < 0 || x >= width || y < 0 || y >= height) continue;
-    const i = y * width + x;
-    if (visited[i]) continue;
-    visited[i] = 1;
-
-    const pi = i * 4;
-    const dr = Math.abs(data[pi] - targetR);
-    const dg = Math.abs(data[pi + 1] - targetG);
-    const db = Math.abs(data[pi + 2] - targetB);
-
-    if (dr + dg + db > tolerance) continue;
-
-    data[pi + 3] = 0;
-    queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-  }
-
-  ctx.putImageData(imageData, 0, 0);
+  const filled = floodFillPixels(
+    imageData.data,
+    canvas.width,
+    canvas.height,
+    startX,
+    startY,
+    { tolerance, fillRGBA: [fillRgb[0], fillRgb[1], fillRgb[2], 255] },
+  );
+  if (filled > 0) ctx.putImageData(imageData, 0, 0);
+  return filled;
 }
 
-function setupDrawingCanvas(root, state, render) {
+function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   const canvas = root.querySelector('[data-fish-canvas]');
   const clearButton = root.querySelector('[data-clear-drawing]');
   const undoButton = root.querySelector('[data-draw-undo]');
+  const redoButton = root.querySelector('[data-draw-redo]');
   const toolButtons = root.querySelectorAll('[data-draw-tool]');
 
   if (!canvas) {
@@ -110,16 +102,53 @@ function setupDrawingCanvas(root, state, render) {
 
   const context = canvas.getContext('2d');
   let isDrawing = false;
-  let currentTool = 'pen';
-  const undoStack = [];
+  let lastPoint = null;
+  let lastMid = null;
+  // Seed from state so the selection survives the per-stroke re-render.
+  let currentTool = state.drawTool ?? 'pen';
 
-  function pushUndo() {
-    if (undoStack.length >= MAX_UNDO) undoStack.shift();
-    undoStack.push(context.getImageData(0, 0, canvas.width, canvas.height));
-    if (undoButton) undoButton.disabled = false;
+  // Undo/redo history lives on `state` so it survives the full-DOM re-render
+  // that fires on every stroke and sheet interaction (the canvas node and this
+  // closure are rebuilt each render; the history must not be).
+  state.undoStack = state.undoStack ?? [];
+  state.redoStack = state.redoStack ?? [];
+
+  function snapshot() {
+    return context.getImageData(0, 0, canvas.width, canvas.height);
   }
 
-  let currentPresetSize = 8;
+  function syncHistoryButtons() {
+    if (undoButton) undoButton.disabled = state.undoStack.length === 0;
+    if (redoButton) redoButton.disabled = state.redoStack.length === 0;
+  }
+
+  // Commit a drawing mutation WITHOUT a full renderApp. A full render replaces
+  // root.innerHTML, tearing down the canvas and repainting it asynchronously
+  // (paintStoredSprite → loadImage); during that blank window a fast next
+  // stroke would lose prior content or get wiped mid-draw. The drawing path
+  // doesn't render a preview (view shows it only for source==='upload'), so the
+  // only things a post-stroke render needs are the register button + status
+  // line — patch those in place and leave the live canvas (and its pixels)
+  // untouched.
+  const registerButton = root.querySelector('[data-register-fish-image]');
+  const statusEl = root.querySelector('.fish-input-status p');
+  function commitDrawing(patch) {
+    Object.assign(state, patch);
+    if (registerButton) registerButton.disabled = !canRegister(state);
+    if (statusEl) statusEl.textContent = state.message || t(statusFallbackKey(state.status));
+    syncHistoryButtons();
+  }
+
+  // Snapshot the canvas before a new mutation. Any fresh edit invalidates the
+  // redo timeline, matching standard drawing-app behaviour.
+  function pushUndo() {
+    state.undoStack = capHistory([...state.undoStack, snapshot()], MAX_HISTORY);
+    state.redoStack = [];
+    state.hasContent = true;
+    syncHistoryButtons();
+  }
+
+  let currentPresetSize = state.drawSize ?? 8;
   const sizePresetBtns = root.querySelectorAll('[data-draw-size-preset]');
 
   function applyToolSettings() {
@@ -140,16 +169,18 @@ function setupDrawingCanvas(root, state, render) {
 
   context.lineCap = 'round';
   context.lineJoin = 'round';
-  context.lineWidth = 8;
-  context.strokeStyle =
-    getComputedStyle(document.documentElement)
-      .getPropertyValue('--color-ink')
-      .trim() || '#0a0a0a';
+  // Restore stroke style/width and composite op from the surviving selection so
+  // tool/color/size persist across the per-stroke re-render.
+  context.strokeStyle = state.drawColor ?? '#1a1a1a';
+  applyToolSettings();
   paintStoredSprite(canvas, state.spriteDataUrl);
+  // Restore button-disabled state from the (re-render-surviving) history.
+  syncHistoryButtons();
 
   toolButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       currentTool = btn.dataset.drawTool;
+      state.drawTool = currentTool;
       toolButtons.forEach((b) => {
         b.setAttribute('aria-pressed', 'false');
         b.classList.remove('is-active');
@@ -157,17 +188,20 @@ function setupDrawingCanvas(root, state, render) {
       btn.setAttribute('aria-pressed', 'true');
       btn.classList.add('is-active');
       applyToolSettings();
+      playHaptic('light');
     });
   });
 
   sizePresetBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       currentPresetSize = Number(btn.dataset.drawSizePreset);
+      state.drawSize = currentPresetSize;
       if (currentTool !== 'fill') context.lineWidth = currentPresetSize;
       sizePresetBtns.forEach((b) => {
         b.classList.toggle('is-active', b === btn);
         b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
       });
+      playHaptic('light');
     });
   });
 
@@ -176,10 +210,12 @@ function setupDrawingCanvas(root, state, render) {
     btn.addEventListener('click', () => {
       const color = btn.dataset.color;
       context.strokeStyle = color;
+      state.drawColor = color;
       colorBtns.forEach((b) => {
         b.classList.toggle('is-active', b === btn);
         b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
       });
+      playHaptic('light');
     });
   });
 
@@ -190,23 +226,34 @@ function setupDrawingCanvas(root, state, render) {
 
     if (currentTool === 'fill') {
       if (canvas.classList.contains('is-processing')) return;
+      const fillRgb = parseColorToRgb(context.strokeStyle) ?? [10, 10, 10];
       pushUndo();
       canvas.classList.add('is-processing');
       canvas.style.cursor = 'wait';
       setTimeout(() => {
-        floodFill(context, canvas, Math.round(point.x), Math.round(point.y));
+        const filled = floodFill(
+          context,
+          canvas,
+          Math.round(point.x),
+          Math.round(point.y),
+          fillRgb,
+        );
         canvas.classList.remove('is-processing');
         canvas.style.cursor = '';
-        updateState(
-          state,
-          {
-            spriteDataUrl: canvas.toDataURL('image/png'),
-            status: 'preview',
-            message: t('status.fill.done'),
-            source: 'drawing',
-          },
-          render,
-        );
+        if (filled === 0) {
+          // Seed already the fill color — drop the undo snapshot we pushed so
+          // a no-op fill doesn't leave a dead undo step.
+          state.undoStack = state.undoStack.slice(0, -1);
+          syncHistoryButtons();
+          return;
+        }
+        playHaptic('magic-b');
+        commitDrawing({
+          spriteDataUrl: canvas.toDataURL('image/png'),
+          status: 'preview',
+          message: t('status.fill.done'),
+          source: 'drawing',
+        });
       }, 0);
       return;
     }
@@ -216,8 +263,15 @@ function setupDrawingCanvas(root, state, render) {
     pushUndo();
     applyToolSettings();
 
+    // Draw a dot at the press point so a single tap (no drag) still leaves a
+    // mark — essential for young children. A following drag continues from the
+    // same point via quadratic smoothing, so there is no double-draw.
+    lastPoint = point;
+    lastMid = point;
     context.beginPath();
-    context.moveTo(point.x, point.y);
+    context.arc(point.x, point.y, context.lineWidth / 2, 0, Math.PI * 2);
+    context.fillStyle = context.strokeStyle;
+    context.fill();
   });
 
   canvas.addEventListener('pointermove', (event) => {
@@ -228,8 +282,17 @@ function setupDrawingCanvas(root, state, render) {
 
     const point = getCanvasPoint(canvas, event);
 
-    context.lineTo(point.x, point.y);
+    // Quadratic-curve smoothing: draw through the midpoint between the last two
+    // sampled points, using the previous point as the control point. Produces
+    // smooth strokes instead of jagged polylines at ~60Hz pointer sampling.
+    const mid = midpoint(lastPoint, point);
+    context.beginPath();
+    context.moveTo(lastMid.x, lastMid.y);
+    context.quadraticCurveTo(lastPoint.x, lastPoint.y, mid.x, mid.y);
     context.stroke();
+
+    lastPoint = point;
+    lastMid = mid;
   });
 
   function finishDrawing(event) {
@@ -241,36 +304,44 @@ function setupDrawingCanvas(root, state, render) {
     isDrawing = false;
     canvas.releasePointerCapture(event.pointerId);
     context.globalCompositeOperation = 'source-over';
-    updateState(
-      state,
-      {
-        spriteDataUrl: canvas.toDataURL('image/png'),
-        status: 'preview',
-        message: t('status.draw.done'),
-        source: 'drawing',
-      },
-      render,
-    );
+    commitDrawing({
+      spriteDataUrl: canvas.toDataURL('image/png'),
+      status: 'preview',
+      message: t('status.draw.done'),
+      source: 'drawing',
+    });
   }
 
   canvas.addEventListener('pointerup', finishDrawing);
   canvas.addEventListener('pointercancel', finishDrawing);
 
+  // Apply a history transition (undo or redo): paint the returned snapshot,
+  // sync the two stacks + button states, and reflect emptiness in app state.
+  function applyHistory(result) {
+    if (!result.snapshot) return;
+    context.putImageData(result.snapshot, 0, 0);
+    state.undoStack = result.undoStack;
+    state.redoStack = result.redoStack;
+    syncHistoryButtons();
+    const blank = state.undoStack.length === 0;
+    // Redo-forward from a blank canvas must re-mark content so register re-enables.
+    state.hasContent = !blank;
+    commitDrawing({
+      spriteDataUrl: canvas.toDataURL('image/png'),
+      status: blank ? 'idle' : 'preview',
+      message: blank ? '' : t('status.draw.done'),
+      source: blank ? '' : 'drawing',
+    });
+  }
+
   undoButton?.addEventListener('click', () => {
-    if (!undoStack.length) return;
-    const snap = undoStack.pop();
-    context.putImageData(snap, 0, 0);
-    if (undoButton) undoButton.disabled = undoStack.length === 0;
-    updateState(
-      state,
-      {
-        spriteDataUrl: canvas.toDataURL('image/png'),
-        status: undoStack.length === 0 ? 'idle' : 'preview',
-        message: undoStack.length === 0 ? '' : t('status.draw.done'),
-        source: undoStack.length === 0 ? '' : 'drawing',
-      },
-      render,
-    );
+    if (!state.undoStack.length) return;
+    applyHistory(applyUndo(state.undoStack, state.redoStack, snapshot()));
+  });
+
+  redoButton?.addEventListener('click', () => {
+    if (!state.redoStack.length) return;
+    applyHistory(applyRedo(state.undoStack, state.redoStack, snapshot()));
   });
 
   let clearPending = false;
@@ -295,9 +366,10 @@ function setupDrawingCanvas(root, state, render) {
     clearButton.textContent = t('draw.clear');
     clearButton.classList.remove('is-confirm-pending');
     context.clearRect(0, 0, canvas.width, canvas.height);
-    undoStack.length = 0;
-    if (undoButton) undoButton.disabled = true;
-    updateState(state, { spriteDataUrl: '', status: 'idle', message: '', source: '' }, render);
+    state.undoStack = [];
+    state.redoStack = [];
+    state.hasContent = false;
+    commitDrawing({ spriteDataUrl: '', status: 'idle', message: '', source: '' });
   });
 }
 
@@ -402,12 +474,13 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     );
   });
 
-  setupDrawingCanvas(root, state, render);
+  const playHaptic = options.playHaptic ?? (() => {});
+  setupDrawingCanvas(root, state, playHaptic);
 
   nameInput?.addEventListener('input', (event) => {
     state.name = event.target.value;
     if (registerButton) {
-      registerButton.disabled = !state.spriteDataUrl || state.status === 'invalid';
+      registerButton.disabled = !canRegister(state);
     }
   });
 
@@ -441,14 +514,14 @@ export function bindFishInputEvents(root, state, render, options = {}) {
     }
 
     if (!isSupportedImageFile(file)) {
+      // Reset so re-selecting the same file still fires a change event.
+      event.target.value = '';
       updateState(
         state,
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: getCurrentLang() === 'ko'
-            ? '이 파일은 사진이 아니에요. 📷 사진 파일을 선택해 주세요!'
-            : "That's not a picture file! Try a photo (JPG or PNG).",
+          message: t('status.file.notImage'),
           source: '',
         },
         render,
@@ -465,7 +538,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl,
           status: 'preview',
-          message: '업로드한 이미지 미리보기가 준비됐어요.',
+          message: t('status.upload.ready'),
           source: 'upload',
         },
         render,
@@ -477,23 +550,24 @@ export function bindFishInputEvents(root, state, render, options = {}) {
         {
           spriteDataUrl: '',
           status: 'invalid',
-          message: getCurrentLang() === 'ko'
-            ? '이 사진을 열 수 없어요. 다른 사진을 골라 주세요! 😊'
-            : "Oops, I can't open this picture. Try a different one!",
+          message: t('status.file.cannotOpen'),
           source: '',
         },
         render,
       );
+    } finally {
+      // Reset so re-selecting the same file re-triggers processing.
+      event.target.value = '';
     }
   });
 
   registerButton?.addEventListener('click', () => {
-    if (!state.spriteDataUrl || state.status === 'invalid') {
+    if (!canRegister(state)) {
       updateState(
         state,
         {
           status: state.status === 'invalid' ? 'invalid' : 'idle',
-          message: '먼저 이미지를 추가해 주세요.',
+          message: t('status.needImage'),
         },
         render,
       );
@@ -504,9 +578,9 @@ export function bindFishInputEvents(root, state, render, options = {}) {
 
     options.onRegister?.(draft);
     const displayName = draft.name || DEFAULT_FISH_NAME;
-    const message = draft.type === 'deco'
-      ? `${displayName}이(가) 자리를 잡았어요!`
-      : `${displayName}이(가) 헤엄칠 준비를 마쳤어요!`;
+    const message = draft.storageError
+      ? t('status.storageFull')
+      : buildRegisterMessage(draft.type, displayName, t);
     updateState(
       state,
       {

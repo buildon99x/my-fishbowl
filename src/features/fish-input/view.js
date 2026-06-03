@@ -1,14 +1,22 @@
 import { escapeHtml, safeSpriteUrl } from '../../lib/utils.js';
 import { renderDefaultObjectsCatalog } from '../default-objects/view.js';
 import { t } from '../../lib/i18n.js';
+import { statusFallbackKey } from './draw-logic.js';
+
+// Swatch hex → locale key suffix (draw.color.*), kept beside the palette markup.
+const COLOR_NAMES = {
+  '#1a1a1a': 'black',
+  '#ef4444': 'red',
+  '#f97316': 'orange',
+  '#eab308': 'yellow',
+  '#22c55e': 'green',
+  '#3b82f6': 'blue',
+  '#a855f7': 'purple',
+  '#ffffff': 'white',
+};
 
 function getStatusText(status) {
-  const map = {
-    idle: t('status.idle'),
-    preview: t('status.preview'),
-    invalid: t('status.invalid'),
-  };
-  return map[status] ?? map.idle;
+  return t(statusFallbackKey(status));
 }
 
 function renderCreateTab(state) {
@@ -22,12 +30,24 @@ function renderCreateTab(state) {
   const typeBadgeText = isFish ? t('add.fish') : t('add.deco');
   const typeHint = isFish ? t('fish.hint.swim') : t('deco.hint.stay');
 
+  // Reflect the persisted drawing selection so the toolbar's active state
+  // survives the per-stroke re-render (defaults match createFishInputState).
+  const drawTool = state.drawTool ?? 'pen';
+  const drawColor = state.drawColor ?? '#1a1a1a';
+  const drawSize = state.drawSize ?? 8;
+  const toolBtn = (tool) =>
+    `class="draw-tool-btn ${drawTool === tool ? 'is-active' : ''}" data-draw-tool="${tool}" aria-pressed="${drawTool === tool}"`;
+  const sizeBtn = (size, label) =>
+    `class="draw-size-preset-btn ${drawSize === size ? 'is-active' : ''}" data-draw-size-preset="${size}" data-size-label="${label}" aria-pressed="${drawSize === size}" aria-label="${t(`draw.size.${label}`)}"`;
+  const colorBtn = (hex, extraStyle = '') =>
+    `class="draw-color-btn ${drawColor === hex ? 'is-active' : ''}" data-color="${hex}" style="--swatch-color: ${hex}${extraStyle}" aria-label="${t(`draw.color.${COLOR_NAMES[hex]}`)}" aria-pressed="${drawColor === hex}" type="button"`;
+
   return `
     <div class="fish-input-status" aria-live="polite">
       <p>${escapeHtml(statusMessage)}</p>
     </div>
 
-    <div class="prop-type-segmented" role="radiogroup" aria-label="종류를 골라요" data-fish-prop-type-group>
+    <div class="prop-type-segmented" role="radiogroup" aria-label="${t('prop.type.label')}" data-fish-prop-type-group>
       <button
         class="prop-type-option ${isFish ? 'is-active' : ''}"
         type="button"
@@ -86,31 +106,36 @@ function renderCreateTab(state) {
 
       <div class="draw-area">
         <div class="draw-toolbar">
-          <div class="draw-tool-group" role="radiogroup" aria-label="${t('draw.label')}">
-            <button type="button" class="draw-tool-btn is-active" data-draw-tool="pen" aria-pressed="true">${t('draw.tool.pen')}</button>
-            <button type="button" class="draw-tool-btn" data-draw-tool="eraser" aria-pressed="false">${t('draw.tool.eraser')}</button>
-            <button type="button" class="draw-tool-btn" data-draw-tool="fill" aria-pressed="false">${t('draw.tool.fill')}</button>
-          </div>
-          <div class="draw-color-row" role="group" aria-label="펜 색깔">
-            <button class="draw-color-btn is-active" data-color="#1a1a1a" style="--swatch-color: #1a1a1a" aria-label="검정" aria-pressed="true" type="button"></button>
-            <button class="draw-color-btn" data-color="#ef4444" style="--swatch-color: #ef4444" aria-label="빨강" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#f97316" style="--swatch-color: #f97316" aria-label="주황" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#eab308" style="--swatch-color: #eab308" aria-label="노랑" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#22c55e" style="--swatch-color: #22c55e" aria-label="초록" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#3b82f6" style="--swatch-color: #3b82f6" aria-label="파랑" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#a855f7" style="--swatch-color: #a855f7" aria-label="보라" aria-pressed="false" type="button"></button>
-            <button class="draw-color-btn" data-color="#ffffff" style="--swatch-color: #ffffff; border-color: #d1d5db" aria-label="흰색" aria-pressed="false" type="button"></button>
-          </div>
-          <div class="draw-size-control">
-            <div class="draw-size-presets" role="group" aria-label="펜 굵기">
-              <button type="button" class="draw-size-preset-btn is-active" data-draw-size-preset="8" data-size-label="thin" aria-pressed="true" aria-label="가늘게"></button>
-              <button type="button" class="draw-size-preset-btn" data-draw-size-preset="14" data-size-label="medium" aria-pressed="false" aria-label="보통"></button>
-              <button type="button" class="draw-size-preset-btn" data-draw-size-preset="22" data-size-label="thick" aria-pressed="false" aria-label="굵게"></button>
+          <div class="draw-toolbar-row draw-toolbar-row--controls">
+            <div class="draw-tool-group" role="radiogroup" aria-label="${t('draw.label')}">
+              <button type="button" ${toolBtn('pen')}>${t('draw.tool.pen')}</button>
+              <button type="button" ${toolBtn('eraser')}>${t('draw.tool.eraser')}</button>
+              <button type="button" ${toolBtn('fill')}>${t('draw.tool.fill')}</button>
+            </div>
+            <div class="draw-size-control">
+              <div class="draw-size-presets" role="group" aria-label="${t('draw.sizeLabel')}">
+                <button type="button" ${sizeBtn(8, 'thin')}></button>
+                <button type="button" ${sizeBtn(14, 'medium')}></button>
+                <button type="button" ${sizeBtn(22, 'thick')}></button>
+              </div>
+            </div>
+            <div class="draw-toolbar-actions">
+              <button type="button" class="button button-secondary" data-draw-undo disabled>${t('draw.undo')}</button>
+              <button type="button" class="button button-secondary" data-draw-redo disabled>${t('draw.redo')}</button>
+              <button type="button" class="button button-secondary" data-clear-drawing>${t('draw.clear')}</button>
             </div>
           </div>
-          <div class="draw-toolbar-actions">
-            <button type="button" class="button button-secondary" data-draw-undo disabled>${t('draw.undo')}</button>
-            <button type="button" class="button button-secondary" data-clear-drawing>${t('draw.clear')}</button>
+          <div class="draw-toolbar-row draw-toolbar-row--colors">
+            <div class="draw-color-row" role="group" aria-label="${t('draw.colorLabel')}">
+              <button ${colorBtn('#1a1a1a')}></button>
+              <button ${colorBtn('#ef4444')}></button>
+              <button ${colorBtn('#f97316')}></button>
+              <button ${colorBtn('#eab308')}></button>
+              <button ${colorBtn('#22c55e')}></button>
+              <button ${colorBtn('#3b82f6')}></button>
+              <button ${colorBtn('#a855f7')}></button>
+              <button ${colorBtn('#ffffff', '; border-color: #d1d5db')}></button>
+            </div>
           </div>
         </div>
         <canvas
@@ -118,19 +143,23 @@ function renderCreateTab(state) {
           width="720"
           height="480"
           data-fish-canvas
-          aria-label="오브젝트 그리기"
+          aria-label="${t('draw.canvas.label')}"
         ></canvas>
       </div>
 
-      <div class="preview-area" data-status="${state.status}" data-prop-type="${type}">
+      ${
+        state.source === 'upload'
+          ? `<div class="preview-area" data-status="${state.status}" data-prop-type="${type}">
         <span class="preview-label">${t('preview')}</span>
         <span class="preview-type-badge" data-prop-type-badge>${typeBadgeIcon} ${typeBadgeText}</span>
         ${
           hasSprite
-            ? `<img class="fish-preview-image" src="${escapeHtml(safeSpriteUrl(state.spriteDataUrl))}" alt="오브젝트 미리보기">`
+            ? `<img class="fish-preview-image" src="${escapeHtml(safeSpriteUrl(state.spriteDataUrl))}" alt="${t('preview.alt')}">`
             : `<span class="preview-empty">${t('preview.empty')}</span>`
         }
-      </div>
+      </div>`
+          : ''
+      }
     </div>
   `;
 }
@@ -152,6 +181,7 @@ export function renderFishInputPanel(state) {
       class="fish-input-widget bottom-sheet"
       data-sheet-stage="${stage}"
       data-active-tab="${activeTab}"
+      data-touch-area="child"
       aria-labelledby="fish-input-title"
       role="dialog"
       aria-modal="false"
@@ -172,11 +202,11 @@ export function renderFishInputPanel(state) {
             <span id="fish-input-title" class="prop-panel-name">${t('add.object')}</span>
           </div>
         </div>
-        <button class="prop-action-btn lang-toggle-btn" type="button" data-lang-toggle aria-label="언어 변경 / Change language" title="한국어 / English">🌐</button>
+        <button class="prop-action-btn lang-toggle-btn" type="button" data-lang-toggle aria-label="${t('lang.toggle.label')}" title="한국어 / English">🌐</button>
         <button class="prop-action-btn" type="button" data-toggle-fish-input aria-label="${t('close')}" title="${t('close')}">×</button>
       </header>
 
-      <div class="fish-input-tabs" role="tablist" aria-label="추가 방식">
+      <div class="fish-input-tabs" role="tablist" aria-label="${t('tab.group.label')}">
         <button
           type="button"
           class="fish-input-tab ${!isCreate ? 'is-active' : ''}"

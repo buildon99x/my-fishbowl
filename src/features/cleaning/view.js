@@ -1,3 +1,5 @@
+import { t } from '../../lib/i18n.js';
+
 export function renderCleaningProgressBar(cleaningState) {
   const pct = Math.round(cleaningState.cleaningProgress * 100);
   return `
@@ -17,10 +19,17 @@ export function renderCleaningProgressBar(cleaningState) {
 }
 
 export function renderCleaningOverlay(cleaningState) {
+  // Scrub guidance: shown until the first brush stroke so a pre-literate child
+  // knows what to do (icon-first, text secondary). pointer-events:none keeps it
+  // purely decorative — it never intercepts the cleaning gesture.
+  const hint = cleaningState.cleaned
+    ? ''
+    : `<div class="cleaning-hint" data-cleaning-hint aria-hidden="true">${t('cleaning.hint')}</div>`;
   return `
     <div class="cleaning-overlay" data-cleaning-overlay aria-hidden="true">
       <div class="cleaning-cursor" data-cleaning-cursor></div>
-      ${cleaningState.cleaned ? '<div class="cleaning-complete-message" data-cleaning-complete>✨ 청소 완료!</div>' : ''}
+      ${hint}
+      ${cleaningState.cleaned ? `<div class="cleaning-complete-message" data-cleaning-complete>${t('cleaning.done')}</div>` : ''}
     </div>
   `;
 }

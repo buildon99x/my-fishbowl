@@ -290,6 +290,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
     fishInputState,
     render,
     {
+      playHaptic: (pattern) => appState.sound?.playHaptic?.(pattern),
       onRegister: (draft) => {
         const previewCanvas = root.querySelector('[data-fish-canvas]');
         const sourceRect = previewCanvas?.getBoundingClientRect();
@@ -512,6 +513,9 @@ function initApp() {
     if (target.closest('[data-sound-modal]')) return;
     const btn = target.closest('button');
     if (!btn) return;
+    // Buttons that play their own semantic sound (e.g. drawer open/close) opt
+    // out of the generic tap so they don't double-fire.
+    if (btn.closest('[data-self-sound]')) return;
     appState.sound.playSound('ui.tap');
     appState.sound.playHaptic('light');
   }, true);

@@ -16,6 +16,20 @@ export function createFishInputState() {
     source: draft?.source ?? '',
     type: normalizeType(draft?.type),
     movementEnabled: draft?.movementEnabled !== false,
+    // A restored draft already holds drawn/uploaded content, so register is allowed.
+    hasContent: Boolean(draft?.spriteDataUrl),
+    // Undo/redo history (ImageData snapshots). Held on state so it survives the
+    // full-DOM re-render that fires on every stroke/sheet interaction; never
+    // serialized (saveFishDraft only persists explicit fields).
+    undoStack: [],
+    redoStack: [],
+    // Selected drawing tool/color/size. Like the history stacks, these live on
+    // state so the user's selection survives the full-DOM re-render that fires
+    // after every stroke (the canvas closure is rebuilt each render). Not
+    // serialized — session UI state, not draft content.
+    drawTool: 'pen',
+    drawColor: '#1a1a1a',
+    drawSize: 8,
     isExpanded: false,
     sheetStage: 'closed',
     activeTab: 'catalog',
@@ -50,6 +64,9 @@ export function saveFishDraft(state) {
     localStorage.setItem(FISH_DRAFT_STORAGE_KEY, JSON.stringify(draft));
   } catch (error) {
     console.warn('Fish image draft could not be saved.', error);
+    // Surface storage pressure to the caller so the UI can warn the child that
+    // their work may not have been saved, instead of failing silently.
+    draft.storageError = true;
   }
 
   return draft;

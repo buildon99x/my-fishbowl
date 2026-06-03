@@ -117,6 +117,7 @@
 .fish-list-item {
   display: grid;
   gap: var(--space-xs);
+  min-height: 64px;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
   padding: var(--space-sm);
@@ -178,8 +179,8 @@
    buttons replace 편집/감추기/삭제 text labels; aria-label provides the
    accessible name. */
 .fish-action-button {
-  width: 44px;
-  height: 44px;
+  width: var(--touch-target-child);
+  height: var(--touch-target-child);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -247,13 +248,9 @@
 }
 
 /* fish-input-widget styling moved to components/bottom-sheet.css (S-029). */
-
-.fish-input-panel {
-  max-height: min(780px, calc(100vh - 18px - 72px - 32px));
-  overflow: auto;
-  overscroll-behavior: contain;
-  padding: var(--space-lg);
-}
+/* Scroll + padding are owned by .bottom-sheet-body (it shares this element);
+   .fish-input-panel must NOT re-declare max-height/overflow or a second scroll
+   container is created on the same node (competing max-heights). */
 
 .fish-input-status {
   margin-bottom: var(--space-md);
@@ -319,6 +316,10 @@
 
 .draw-area {
   grid-column: 1 / -1;
+  /* Surface the drawing canvas + toolbar at the top of the create tab so it is
+     immediately usable without scrolling; metadata inputs sit below and the
+     register button lives in the always-visible sticky footer. */
+  order: -1;
 }
 
 .preview-area {
@@ -326,10 +327,23 @@
 }
 
 .draw-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: var(--space-sm);
+}
+
+.draw-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.draw-toolbar-row--controls {
+  justify-content: space-between;
+}
+
+.draw-toolbar-row--controls .draw-toolbar-actions {
+  margin-left: auto;
 }
 
 .draw-toolbar-actions {
@@ -345,8 +359,8 @@
 }
 
 .draw-tool-btn {
-  min-width: 52px;
-  min-height: 52px;
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
   padding: var(--space-xs) var(--space-sm);
@@ -371,8 +385,8 @@
   color: var(--color-canvas);
   border-color: var(--color-ink);
   font-weight: 600;
-  transform: scale(1.05);
-  box-shadow: 0 0 0 3px var(--color-brand-teal, #06b6d4);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-focus);
 }
 
 /* Draw toolbar — disabled state */
@@ -390,18 +404,6 @@
   gap: var(--space-xs, 4px);
 }
 
-.draw-size-label {
-  font-size: 0.75rem;
-  color: var(--color-muted);
-  white-space: nowrap;
-}
-
-.draw-size-slider {
-  width: 80px;
-  accent-color: var(--color-ink, #0a0a0a);
-  cursor: pointer;
-}
-
 .draw-size-control.is-inactive {
   opacity: 0.45;
   pointer-events: none;
@@ -416,15 +418,18 @@
 .draw-color-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--touch-target-child-spacing);
   align-items: center;
 }
 
+/* Visible swatch stays 36px (so the 8-swatch row footprint doesn't grow and
+   reintroduce the draw-tab scroll), while a ::before overlay expands the tap
+   target to 56px (S-024 child-recommended). border:2px keeps the white
+   swatch's edge visible via the inline border-color in view.js. */
 .draw-color-btn {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  position: relative;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 2px solid transparent;
   background-color: var(--swatch-color);
@@ -435,14 +440,21 @@
   touch-action: manipulation;
 }
 
+.draw-color-btn::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+}
+
 .draw-color-btn.is-active {
   border-color: var(--color-ink);
-  transform: scale(1.1);
-  box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-focus);
 }
 
 .draw-color-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.06);
 }
 
 .fish-drawing-canvas,
@@ -547,16 +559,21 @@
     width: calc(100vw - 24px);
   }
 
-  .fish-input-panel {
-    max-height: min(860px, calc(100vh - 92px));
-  }
-
   .fish-input-grid {
     grid-template-columns: 1fr;
+    gap: var(--space-sm);
   }
 
   .preview-area {
     grid-column: 1;
+  }
+
+  .draw-toolbar-row--controls {
+    justify-content: flex-start;
+  }
+
+  .draw-toolbar-row--controls .draw-toolbar-actions {
+    margin-left: auto;
   }
 }
 
@@ -696,8 +713,8 @@
 }
 
 .draw-size-preset-btn {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
   border: 2px solid var(--color-border, #d1d5db);
   border-radius: var(--radius-md);
   background: var(--color-canvas);
@@ -712,6 +729,16 @@
 .draw-size-preset-btn.is-active {
   border-color: var(--color-ink);
   background: var(--color-surface-soft, #f1efe8);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draw-tool-btn.is-active,
+  .draw-color-btn.is-active,
+  .draw-size-preset-btn.is-active {
+    transform: none;
+  }
 }
 
 .draw-size-preset-btn::before {
