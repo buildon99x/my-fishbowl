@@ -1,7 +1,17 @@
 import { escapeHtml, safeSpriteUrl } from '../../lib/utils.js';
 import { renderDefaultObjectsCatalog } from '../default-objects/view.js';
 import { t } from '../../lib/i18n.js';
-import { statusFallbackKey } from './draw-logic.js';
+import { statusFallbackKey, STAMP_SHAPES, normalizeShape } from './draw-logic.js';
+
+// Emoji glyph per stamp shape, kept beside the picker markup (S-036).
+const SHAPE_ICONS = {
+  circle: '⭕',
+  heart: '❤️',
+  star: '⭐',
+  eye: '👁️',
+  drop: '💧',
+  triangle: '🔺',
+};
 
 // Swatch hex → locale key suffix (draw.color.*), kept beside the palette markup.
 const COLOR_NAMES = {
@@ -35,8 +45,13 @@ function renderCreateTab(state) {
   const drawTool = state.drawTool ?? 'pen';
   const drawColor = state.drawColor ?? '#1a1a1a';
   const drawSize = state.drawSize ?? 8;
+  const symmetryOn = state.symmetry === true;
+  const drawShape = normalizeShape(state.drawShape);
+  const isStamp = drawTool === 'stamp';
   const toolBtn = (tool) =>
     `class="draw-tool-btn ${drawTool === tool ? 'is-active' : ''}" data-draw-tool="${tool}" aria-pressed="${drawTool === tool}"`;
+  const shapeBtn = (shape) =>
+    `class="draw-shape-btn ${drawShape === shape ? 'is-active' : ''}" data-draw-shape="${shape}" aria-pressed="${drawShape === shape}" aria-label="${t(`draw.shape.${shape}`)}" type="button"`;
   const sizeBtn = (size, label) =>
     `class="draw-size-preset-btn ${drawSize === size ? 'is-active' : ''}" data-draw-size-preset="${size}" data-size-label="${label}" aria-pressed="${drawSize === size}" aria-label="${t(`draw.size.${label}`)}"`;
   const colorBtn = (hex, extraStyle = '') =>
@@ -111,7 +126,15 @@ function renderCreateTab(state) {
               <button type="button" ${toolBtn('pen')}>${t('draw.tool.pen')}</button>
               <button type="button" ${toolBtn('eraser')}>${t('draw.tool.eraser')}</button>
               <button type="button" ${toolBtn('fill')}>${t('draw.tool.fill')}</button>
+              <button type="button" ${toolBtn('stamp')}>${t('draw.tool.stamp')}</button>
             </div>
+            <button
+              type="button"
+              class="draw-symmetry-btn ${symmetryOn ? 'is-active' : ''}"
+              data-draw-symmetry
+              aria-pressed="${symmetryOn}"
+              title="${t('draw.symmetry')}"
+            >${t('draw.symmetry')}</button>
             <div class="draw-size-control">
               <div class="draw-size-presets" role="group" aria-label="${t('draw.sizeLabel')}">
                 <button type="button" ${sizeBtn(8, 'thin')}></button>
@@ -137,14 +160,29 @@ function renderCreateTab(state) {
               <button ${colorBtn('#ffffff', '; border-color: #d1d5db')}></button>
             </div>
           </div>
+          <div
+            class="draw-toolbar-row draw-shape-row ${isStamp ? 'is-visible' : ''}"
+            data-draw-shape-row
+            role="group"
+            aria-label="${t('draw.shapeLabel')}"
+          >
+            ${STAMP_SHAPES.map((shape) => `<button ${shapeBtn(shape)}>${SHAPE_ICONS[shape]}</button>`).join('')}
+          </div>
         </div>
-        <canvas
-          class="fish-drawing-canvas"
-          width="720"
-          height="480"
-          data-fish-canvas
-          aria-label="${t('draw.canvas.label')}"
-        ></canvas>
+        <div class="draw-canvas-wrap">
+          <canvas
+            class="fish-drawing-canvas"
+            width="720"
+            height="480"
+            data-fish-canvas
+            aria-label="${t('draw.canvas.label')}"
+          ></canvas>
+          <div
+            class="draw-symmetry-guide ${symmetryOn ? 'is-visible' : ''}"
+            data-draw-symmetry-guide
+            aria-hidden="true"
+          ></div>
+        </div>
       </div>
 
       ${
