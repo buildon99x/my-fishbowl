@@ -57,6 +57,12 @@ function renderCreateTab(state) {
   const colorBtn = (hex, extraStyle = '') =>
     `class="draw-color-btn ${drawColor === hex ? 'is-active' : ''}" data-color="${hex}" style="--swatch-color: ${hex}${extraStyle}" aria-label="${t(`draw.color.${COLOR_NAMES[hex]}`)}" aria-pressed="${drawColor === hex}" type="button"`;
 
+  // S-037: "draw first, name later". name/movement/upload live in a
+  // collapsible <details>; open state is read from `state` (survives the
+  // per-interaction full re-render) and force-open during the upload flow so a
+  // chosen image's preview is never hidden behind a collapsed summary.
+  const optionsOpen = state.optionsOpen === true || state.source === 'upload';
+
   return `
     <div class="fish-input-status" aria-live="polite">
       <p>${escapeHtml(statusMessage)}</p>
@@ -86,40 +92,7 @@ function renderCreateTab(state) {
     </div>
     <p class="prop-type-hint" data-fish-prop-type-hint>${escapeHtml(typeHint)}</p>
 
-    <div class="fish-input-grid">
-      <div class="input-group">
-        <label class="input-label" for="fish-file">${t('img.file.label')}</label>
-        <input id="fish-file" class="file-input" type="file" accept="image/png,image/jpeg,image/webp" data-fish-file>
-      </div>
-
-      <div class="input-group">
-        <label class="input-label" for="fish-name" data-fish-name-label>${escapeHtml(nameLabel)}</label>
-        <input
-          id="fish-name"
-          class="text-input"
-          type="text"
-          value="${escapeHtml(state.name)}"
-          maxlength="32"
-          placeholder="${escapeHtml(namePlaceholder)}"
-          data-fish-name
-        >
-      </div>
-
-      ${
-        isFish
-          ? `
-      <div class="input-group" data-fish-movement-group>
-        <label class="input-label" for="fish-movement">${t('fish.movement')}</label>
-        <select id="fish-movement" class="select-input" data-fish-movement>
-          <option value="on" ${state.movementEnabled === false ? '' : 'selected'}>${t('fish.movement.on')}</option>
-          <option value="off" ${state.movementEnabled === false ? 'selected' : ''}>${t('fish.movement.off')}</option>
-        </select>
-      </div>
-      `
-          : ''
-      }
-
-      <div class="draw-area">
+    <div class="draw-area">
         <div class="draw-toolbar">
           <div class="draw-toolbar-row draw-toolbar-row--controls">
             <div class="draw-tool-group" role="radiogroup" aria-label="${t('draw.label')}">
@@ -183,22 +156,58 @@ function renderCreateTab(state) {
             aria-hidden="true"
           ></div>
         </div>
-      </div>
-
-      ${
-        state.source === 'upload'
-          ? `<div class="preview-area" data-status="${state.status}" data-prop-type="${type}">
-        <span class="preview-label">${t('preview')}</span>
-        <span class="preview-type-badge" data-prop-type-badge>${typeBadgeIcon} ${typeBadgeText}</span>
-        ${
-          hasSprite
-            ? `<img class="fish-preview-image" src="${escapeHtml(safeSpriteUrl(state.spriteDataUrl))}" alt="${t('preview.alt')}">`
-            : `<span class="preview-empty">${t('preview.empty')}</span>`
-        }
-      </div>`
-          : ''
-      }
     </div>
+
+    <details class="create-options" data-create-options ${optionsOpen ? 'open' : ''}>
+      <summary class="create-options-summary">${t('create.options')}</summary>
+      <div class="create-options-body">
+        <div class="input-group">
+          <label class="input-label" for="fish-name" data-fish-name-label>${escapeHtml(nameLabel)}</label>
+          <input
+            id="fish-name"
+            class="text-input"
+            type="text"
+            value="${escapeHtml(state.name)}"
+            maxlength="32"
+            placeholder="${escapeHtml(namePlaceholder)}"
+            data-fish-name
+          >
+        </div>
+
+        ${
+          isFish
+            ? `
+        <div class="input-group" data-fish-movement-group>
+          <label class="input-label" for="fish-movement">${t('fish.movement')}</label>
+          <select id="fish-movement" class="select-input" data-fish-movement>
+            <option value="on" ${state.movementEnabled === false ? '' : 'selected'}>${t('fish.movement.on')}</option>
+            <option value="off" ${state.movementEnabled === false ? 'selected' : ''}>${t('fish.movement.off')}</option>
+          </select>
+        </div>
+        `
+            : ''
+        }
+
+        <div class="input-group">
+          <label class="input-label" for="fish-file">${t('img.file.label')}</label>
+          <input id="fish-file" class="file-input" type="file" accept="image/png,image/jpeg,image/webp" data-fish-file>
+        </div>
+
+        ${
+          state.source === 'upload'
+            ? `<div class="preview-area" data-status="${state.status}" data-prop-type="${type}">
+          <span class="preview-label">${t('preview')}</span>
+          <span class="preview-type-badge" data-prop-type-badge>${typeBadgeIcon} ${typeBadgeText}</span>
+          ${
+            hasSprite
+              ? `<img class="fish-preview-image" src="${escapeHtml(safeSpriteUrl(state.spriteDataUrl))}" alt="${t('preview.alt')}">`
+              : `<span class="preview-empty">${t('preview.empty')}</span>`
+          }
+        </div>`
+            : ''
+        }
+      </div>
+    </details>
   `;
 }
 

@@ -162,7 +162,7 @@ export function renderActionCluster({ feedingState, fishInputState, propPanelSta
   const ctaArrow = defaultObjectsCtaPulse
     ? '<span class="default-objects-cta-arrow" aria-hidden="true">↓</span>'
     : '';
-  // CTA pulse now decorates the ➕ button (catalog tab opens by default).
+  // CTA pulse now decorates the ➕ button (S-037: opens the create/draw tab).
   const addBtnClass = `prop-btn${addFishActive ? ' is-active' : ''}${ctaPulseClass}`;
 
   const godModeButton = import.meta.env.DEV

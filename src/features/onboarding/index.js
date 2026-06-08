@@ -125,7 +125,12 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
         e.stopPropagation();
         if (fishInputState) {
           fishInputState.isExpanded = true;
-          fishInputState.sheetStage = 'peek';
+          // S-037: land first-run children directly on the drawing canvas at
+          // full height (create tab). seq2 attaches its canvas outline to
+          // [data-fish-canvas], which only exists in the create tab — and a
+          // full sheet avoids the cropped-peek canvas.
+          fishInputState.sheetStage = 'full';
+          fishInputState.activeTab = 'create';
         }
         onSeq1Plus?.();
         activity();

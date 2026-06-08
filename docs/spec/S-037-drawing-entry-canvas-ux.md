@@ -2,9 +2,21 @@
 
 ## 상태
 
-- 상태: draft (4단계 sub-agent 리뷰 대기)
+- 상태: ready (4단계 sub-agent(critic) 리뷰 반영 완료 — CRITICAL 2 + MAJOR/MINOR 다수)
 - 구현 여부: not-started
 - 검증 여부: not-tested
+
+## 4단계 리뷰 반영 (must-fix 해결)
+
+- **[C1] 온보딩 회귀**: 온보딩 seq1 CTA(`onboarding/index.js:126-128`)가 `activeTab='create'` + `sheetStage='full'`을 설정하도록 변경(기존 peek/탭 미설정 → seq2의 `[data-fish-canvas]` 부재 위험 제거). 가드 테스트 추가.
+- **[C2] 캔버스 붕괴 방지**: 만들기 본문을 `overflow:hidden`(스크롤 제거)으로 두지 않는다. 대신 **캔버스 바닥값(min-height) + 넘칠 때만 스크롤 폴백**: 캔버스가 가용 높이를 채우되(`flex:1`), 바닥값 아래로 줄지 않고, 전체가 넘치면 본문이 스크롤(복구 경로 유지). iPhone SE(667)에서 캔버스 ~84px로 짓눌리는 시나리오 해소.
+- **[M3] 시트 grid-row 수정**: `.bottom-sheet`는 자식 5개(grabber/header/tabs/body/footer)인데 `grid-template-rows`가 4트랙(`auto auto 1fr auto`)이라 `1fr`이 **tabs**에 잘못 배정됨 → `auto auto auto 1fr auto`로 고쳐 **body**가 늘어나는 행이 되게 한다(캔버스 flex 높이 확보의 전제).
+- **[M3b] create 탭 peek 클리핑**: create 탭은 stage와 무관하게 full 높이로 표시(CSS override)하여 grabber로 peek가 되어도 캔버스가 잘리지 않게.
+- **[M4/M5] `<details>` 옵션**: 열림 상태를 `state.optionsOpen`에 보관해 per-stroke/리렌더 후에도 유지(평문 details의 리렌더-닫힘 방지). `source==='upload'`이면 강제 open. 업로드 `.preview-area`는 **옵션 details 내부, 파일 input 바로 아래**에 렌더(고아 방지).
+- **[M6] 검증 가능성 + 로케일**: 레이아웃 기준에 **수치 바닥값**(360×640에서 `.draw-canvas-wrap` 계산 높이 ≥ 바닥값)과 수동 시각 QA를 명시. `create.options` 키를 ko/en **양쪽**에 추가(locale-completeness 게이트 충족).
+- **[Minor] 스와치 36→40 철회**: 36px는 8-스와치 행 비대화로 드로잉 스크롤 재유발을 막는 의도(`components.css:425-428`) → **변경하지 않음**(C2와 상충). 색 스와치 크기 유지.
+- **[Minor] 칩/힌트 컴팩트**: `.fish-input-status` margin 제거(얇은 1줄), 타입 토글 힌트 컴팩트.
+- **[Minor] CTA 코멘트 갱신**: `prop-panel/view.js:165` "catalog tab opens by default" 주석을 create-default로 갱신.
 
 ## 배경
 
@@ -30,11 +42,11 @@
 
 - 포함할 것:
   1. **진입 변경**: ➕(`data-prop-add-fish`)가 `activeTab='create'` + `sheetStage='full'`로 연다(직접 그리기 우선). 카탈로그는 탭 한 번 거리로 유지.
-  2. **만들기 탭 레이아웃 재구성**: 만들기 탭에서 시트 본문을 **비-스크롤 flex 컬럼**으로, 캔버스가 남은 공간을 채우게(`1fr`/`flex:1; min-height:0`). 카탈로그 탭은 기존대로 스크롤 유지.
+  2. **만들기 탭 레이아웃 재구성**: 만들기 탭에서 시트 본문을 **flex 컬럼**으로, 캔버스가 남은 공간을 채우게(`flex:1; min-height:0`) 하되 **캔버스 바닥값 보장 + 넘칠 때만 스크롤 폴백**(`overflow-y:auto`로 복구 경로 유지). 카탈로그 탭은 기존대로 스크롤 유지.
   3. **메타데이터 보조화(그리기 먼저)**: 이름·움직임·이미지 업로드를 접이식 **"옵션"**(`<details data-create-options>`)으로 이동, 기본 접힘. 물고기/데코 토글은 캔버스 위 컴팩트 행으로 유지(1탭·의미 큼). 상태줄은 캔버스 높이를 빼앗지 않는 얇은 1줄.
   4. **캔버스 사이징**: `.draw-canvas-wrap`가 가용 높이를 채우고, 캔버스는 종횡비(3:2) 유지하며 `max-width/height:100%`로 전부 보이게(`object-fit`/`aspect-ratio`). 백킹 해상도는 720×480 유지(기존 드로잉/스탬프/대칭/플러드필 좌표계 불변 → 회귀 0).
   5. **스크롤 격리 강화**: 만들기 본문/캔버스 영역 `overscroll-behavior: contain`, 캔버스 `touch-action:none`(기존) 유지. 캔버스가 더 이상 스크롤 컨테이너 안에 갇히지 않게.
-  6. **키즈 터치 타깃 폴리시(소폭)**: 색 스와치 가시 크기 36→40px(히트 영역 ≥56px 유지), 핵심 도구 버튼 시각 강조 유지. (전역 토큰 변경 없음 — 회귀 최소화.)
+  6. **키즈 터치 타깃 유지**: 도구 버튼 ≥56px·활성 강조 유지, 색 스와치 가시 36px·히트 ≥56px **유지**(4단계 리뷰: 스와치 확대는 행 비대화로 C2와 상충 → 변경 없음).
   7. i18n 키 추가(옵션 disclosure 라벨 등) ko/en.
 
 - 제외할 것(별도 스펙/Phase 2, 본 스펙 비목표):
@@ -58,23 +70,29 @@
 
 ## UI/상태 요구사항
 
-### 진입 (`prop-panel`)
+### 진입 (`prop-panel` + `onboarding`)
 - `src/features/prop-panel/index.js` `data-prop-add-fish` 핸들러: 열 때 `fishInputState.activeTab = 'create'`, `fishInputState.sheetStage = 'full'`(기존 `'catalog'`/`'peek'` 대체). 닫기 토글 동작은 유지. `editingTarget=null`(기존) 유지.
-- (참고) `fish-input/index.js`의 toggleButton(헤더 ×)·탭 클릭은 기존 유지. 만들기 탭으로의 전환이 `sheetStage='full'`을 보장하는 기존 로직(`index.js:603`)과 일관.
+- **[C1] 온보딩**: `src/features/onboarding/index.js`의 seq1 CTA 핸들러(현 `isExpanded=true; sheetStage='peek'`)에 `fishInputState.activeTab='create'`, `fishInputState.sheetStage='full'` 추가 → seq2가 의존하는 `[data-fish-canvas]`가 항상 존재하고, 첫 사용 아동이 cropped peek가 아닌 full 캔버스에 안착.
+- (참고) `fish-input/index.js`의 toggleButton(헤더 ×)·탭 클릭은 기존 유지.
 
 ### 만들기 탭 레이아웃 (`renderCreateTab` + CSS)
 - 만들기 본문은 위→아래 고정 순서: **(1) 얇은 상태줄**(`.fish-input-status`, 1줄), **(2) 🐟/🪨 세그먼트 토글 + 힌트(컴팩트)**, **(3) `.draw-toolbar`**(도구/색/도형 행 — 기존), **(4) `.draw-canvas-wrap`(캔버스, `flex:1; min-height:0`)**, **(5) `<details data-create-options>` "옵션"**(이름·움직임·업로드, 기본 접힘).
 - 캔버스를 그리드 맨 위로 올리던 `.draw-area { order:-1 }`는 새 컬럼 순서로 대체(또는 무력화). 업로드용 `.preview-area`는 옵션 내부에서만(업로드 흐름) 노출 — 기존 `state.source==='upload'` 조건 유지(preview-visibility 테스트 보존).
 - CSS 스코프:
-  - `.fish-input-widget[data-active-tab="create"] .bottom-sheet-body { overflow:hidden; display:flex; flex-direction:column; min-height:0; overscroll-behavior:contain; }`
-  - `.draw-canvas-wrap { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; }`
-  - `.fish-drawing-canvas { max-width:100%; max-height:100%; width:auto; height:auto; aspect-ratio:3/2; }`(기존 `touch-action:none` 유지)
-  - 카탈로그 탭은 스코프 밖 → 기존 스크롤 동작 유지.
+  - 시트 grid-row 수정: `.fish-input-widget.bottom-sheet { grid-template-rows: auto auto auto 1fr auto; }` (body가 늘어나는 1fr 행이 되게 — M3).
+  - create 탭 full 고정: `.fish-input-widget[data-active-tab="create"] { max-height: calc(92svh - var(--keyboard-inset)); }` (peek여도 클리핑 방지 — M3b).
+  - `.fish-input-widget[data-active-tab="create"] .bottom-sheet-body { display:flex; flex-direction:column; min-height:0; overflow-y:auto; overscroll-behavior:contain; }` (스크롤 폴백 유지).
+  - `.draw-area { display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }` (toolbar 고정 + 캔버스 늘어남). 기존 `order:-1; grid-column` 규칙은 제거.
+  - `.draw-canvas-wrap { flex:1 1 auto; min-height: min(320px, 42svh); display:flex; align-items:center; justify-content:center; }` (**바닥값** — C2/M6).
+  - `.fish-drawing-canvas { max-width:100%; max-height:100%; width:auto; height:auto; aspect-ratio:3/2; }`(기존 `touch-action:none` 유지).
+  - 카탈로그 탭은 `[data-active-tab="create"]` 스코프 밖 → 기존 스크롤 동작 유지.
 - 마크업 보존: `data-fish-canvas`, `data-fish-name`, `data-fish-movement`, `data-fish-file`, 도구/색/도형/대칭 `data-*`와 활성 마커는 그대로 유지(뷰 테스트 보존).
 
 ### 옵션 disclosure
-- `<details>` 기반(JS 없이 동작), 요약 라벨 i18n `create.options`(예: "옵션 · 이름·움직임"). 펼침 상태는 캔버스 영역을 줄이되, 본문이 비-스크롤이라 옵션이 길어지면 옵션 내부만 스크롤(`max-height` + `overflow:auto`)하여 캔버스가 사라지지 않게.
-- 이름 input/움직임 select/파일 input은 옵션 내부로 이동(접근성 라벨 유지). 물고기일 때만 움직임 노출(기존 조건).
+- `<details data-create-options ${state.optionsOpen || state.source==='upload' ? 'open' : ''}>` — **열림 상태를 `state.optionsOpen`에 보관**해 리렌더 후에도 유지(평문 details의 리렌더-닫힘 방지 — M5). `toggle` 이벤트로 `state.optionsOpen` 동기화(렌더 불필요). `source==='upload'`이면 강제 open.
+- 요약 라벨 i18n `create.options`("⚙️ 옵션 · 이름·움직임").
+- 이름 input/움직임 select/파일 input을 옵션 내부로 이동(접근성 라벨 유지). 물고기일 때만 움직임 노출(기존 조건).
+- 업로드 미리보기 `.preview-area`(`source==='upload'`)는 **옵션 details 내부, 파일 input 바로 아래**에 렌더(고아 방지 — M4). 본문 스크롤 폴백이 있으므로 옵션이 길어져도 도달 가능.
 
 ### 상태
 - 신규 영구 상태 없음. 진입 기본값만 `activeTab='catalog'→'create'` 흐름으로 바뀜(➕ 경로). `createFishInputState`의 기본 `activeTab`은 유지(앱 부팅 시 시트는 닫힘).
@@ -99,16 +117,24 @@
 
 ## 검증 기준 (출시 합격선)
 
-- [ ] ➕ 한 번으로 **만들기 탭 + 전체 높이**가 열리고 **캔버스가 추가 탭/스크롤 없이 전부 보인다**.
-- [ ] 캔버스가 더 이상 스크롤되는 본문 안에 갇히지 않는다: 만들기 본문 `overflow:hidden` flex 컬럼, 캔버스 `flex:1`.
-- [ ] 폰/좁은 화면에서 캔버스가 종횡비(3:2)를 유지하며 잘림 없이 한 화면에 보인다.
-- [ ] 캔버스 위 드로잉 중 시트가 밀리지 않고, 가장자리에서도 의도치 않은 스크롤이 없다(`touch-action:none` + `overscroll-behavior:contain`).
-- [ ] 이름/움직임/이미지 업로드가 접이식 "옵션"으로 이동했고, 접힌 상태에서도 **추가**가 기본 이름으로 동작한다.
-- [ ] 카탈로그 탭은 기존대로 정상 스크롤된다(회귀 없음).
-- [ ] 업로드 흐름 미리보기(`.preview-area`)는 업로드 시에만 노출(preview-visibility 회귀 없음).
+자동(테스트로 검증):
+- [ ] ➕ 진입 시 `fishInputState.activeTab==='create'` && `sheetStage==='full'`(prop-panel 핸들러 단위/통합 테스트).
+- [ ] **[C1]** 온보딩 seq1 CTA 후 `activeTab==='create'` && `sheetStage==='full'`이고, 렌더 결과에 `[data-fish-canvas]`가 존재한다(가드 테스트).
+- [ ] **[M4]** 이름·움직임·파일 input이 `[data-create-options]` 내부에 렌더된다. 업로드(`source==='upload'`) 시 `.preview-area`가 옵션 내부에 보이고 details가 `open`이다.
+- [ ] **[M5]** `state.optionsOpen===true`면 details가 `open`으로 렌더된다(리렌더 후 유지).
+- [ ] 업로드 미리보기는 업로드 시에만 노출(preview-visibility 회귀 없음).
+- [ ] 뷰 테스트(도구/색/도형/대칭 활성 마커, 캔버스 존재)·state·locale-completeness 전부 그린.
+- [ ] `create.options` 키가 ko/en 양쪽에 존재.
+- [ ] `npm run lint`(eslint+knip), `npm test`, `npm run build` 모두 통과(242 + 신규).
+
+수동/시각 QA(레이아웃 — 하니스가 단언 불가, `drawing.test.js:8` 참조):
+- [ ] **[C2/M6]** 360×640 뷰포트에서 `.draw-canvas-wrap` 계산 높이 ≥ 바닥값(`min(320px,42svh)`); 툴바가 최대 줄바꿈해도 캔버스가 0으로 붕괴하지 않고, 넘치면 본문이 스크롤된다(잠금 없음).
+- [ ] ➕ 한 번으로 만들기 탭 + full이 열리고 캔버스가 추가 탭 없이 보인다(여유 화면에선 스크롤 없이 전부, 협소하면 스크롤로 도달).
+- [ ] **[M3b]** grabber로 create 탭을 peek로 내려도 캔버스/툴바/푸터가 잘리지 않는다.
+- [ ] 캔버스 위 드로잉 중 시트가 밀리지 않고 가장자리 스크롤 없음(`touch-action:none` + `overscroll-behavior:contain`).
+- [ ] 캔버스가 종횡비(3:2) 유지하며 잘림 없이 표시.
+- [ ] 접힌 옵션에서도 **추가**가 기본 이름으로 동작; 옵션을 펼쳐 이름 입력 가능(리렌더로 닫히지 않음).
+- [ ] 카탈로그 탭 기존대로 스크롤(회귀 없음).
 - [ ] 펜/지우개/채우기/색/굵기/되돌리기·다시/전체지우기/대칭/스탬프/등록(S-003~S-036) 전부 유지.
-- [ ] 색 스와치 가시 40px·히트 ≥56px, 도구 버튼 활성 강조 유지.
-- [ ] 손가락/펜/마우스 동일 동작(Pointer Events), `pointercancel` 정리 유지.
-- [ ] ko/en 신규 라벨 존재, locale-completeness 테스트 통과.
+- [ ] 손가락/펜/마우스 동일 동작(Pointer Events).
 - [ ] 브라우저 콘솔 오류 없음.
-- [ ] `npm run lint`, `npm test`, `npm run build` 모두 통과(242 테스트 + 신규).

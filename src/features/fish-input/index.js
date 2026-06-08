@@ -584,6 +584,15 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   const playHaptic = options.playHaptic ?? (() => {});
   setupDrawingCanvas(root, state, playHaptic);
 
+  // Persist the "옵션" disclosure open/closed state on `state` so it survives the
+  // full-DOM re-render that fires on sibling interactions (S-037). No render is
+  // needed — the DOM already reflects the toggle; we only record it for the
+  // next render so the disclosure doesn't snap shut on the child.
+  const optionsDetails = root.querySelector('[data-create-options]');
+  optionsDetails?.addEventListener('toggle', () => {
+    state.optionsOpen = optionsDetails.open;
+  });
+
   nameInput?.addEventListener('input', (event) => {
     state.name = event.target.value;
     if (registerButton) {

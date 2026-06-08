@@ -20,7 +20,10 @@
   max-height: calc(92svh - var(--keyboard-inset));
   z-index: var(--z-panel);
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  /* 5 children: grabber / header / tabs / body / footer. The body must be the
+     growing (1fr) row so the create-tab canvas can flex to fill it (S-037 — the
+     previous 4-track template put 1fr on the tabs row by mistake). */
+  grid-template-rows: auto auto auto 1fr auto;
   border-top-left-radius: var(--radius-xl);
   border-top-right-radius: var(--radius-xl);
   border-bottom-left-radius: 0;
@@ -39,6 +42,67 @@
 
 .fish-input-widget.bottom-sheet[data-sheet-stage="full"] {
   max-height: calc(92svh - var(--keyboard-inset));
+}
+
+/* S-037: the create/draw tab always uses full height regardless of sheet stage,
+   so dragging the grabber to "peek" can never clip the canvas/toolbar/footer.
+   Same specificity as the peek rule above and declared later, so it wins. */
+.fish-input-widget.bottom-sheet[data-active-tab="create"] {
+  max-height: calc(92svh - var(--keyboard-inset));
+}
+
+/* Create tab: a flex column so the drawing area fills the remaining height. The
+   body keeps overflow-y:auto as a fallback — if the toolbar wraps tall on a
+   narrow phone and the content exceeds the sheet, it scrolls rather than locking
+   the canvas off-screen. Catalog tab is out of scope and keeps its own scroll. */
+.fish-input-widget[data-active-tab="create"] .bottom-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-height: 0;
+}
+
+/* "옵션" disclosure — name / movement / image upload, deferred so drawing comes
+   first. Sits below the canvas; opening it shrinks the canvas toward its floor
+   (then the body scrolls). */
+.create-options {
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-sm);
+}
+
+.create-options-summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-target-child);
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--text-body-md);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.create-options-summary::-webkit-details-marker {
+  display: none;
+}
+
+.create-options-summary::before {
+  content: '▸';
+  margin-right: var(--space-xs);
+  transition: transform 0.15s ease;
+}
+
+.create-options[open] > .create-options-summary::before {
+  transform: rotate(90deg);
+}
+
+.create-options-body {
+  display: grid;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-options-summary::before { transition: none; }
 }
 
 .bottom-sheet-grabber {
@@ -98,12 +162,15 @@
   font-size: var(--text-title-sm);
 }
 
+/* S-037: fit the canvas inside its (now height-constrained) wrap — largest 3:2
+   box that fits BOTH the available width and height, never cropped. */
 .fish-input-widget.bottom-sheet .fish-drawing-canvas {
   touch-action: none;
-  width: min(720px, calc(100vw - 32px));
-  max-width: 100%;
-  aspect-ratio: 3 / 2;
+  width: auto;
   height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 3 / 2;
 }
 
 @media (prefers-reduced-motion: reduce) {

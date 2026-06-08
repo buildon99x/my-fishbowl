@@ -252,20 +252,17 @@
    .fish-input-panel must NOT re-declare max-height/overflow or a second scroll
    container is created on the same node (competing max-heights). */
 
+/* S-037: thin single status line — flex-column gap owns the spacing now, so no
+   bottom margin stealing canvas height. */
 .fish-input-status {
-  margin-bottom: var(--space-md);
+  margin-bottom: 0;
 }
 
 .fish-input-status p {
   color: var(--color-ink);
   font-size: 16px;
   font-weight: 600;
-}
-
-.fish-input-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-md);
+  margin: 0;
 }
 
 .input-group {
@@ -307,23 +304,21 @@
   padding-top: 10px;
 }
 
-.draw-area,
 .preview-area {
   display: grid;
   gap: var(--space-xs);
   align-content: start;
 }
 
+/* S-037: the drawing area fills the remaining sheet height so the canvas is
+   large and fully visible. The toolbar keeps its natural size; .draw-canvas-wrap
+   grows to take the slack (with a min-height floor so it never collapses). */
 .draw-area {
-  grid-column: 1 / -1;
-  /* Surface the drawing canvas + toolbar at the top of the create tab so it is
-     immediately usable without scrolling; metadata inputs sit below and the
-     register button lives in the always-visible sticky footer. */
-  order: -1;
-}
-
-.preview-area {
-  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .draw-toolbar {
@@ -538,6 +533,14 @@
    exported PNG sprite. */
 .draw-canvas-wrap {
   position: relative;
+  /* S-037: grow to fill the draw-area, but never below this floor — protects the
+     canvas from collapsing to ~0 when the toolbar wraps to many rows on a narrow
+     phone. If the total overflows, the create-tab body scrolls as a fallback. */
+  flex: 1 1 auto;
+  min-height: min(320px, 42svh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .draw-symmetry-guide {
@@ -656,15 +659,6 @@
     right: 12px;
     bottom: 12px;
     width: calc(100vw - 24px);
-  }
-
-  .fish-input-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-sm);
-  }
-
-  .preview-area {
-    grid-column: 1;
   }
 
   .draw-toolbar-row--controls {
