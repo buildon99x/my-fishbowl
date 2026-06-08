@@ -1,6 +1,7 @@
 import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.js';
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
+import { bindKeyboardInset, bindSheetBackdrop, bindSheetGrabber } from '../../lib/bottomSheet.js';
 import { setLang, getCurrentLang, t } from '../../lib/i18n.js';
 import { buildRegisterMessage } from './messages.js';
 import {
@@ -480,78 +481,6 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   });
 }
 
-function bindBottomSheetGrabber(panel, state, render) {
-  const grabber = panel.querySelector('[data-fish-input-grabber]');
-  if (!grabber) return;
-
-  let startY = 0;
-  let dragging = false;
-  let startStage = 'peek';
-
-  grabber.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'touch' && !e.isPrimary) return;
-    dragging = true;
-    startY = e.clientY;
-    startStage = state.sheetStage === 'full' ? 'full' : 'peek';
-    grabber.setPointerCapture(e.pointerId);
-  });
-
-  grabber.addEventListener('pointerup', (e) => {
-    if (e.pointerType === 'touch' && !e.isPrimary) return;
-    if (!dragging) return;
-    dragging = false;
-    grabber.releasePointerCapture(e.pointerId);
-    const dy = e.clientY - startY;
-    // Short tap = toggle peek<->full. Drag up >= 40 = full. Drag down >= 40 from peek = close.
-    if (Math.abs(dy) < 10) {
-      state.sheetStage = startStage === 'full' ? 'peek' : 'full';
-      render();
-      return;
-    }
-    if (dy <= -40) {
-      state.sheetStage = 'full';
-      render();
-      return;
-    }
-    if (dy >= 40) {
-      if (startStage === 'full') {
-        state.sheetStage = 'peek';
-      } else {
-        state.sheetStage = 'closed';
-        state.isExpanded = false;
-      }
-      render();
-    }
-  });
-
-  grabber.addEventListener('pointercancel', () => { dragging = false; });
-}
-
-function bindBackdrop(root, state, render) {
-  const backdrop = root.querySelector('[data-fish-input-backdrop]');
-  backdrop?.addEventListener('click', () => {
-    state.sheetStage = 'closed';
-    state.isExpanded = false;
-    render();
-  });
-}
-
-let visualViewportBound = false;
-function bindVisualViewportInset() {
-  if (visualViewportBound) return;
-  if (typeof window === 'undefined' || !window.visualViewport) return;
-  visualViewportBound = true;
-  const update = () => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const inset = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
-    document.documentElement.style.setProperty('--keyboard-inset', `${inset}px`);
-  };
-  window.visualViewport.addEventListener('resize', update);
-  window.visualViewport.addEventListener('scroll', update);
-  update();
-}
-
 export function bindFishInputEvents(root, state, render, options = {}) {
   const toggleButton = root.querySelector('[data-toggle-fish-input]');
   const fileInput = root.querySelector('[data-fish-file]');
@@ -575,7 +504,6 @@ export function bindFishInputEvents(root, state, render, options = {}) {
       {
         isExpanded: next,
         sheetStage: next ? 'peek' : 'closed',
-        activeTab: next ? 'catalog' : state.activeTab,
       },
       render,
     );
@@ -593,16 +521,6 @@ export function bindFishInputEvents(root, state, render, options = {}) {
 
   movementSelect?.addEventListener('change', (event) => {
     state.movementEnabled = event.target.value !== 'off';
-  });
-
-  root.querySelectorAll('[data-fish-input-tab]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const next = btn.dataset.fishInputTab === 'create' ? 'create' : 'catalog';
-      if (state.activeTab === next) return;
-      const patch = { activeTab: next };
-      if (next === 'create') patch.sheetStage = 'full';
-      updateState(state, patch, render);
-    });
   });
 
   root.querySelectorAll('[data-fish-prop-type]').forEach((btn) => {
@@ -699,7 +617,7 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   });
 
   const panel = root.querySelector('.fish-input-widget');
-  if (panel) bindBottomSheetGrabber(panel, state, render);
-  bindBackdrop(root, state, render);
-  bindVisualViewportInset();
+  if (panel) bindSheetGrabber(panel, state, render);
+  bindSheetBackdrop(root, state, render);
+  bindKeyboardInset();
 }

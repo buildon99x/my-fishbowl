@@ -42,8 +42,14 @@ describe('child-area component sizes', () => {
     expect(block(components, '.draw-size-preset-btn')).toMatch(/child-recommended/);
   });
 
-  it('add-sheet tabs use the child-recommended target', () => {
-    expect(block(bottomSheet, '.fish-input-tab')).toMatch(/child-recommended/);
+  it('dock action buttons use a large child touch target (S-037)', () => {
+    const propBtn = block(panels, '.prop-btn');
+    expect(propBtn).toMatch(/width:\s*68px/);
+    expect(propBtn).toMatch(/height:\s*68px/);
+  });
+
+  it('bottom-sheet grabber exposes a draggable handle', () => {
+    expect(block(bottomSheet, '.bottom-sheet-grabber')).toMatch(/height:\s*32px/);
   });
 
   it('fish-list rows are at least 64px tall', () => {

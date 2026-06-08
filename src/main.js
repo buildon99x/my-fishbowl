@@ -60,6 +60,7 @@ import {
   bindDefaultObjectsEvents,
   createDefaultObjectsState,
   markCtaPulseShown,
+  renderDefaultObjectsSheet,
   shouldShowCtaPulse,
 } from './features/default-objects/index.js';
 import { renderAquariumStatus, renderUndoSnackbar } from './features/fish-list/view.js';
@@ -81,8 +82,8 @@ function renderEmptyState(propCount) {
 
   return `
     <div class="aquarium-empty" role="status">
-      <span class="aquarium-empty-icon" aria-hidden="true">➕</span>
-      <p class="aquarium-empty-text">➕ 버튼을 눌러 첫 친구를 만들어 보세요!</p>
+      <span class="aquarium-empty-icon" aria-hidden="true">🎁</span>
+      <p class="aquarium-empty-text">🎁 또는 ✏️ 버튼을 눌러 첫 친구를 만들어 보세요!</p>
       <span class="aquarium-empty-arrow" aria-hidden="true">↓</span>
     </div>
   `;
@@ -201,20 +202,25 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
   const { cleaningState } = appState;
 
-  // S-034: cleaning mode owns the canvas; close all editing surfaces
-  // before render so they can't shadow the cleaning brush hit area.
+  // S-034/S-037: cleaning mode owns the canvas; close all editing surfaces
+  // (prop-panel + both add windows) before render so none can shadow the
+  // cleaning brush hit area.
   if (cleaningState.cleaningMode) {
     appState.propPanel.editingTarget = null;
     fishInputState.isExpanded = false;
+    appState.defaultObjects.isExpanded = false;
   }
-  // S-034: prop-panel and the ➕ sheet both anchor to the bottom on narrow
-  // screens. They must never render together — if a callback set both,
-  // collapse the sheet so only the panel is visible. (The active opener
-  // path already calls this, but row-tap and other handlers don't have a
-  // direct reference to fishInputState; this normalization is the safety
-  // net.)
-  if (appState.propPanel.editingTarget && fishInputState.isExpanded) {
+  // S-034/S-037: prop-panel, the 직접 만들기 sheet, and the 카탈로그 sheet all
+  // anchor to the bottom on narrow screens. At most one may render at a time —
+  // if a callback set more than one, collapse the lower-priority surface(s).
+  // (The active opener paths already enforce this, but row-tap and other
+  // handlers don't have a direct reference; this normalization is the safety
+  // net.) Priority: prop-panel > create > catalog.
+  if (appState.propPanel.editingTarget) {
     fishInputState.isExpanded = false;
+    appState.defaultObjects.isExpanded = false;
+  } else if (fishInputState.isExpanded && appState.defaultObjects.isExpanded) {
+    appState.defaultObjects.isExpanded = false;
   }
 
   const visibleProps = aquarium.fishes.filter((p) => !p.pendingDelete);
@@ -256,10 +262,12 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       })}
 
       ${renderFishInputPanel(fishInputState)}
+      ${renderDefaultObjectsSheet(appState.defaultObjects)}
       ${renderPropPanel(appState.propPanel.editingTarget, aquarium, appState.propPanel)}
       ${renderActionCluster({
         feedingState,
         fishInputState,
+        defaultObjectsState: appState.defaultObjects,
         propPanelState: appState.propPanel,
         cleaningState: appState.cleaningState,
         defaultObjectsCtaPulse,
@@ -273,9 +281,10 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   `;
   restoreFishListScroll(root, appState);
 
-  // S-033: toggle a body-level flag so dock can hide while the ➕ sheet is
-  // open. Only one chrome surface at a time.
-  document.body.dataset.sheetOpen = fishInputState.isExpanded ? 'true' : 'false';
+  // S-033/S-037: toggle a body-level flag so the dock can hide while either add
+  // window (직접 만들기 / 카탈로그) is open. Only one chrome surface at a time.
+  document.body.dataset.sheetOpen =
+    fishInputState.isExpanded || appState.defaultObjects.isExpanded ? 'true' : 'false';
 
   const algaeCanvas = root.querySelector('[data-algae-canvas]');
   if (algaeCanvas) {
@@ -345,7 +354,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
   });
   bindActionClusterEvents(
     root,
-    { fishInputState, propPanelState: appState.propPanel },
+    { fishInputState, defaultObjectsState: appState.defaultObjects, propPanelState: appState.propPanel },
     {
       render,
       onFeedingToggle: () => { feedingState.feedingMode = !feedingState.feedingMode; },
@@ -449,7 +458,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
   appState.bubbleController = startBubbles(bubbleSvg, appState.bubblesState);
 
-  appState.onboarding.bind(root, { fishInputState, render });
+  appState.onboarding.bind(root, { catalogState: appState.defaultObjects, render });
 
   appState.sound.bindModal(root, { onResolved: render });
   appState.sound.bindMuteToggle(root, { render });

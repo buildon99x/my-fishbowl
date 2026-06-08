@@ -2,7 +2,8 @@
   "lang": "en",
   "lang.ko": "한국어",
   "lang.en": "English",
-  "add.object": "Add Object",
+  "create.title": "Create Your Own",
+  "catalog.title": "Catalog",
   "add.fish": "Fish",
   "add.deco": "Decoration",
   "fish.name.label": "Fish Name",
@@ -12,8 +13,6 @@
   "fish.movement": "Movement",
   "fish.movement.on": "On",
   "fish.movement.off": "Off",
-  "tab.catalog": "🎁 Catalog",
-  "tab.create": "✏️ Draw Your Own",
   "img.file.label": "Image file",
   "draw.label": "Drawing tools",
   "draw.colorLabel": "Pen color",
@@ -70,7 +69,6 @@
   "prop.type.label": "Choose a type",
   "draw.canvas.label": "Draw an object",
   "lang.toggle.label": "Change language / 언어 변경",
-  "tab.group.label": "How to add",
   "cleaning.hint": "🧽 Scrub to clean",
   "cleaning.done": "✨ All clean!"
 }

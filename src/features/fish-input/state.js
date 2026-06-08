@@ -37,7 +37,6 @@ export function createFishInputState() {
     drawShape: 'circle',
     isExpanded: false,
     sheetStage: 'closed',
-    activeTab: 'catalog',
   };
 }
 
