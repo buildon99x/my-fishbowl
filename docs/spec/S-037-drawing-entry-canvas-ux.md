@@ -2,9 +2,9 @@
 
 ## 상태
 
-- 상태: ready (4단계 sub-agent(critic) 리뷰 반영 완료 — CRITICAL 2 + MAJOR/MINOR 다수)
-- 구현 여부: not-started
-- 검증 여부: not-tested
+- 상태: ready (4단계 critic + 5단계 code-reviewer 리뷰 반영 완료)
+- 구현 여부: implemented
+- 검증 여부: unit/source 테스트 통과(254) · lint/build 통과 · 레이아웃 시각 QA 대기
 
 ## 4단계 리뷰 반영 (must-fix 해결)
 
@@ -17,6 +17,13 @@
 - **[Minor] 스와치 36→40 철회**: 36px는 8-스와치 행 비대화로 드로잉 스크롤 재유발을 막는 의도(`components.css:425-428`) → **변경하지 않음**(C2와 상충). 색 스와치 크기 유지.
 - **[Minor] 칩/힌트 컴팩트**: `.fish-input-status` margin 제거(얇은 1줄), 타입 토글 힌트 컴팩트.
 - **[Minor] CTA 코멘트 갱신**: `prop-panel/view.js:165` "catalog tab opens by default" 주석을 create-default로 갱신.
+
+## 5단계 코드리뷰 반영 (code-reviewer)
+
+- **[HIGH] 대칭 가이드/온보딩 아웃라인 정합성 회귀 수정**: 캔버스 wrap을 flex 중앙정렬 + min-height floor로 두니 캔버스가 레터박스되어, wrap에 절대배치된 **대칭 가이드선(S-036)·온보딩 캔버스 아웃라인(seq2)** 이 캔버스 rect와 어긋났다. → 캔버스를 **폭 기준(width:100%, 3:2)** 으로 되돌려 wrap이 캔버스를 정확히 감싸게(shrink-wrap) 수정 → 두 오버레이가 다시 캔버스에 정렬. 폭 기준이라 캔버스가 0으로 붕괴하지 않으며, 협소 시 본문 스크롤 폴백 유지(critic의 C2 의도 충족). (`components.css` `.draw-canvas-wrap`/`.draw-area`, `bottom-sheet.css` 캔버스 규칙)
+- **[LOW] 코멘트 명확화**: create-tab 본문의 overflow-y/overscroll는 base `.bottom-sheet-body` 규칙에서 상속됨을 주석에 명시.
+- **[LOW] 업로드 후 옵션 열림 latch**: `source==='upload'` 강제 open이 `optionsOpen=true`로 남는 동작은 사용자 컨텍스트 유지로 **의도된 수용**(reviewer도 fix 불필요로 판단).
+- 회귀 가드 갱신: `s037-entry-layout.test.js`의 floor/flex 단언을 새 모델(wrap shrink-wrap + 폭 기준 캔버스)로 교체.
 
 ## 배경
 
@@ -82,9 +89,9 @@
   - 시트 grid-row 수정: `.fish-input-widget.bottom-sheet { grid-template-rows: auto auto auto 1fr auto; }` (body가 늘어나는 1fr 행이 되게 — M3).
   - create 탭 full 고정: `.fish-input-widget[data-active-tab="create"] { max-height: calc(92svh - var(--keyboard-inset)); }` (peek여도 클리핑 방지 — M3b).
   - `.fish-input-widget[data-active-tab="create"] .bottom-sheet-body { display:flex; flex-direction:column; min-height:0; overflow-y:auto; overscroll-behavior:contain; }` (스크롤 폴백 유지).
-  - `.draw-area { display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }` (toolbar 고정 + 캔버스 늘어남). 기존 `order:-1; grid-column` 규칙은 제거.
-  - `.draw-canvas-wrap { flex:1 1 auto; min-height: min(320px, 42svh); display:flex; align-items:center; justify-content:center; }` (**바닥값** — C2/M6).
-  - `.fish-drawing-canvas { max-width:100%; max-height:100%; width:auto; height:auto; aspect-ratio:3/2; }`(기존 `touch-action:none` 유지).
+  - `.draw-area { display:flex; flex-direction:column; }` (toolbar 위 + 캔버스 아래, 자연 높이). 기존 `order:-1; grid-column` 규칙은 제거.
+  - `.draw-canvas-wrap { position:relative; width:100%; }` (캔버스를 정확히 감싸는 박스 = 캔버스 rect. 5단계 리뷰 반영: flex 중앙정렬+floor는 레터박스로 오버레이 어긋남 유발 → 폭 기준으로 교체).
+  - `.fish-drawing-canvas { width:100%; height:auto; max-width:100%; aspect-ratio:3/2; }`(폭 기준 — 0 붕괴 없음, 협소 시 본문 스크롤 폴백. 기존 `touch-action:none` 유지).
   - 카탈로그 탭은 `[data-active-tab="create"]` 스코프 밖 → 기존 스크롤 동작 유지.
 - 마크업 보존: `data-fish-canvas`, `data-fish-name`, `data-fish-movement`, `data-fish-file`, 도구/색/도형/대칭 `data-*`와 활성 마커는 그대로 유지(뷰 테스트 보존).
 
@@ -128,7 +135,8 @@
 - [ ] `npm run lint`(eslint+knip), `npm test`, `npm run build` 모두 통과(242 + 신규).
 
 수동/시각 QA(레이아웃 — 하니스가 단언 불가, `drawing.test.js:8` 참조):
-- [ ] **[C2/M6]** 360×640 뷰포트에서 `.draw-canvas-wrap` 계산 높이 ≥ 바닥값(`min(320px,42svh)`); 툴바가 최대 줄바꿈해도 캔버스가 0으로 붕괴하지 않고, 넘치면 본문이 스크롤된다(잠금 없음).
+- [ ] **[C2/M6]** 360×640 뷰포트에서 캔버스는 폭 기준 3:2(약 폭×0.667 높이)로 표시되어 0으로 붕괴하지 않고, 툴바가 최대 줄바꿈해 총 높이가 넘치면 본문이 스크롤된다(잠금 없음).
+- [ ] **[5단계 HIGH]** 대칭 ON 시 가이드선이 캔버스 세로 중앙선과 정확히 일치하고, 온보딩 seq2 아웃라인이 캔버스 외곽과 일치한다(레터박스 어긋남 없음).
 - [ ] ➕ 한 번으로 만들기 탭 + full이 열리고 캔버스가 추가 탭 없이 보인다(여유 화면에선 스크롤 없이 전부, 협소하면 스크롤로 도달).
 - [ ] **[M3b]** grabber로 create 탭을 peek로 내려도 캔버스/툴바/푸터가 잘리지 않는다.
 - [ ] 캔버스 위 드로잉 중 시트가 밀리지 않고 가장자리 스크롤 없음(`touch-action:none` + `overscroll-behavior:contain`).

@@ -51,10 +51,12 @@
   max-height: calc(92svh - var(--keyboard-inset));
 }
 
-/* Create tab: a flex column so the drawing area fills the remaining height. The
-   body keeps overflow-y:auto as a fallback — if the toolbar wraps tall on a
-   narrow phone and the content exceeds the sheet, it scrolls rather than locking
-   the canvas off-screen. Catalog tab is out of scope and keeps its own scroll. */
+/* Create tab: a flex column laying out the status / type toggle / draw area /
+   options disclosure. overflow-y:auto + overscroll-behavior:contain come from
+   the base .bottom-sheet-body rule above and remain in effect on this same
+   element — so if the toolbar wraps tall on a narrow phone and the content
+   exceeds the sheet, the body scrolls rather than locking the canvas off-screen
+   (the recovery path). Catalog tab is out of scope and keeps its own scroll. */
 .fish-input-widget[data-active-tab="create"] .bottom-sheet-body {
   display: flex;
   flex-direction: column;
@@ -162,14 +164,14 @@
   font-size: var(--text-title-sm);
 }
 
-/* S-037: fit the canvas inside its (now height-constrained) wrap — largest 3:2
-   box that fits BOTH the available width and height, never cropped. */
+/* S-037: canvas fills the wrap's width; height follows from the 3:2 ratio. The
+   wrap therefore shrink-wraps the canvas exactly, keeping the symmetry guide and
+   onboarding outline (positioned to the wrap) aligned to the canvas rect. */
 .fish-input-widget.bottom-sheet .fish-drawing-canvas {
   touch-action: none;
-  width: auto;
+  width: 100%;
   height: auto;
   max-width: 100%;
-  max-height: 100%;
   aspect-ratio: 3 / 2;
 }
 

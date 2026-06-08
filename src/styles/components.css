@@ -310,15 +310,14 @@
   align-content: start;
 }
 
-/* S-037: the drawing area fills the remaining sheet height so the canvas is
-   large and fully visible. The toolbar keeps its natural size; .draw-canvas-wrap
-   grows to take the slack (with a min-height floor so it never collapses). */
+/* S-037: drawing area is a natural-height flex column (toolbar above, canvas
+   below). It doesn't grow — the canvas is width-driven (3:2) so it stays a fixed,
+   non-collapsing size; if toolbar + canvas exceed the sheet on a small phone the
+   create-tab body scrolls. */
 .draw-area {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-  flex: 1 1 auto;
-  min-height: 0;
 }
 
 .draw-toolbar {
@@ -532,15 +531,14 @@
    guide is a DOM element (never canvas pixels) so it is excluded from the
    exported PNG sprite. */
 .draw-canvas-wrap {
+  /* S-037: the wrap shrink-wraps the canvas (full width, 3:2 height) so its box
+     is EXACTLY the canvas rect — the symmetry guide and onboarding outline are
+     positioned against this wrap, so they must match the canvas, not a
+     letterboxed flex cell. Width-driven sizing also means the canvas never
+     collapses when the toolbar wraps tall; the create-tab body scrolls instead
+     (fallback). position:relative anchors the overlays. */
   position: relative;
-  /* S-037: grow to fill the draw-area, but never below this floor — protects the
-     canvas from collapsing to ~0 when the toolbar wraps to many rows on a narrow
-     phone. If the total overflows, the create-tab body scrolls as a fallback. */
-  flex: 1 1 auto;
-  min-height: min(320px, 42svh);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
 }
 
 .draw-symmetry-guide {

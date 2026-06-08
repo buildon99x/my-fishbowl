@@ -56,12 +56,24 @@ describe('S-037 create-tab layout invariants (C2 / M3)', () => {
     expect(block(bottomSheet, '.bottom-sheet-body')).toMatch(/overscroll-behavior:\s*contain/);
   });
 
-  it('the canvas wrap has a min-height floor so it never collapses to ~0', () => {
-    expect(block(components, '.draw-canvas-wrap')).toMatch(/min-height:\s*min\(/);
-    expect(block(components, '.draw-canvas-wrap')).toMatch(/flex:\s*1 1 auto/);
+  it('the canvas wrap shrink-wraps the canvas so overlays (symmetry guide / onboarding outline) stay aligned', () => {
+    const wrap = block(components, '.draw-canvas-wrap');
+    // position:relative anchors the absolutely-positioned overlays to the wrap,
+    // and width:100% (no flex grow / min-height floor) makes the wrap box equal
+    // the canvas rect — the fix for the letterbox misalignment regression.
+    expect(wrap).toMatch(/position:\s*relative/);
+    expect(wrap).toMatch(/width:\s*100%/);
+    expect(wrap).not.toMatch(/flex:\s*1 1 auto/);
   });
 
-  it('the draw area flexes to fill the remaining sheet height', () => {
-    expect(block(components, '.draw-area')).toMatch(/flex:\s*1 1 auto/);
+  it('the canvas is width-driven (3:2) so it never collapses; the body scrolls if cramped', () => {
+    expect(block(bottomSheet, '.fish-input-widget.bottom-sheet .fish-drawing-canvas'))
+      .toMatch(/width:\s*100%/);
+    expect(block(bottomSheet, '.fish-input-widget.bottom-sheet .fish-drawing-canvas'))
+      .toMatch(/aspect-ratio:\s*3 \/ 2/);
+  });
+
+  it('the draw area is a natural-height flex column (toolbar above, canvas below)', () => {
+    expect(block(components, '.draw-area')).toMatch(/flex-direction:\s*column/);
   });
 });
