@@ -50,6 +50,38 @@ describe('toolbar reflects persisted drawing selection', () => {
   });
 });
 
+describe('S-037 deferred "옵션" disclosure (draw first, name later)', () => {
+  it('renders name, movement and file inside the [data-create-options] disclosure', () => {
+    const html = renderFishInputPanel(createState({ type: 'fish' }));
+    const optionsAt = html.indexOf('data-create-options');
+    expect(optionsAt).toBeGreaterThan(-1);
+    // The metadata inputs live AFTER (inside) the disclosure, not in the draw flow.
+    expect(html.indexOf('data-fish-name')).toBeGreaterThan(optionsAt);
+    expect(html.indexOf('data-fish-movement')).toBeGreaterThan(optionsAt);
+    expect(html.indexOf('data-fish-file')).toBeGreaterThan(optionsAt);
+  });
+
+  it('keeps the canvas ABOVE (before) the options disclosure so drawing is primary', () => {
+    const html = renderFishInputPanel(createState());
+    expect(html.indexOf('data-fish-canvas')).toBeLessThan(html.indexOf('data-create-options'));
+  });
+
+  it('collapses the disclosure by default and opens it when optionsOpen is set', () => {
+    expect(renderFishInputPanel(createState())).toMatch(/data-create-options\s*>/);
+    expect(renderFishInputPanel(createState({ optionsOpen: true })))
+      .toMatch(/data-create-options[^>]*\bopen\b/);
+  });
+
+  it('force-opens the disclosure and renders the preview INSIDE it for the upload flow', () => {
+    const html = renderFishInputPanel(
+      createState({ source: 'upload', status: 'preview', spriteDataUrl: 'data:image/png;base64,AAA' }),
+    );
+    expect(html).toMatch(/data-create-options[^>]*\bopen\b/);
+    // preview-area must sit inside the disclosure (after it), not orphaned above.
+    expect(html.indexOf('preview-area')).toBeGreaterThan(html.indexOf('data-create-options'));
+  });
+});
+
 describe('symmetry + stamp markup (S-036)', () => {
   it('renders the stamp tool button and the symmetry toggle', () => {
     const html = renderFishInputPanel(createState());

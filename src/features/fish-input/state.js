@@ -35,6 +35,11 @@ export function createFishInputState() {
     // survive the full-DOM re-render; never serialized by saveFishDraft.
     symmetry: false,
     drawShape: 'circle',
+    // S-037: "draw first, name later" — name/movement/upload live in a
+    // collapsible <details>. Its open state is held here (not DOM-only) so it
+    // survives the full-DOM re-render that fires on every interaction; never
+    // serialized by saveFishDraft (session UI state).
+    optionsOpen: false,
     isExpanded: false,
     sheetStage: 'closed',
     activeTab: 'catalog',

@@ -24,9 +24,12 @@ export function bindActionClusterEvents(root, { fishInputState, propPanelState }
   root.querySelector('[data-prop-add-fish]')?.addEventListener('click', () => {
     const next = !fishInputState.isExpanded;
     fishInputState.isExpanded = next;
-    fishInputState.sheetStage = next ? 'peek' : 'closed';
+    // S-037: direct drawing is the primary feature, so ➕ opens straight to the
+    // "만들기"(create) tab at full height — the canvas is one tap away, no extra
+    // tab-switch or scroll. The catalog stays one tab away.
+    fishInputState.sheetStage = next ? 'full' : 'closed';
     if (next) {
-      fishInputState.activeTab = 'catalog';
+      fishInputState.activeTab = 'create';
       // S-034: opening the ➕ sheet closes the prop-panel so the two bottom
       // surfaces don't stack on narrow screens.
       propPanelState.editingTarget = null;
