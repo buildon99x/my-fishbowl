@@ -10,6 +10,109 @@ export function midpoint(a, b) {
 }
 
 /**
+ * Horizontal mirror of an x coordinate across the canvas's vertical centre.
+ * Used by the left-right symmetry mode: drawing the same input a second time at
+ * mirrorX(x) produces a bilaterally symmetric result (ideal for fish).
+ */
+export function mirrorX(x, width) {
+  return width - x;
+}
+
+/** Stamp shapes offered in the shape picker (S-036). Order = display order. */
+export const STAMP_SHAPES = ['circle', 'heart', 'star', 'eye', 'drop', 'triangle'];
+
+/** Clamp an arbitrary value to a known stamp shape, defaulting to 'circle'. */
+export function normalizeShape(value) {
+  return STAMP_SHAPES.includes(value) ? value : 'circle';
+}
+
+/**
+ * Stamp radius derived from the active pen size. Pinned mapping (S-036): the
+ * stamp scales 3× the brush size so a tapped shape is large enough for a 6–9yo
+ * to recognise on the 720×480 canvas (8/14/22 → 24/42/66).
+ */
+export function stampSizeFor(drawSize) {
+  return drawSize * 3;
+}
+
+/** N-pointed star vertices centred at origin (canvas y-down). */
+function starPoints(spikes, outer, inner) {
+  const points = [];
+  const step = Math.PI / spikes;
+  let rot = -Math.PI / 2; // start at the top
+  for (let i = 0; i < spikes; i += 1) {
+    points.push({ x: Math.cos(rot) * outer, y: Math.sin(rot) * outer });
+    rot += step;
+    points.push({ x: Math.cos(rot) * inner, y: Math.sin(rot) * inner });
+    rot += step;
+  }
+  return points;
+}
+
+/** Heart outline sampled from the classic parametric curve, scaled to `size`. */
+function heartPoints(size, steps = 28) {
+  const points = [];
+  for (let i = 0; i < steps; i += 1) {
+    const t = (i / steps) * Math.PI * 2;
+    const x = 16 * Math.sin(t) ** 3;
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    points.push({ x: (x / 16) * size, y: -(y / 16) * size });
+  }
+  return points;
+}
+
+/** Teardrop outline: a round bulb (most of a circle) closed off with a top tip. */
+function dropPoints(size, steps = 22) {
+  const points = [];
+  const a0 = -Math.PI * 0.25; // upper-right of the bulb
+  const a1 = Math.PI * 1.25; // upper-left, sweeping through the bottom
+  for (let i = 0; i <= steps; i += 1) {
+    const a = a0 + (i / steps) * (a1 - a0);
+    points.push({ x: Math.cos(a) * size, y: Math.sin(a) * size });
+  }
+  points.push({ x: 0, y: -size * 1.7 }); // pointed tip
+  return points;
+}
+
+/**
+ * Drawing primitives for a stamp shape, centred at origin (caller translates to
+ * the tap point). Canvas-free so the geometry is unit-testable. `fill:'current'`
+ * means paint with the active pen colour; a hex value is a fixed colour (the eye
+ * keeps a white sclera + dark pupil so it reads as an eye regardless of colour).
+ * @returns {Array<{type:'circle',cx:number,cy:number,r:number,fill:string}
+ *   |{type:'polygon',points:Array<{x:number,y:number}>,fill:string}>}
+ */
+export function shapePrimitives(shape, size) {
+  switch (normalizeShape(shape)) {
+    case 'star':
+      return [{ type: 'polygon', points: starPoints(5, size, size * 0.45), fill: 'current' }];
+    case 'triangle':
+      return [{
+        type: 'polygon',
+        points: [
+          { x: 0, y: -size },
+          { x: size * 0.87, y: size * 0.6 },
+          { x: -size * 0.87, y: size * 0.6 },
+        ],
+        fill: 'current',
+      }];
+    case 'heart':
+      return [{ type: 'polygon', points: heartPoints(size), fill: 'current' }];
+    case 'drop':
+      return [{ type: 'polygon', points: dropPoints(size), fill: 'current' }];
+    case 'eye':
+      return [
+        { type: 'circle', cx: 0, cy: 0, r: size, fill: '#ffffff' },
+        { type: 'circle', cx: 0, cy: 0, r: size * 0.5, fill: '#1a1a1a' },
+        { type: 'circle', cx: -size * 0.2, cy: -size * 0.2, r: size * 0.16, fill: '#ffffff' },
+      ];
+    case 'circle':
+    default:
+      return [{ type: 'circle', cx: 0, cy: 0, r: size, fill: 'current' }];
+  }
+}
+
+/**
  * Parse a CSS color string (#rgb, #rrggbb, or rgb()/rgba()) to an [r,g,b]
  * integer triple. Returns null for unrecognized input so callers can fall back.
  */

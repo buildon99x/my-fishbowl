@@ -49,3 +49,38 @@ describe('toolbar reflects persisted drawing selection', () => {
     expect(html).toMatch(/draw-color-btn is-active"[^>]*data-color="#1a1a1a"/);
   });
 });
+
+describe('symmetry + stamp markup (S-036)', () => {
+  it('renders the stamp tool button and the symmetry toggle', () => {
+    const html = renderFishInputPanel(createState());
+    expect(html).toMatch(/data-draw-tool="stamp"/);
+    expect(html).toContain('data-draw-symmetry');
+  });
+
+  it('renders all six shape buttons', () => {
+    const html = renderFishInputPanel(createState());
+    ['circle', 'heart', 'star', 'eye', 'drop', 'triangle'].forEach((shape) => {
+      expect(html).toContain(`data-draw-shape="${shape}"`);
+    });
+  });
+
+  it('hides the shape row until the stamp tool is active', () => {
+    expect(renderFishInputPanel(createState())).toMatch(/draw-shape-row "/);
+    expect(renderFishInputPanel(createState({ drawTool: 'stamp' })))
+      .toMatch(/draw-shape-row is-visible"/);
+  });
+
+  it('marks the symmetry toggle and guide active only when symmetry is on', () => {
+    const off = renderFishInputPanel(createState());
+    expect(off).toMatch(/draw-symmetry-btn "[^>]*data-draw-symmetry[^>]*aria-pressed="false"/);
+    expect(off).toMatch(/draw-symmetry-guide "/);
+    const on = renderFishInputPanel(createState({ symmetry: true }));
+    expect(on).toMatch(/draw-symmetry-btn is-active"[^>]*aria-pressed="true"/);
+    expect(on).toMatch(/draw-symmetry-guide is-visible"/);
+  });
+
+  it('marks the persisted shape active', () => {
+    const html = renderFishInputPanel(createState({ drawTool: 'stamp', drawShape: 'heart' }));
+    expect(html).toMatch(/draw-shape-btn is-active"[^>]*data-draw-shape="heart"/);
+  });
+});

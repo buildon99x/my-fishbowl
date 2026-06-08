@@ -69,6 +69,7 @@
 | S-033 | Dock을 hero에서 grid dock area로 강등 | draft | not-started | not-tested | `docs/spec/S-033-dock-as-grid-area.md` |
 | S-034 | prop-panel을 우측 사이드 시트로 이전 | draft | not-started | not-tested | `docs/spec/S-034-prop-panel-right-sheet.md` |
 | S-035 | Drawer 뎁스 축소 — 토글 제거 + 행 액션 단일화 | draft | not-started | not-tested | `docs/spec/S-035-drawer-depth-reduction.md` |
+| S-036 | 직접 만들기(드로잉) 어린이 경험 개선 — 좌우 대칭 + 도형 스탬프 | ready | in-progress | not-tested | `docs/spec/S-036-drawing-kids-improvements.md` |
 
 ## 상태 값
 

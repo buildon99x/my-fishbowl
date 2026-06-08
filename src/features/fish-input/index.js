@@ -11,7 +11,11 @@ import {
   capHistory,
   floodFillPixels,
   midpoint,
+  mirrorX,
+  normalizeShape,
   parseColorToRgb,
+  shapePrimitives,
+  stampSizeFor,
   statusFallbackKey,
 } from './draw-logic.js';
 
@@ -61,6 +65,33 @@ function paintStoredSprite(canvas, spriteDataUrl) {
     });
 }
 
+// Stamp the current shape onto the canvas at (cx, cy) using `color` for any
+// 'current'-filled primitive. Forces source-over (save/restore) so a stamp
+// paints even when the eraser's destination-out op is otherwise active, and so
+// the eye's fixed white/dark fills are never accidentally erased.
+function drawStamp(ctx, shape, cx, cy, size, color) {
+  const primitives = shapePrimitives(shape, size);
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  primitives.forEach((primitive) => {
+    ctx.beginPath();
+    ctx.fillStyle = primitive.fill === 'current' ? color : primitive.fill;
+    if (primitive.type === 'circle') {
+      ctx.arc(cx + primitive.cx, cy + primitive.cy, primitive.r, 0, Math.PI * 2);
+    } else {
+      primitive.points.forEach((point, i) => {
+        const px = cx + point.x;
+        const py = cy + point.y;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.closePath();
+    }
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
 function getCanvasPoint(canvas, event) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
@@ -106,6 +137,10 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   let lastMid = null;
   // Seed from state so the selection survives the per-stroke re-render.
   let currentTool = state.drawTool ?? 'pen';
+  // Symmetry + stamp shape also live on state (seeded here) so a per-stroke
+  // re-render keeps the toggle/picker selection (S-036).
+  let symmetryOn = state.symmetry === true;
+  let currentShape = normalizeShape(state.drawShape);
 
   // Undo/redo history lives on `state` so it survives the full-DOM re-render
   // that fires on every stroke and sheet interaction (the canvas node and this
@@ -160,6 +195,10 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
     } else if (currentTool === 'fill') {
       context.globalCompositeOperation = 'source-over';
       sizeControl?.classList.add('is-inactive');
+    } else if (currentTool === 'stamp') {
+      // Stamps paint normally; size stays active because the stamp scales from it.
+      context.globalCompositeOperation = 'source-over';
+      sizeControl?.classList.remove('is-inactive');
     } else {
       context.globalCompositeOperation = 'source-over';
       context.lineWidth = currentPresetSize;
@@ -177,6 +216,11 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   // Restore button-disabled state from the (re-render-surviving) history.
   syncHistoryButtons();
 
+  const shapeRow = root.querySelector('[data-draw-shape-row]');
+  const shapeBtns = root.querySelectorAll('[data-draw-shape]');
+  const symmetryBtn = root.querySelector('[data-draw-symmetry]');
+  const symmetryGuide = root.querySelector('[data-draw-symmetry-guide]');
+
   toolButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       currentTool = btn.dataset.drawTool;
@@ -187,9 +231,36 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
       });
       btn.setAttribute('aria-pressed', 'true');
       btn.classList.add('is-active');
+      // Reveal the shape picker only while the stamp tool is active. Toggling in
+      // place (not a full render) keeps the live canvas pixels intact.
+      shapeRow?.classList.toggle('is-visible', currentTool === 'stamp');
       applyToolSettings();
       playHaptic('light');
     });
+  });
+
+  shapeBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      currentShape = normalizeShape(btn.dataset.drawShape);
+      state.drawShape = currentShape;
+      shapeBtns.forEach((b) => {
+        const on = b === btn;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      playHaptic('light');
+    });
+  });
+
+  symmetryBtn?.addEventListener('click', () => {
+    symmetryOn = !symmetryOn;
+    state.symmetry = symmetryOn;
+    symmetryBtn.setAttribute('aria-pressed', symmetryOn ? 'true' : 'false');
+    symmetryBtn.classList.toggle('is-active', symmetryOn);
+    // Guide is a DOM overlay (never canvas pixels) so it stays out of the
+    // exported sprite; toggled in place here and re-derived from state on render.
+    symmetryGuide?.classList.toggle('is-visible', symmetryOn);
+    playHaptic('light');
   });
 
   sizePresetBtns.forEach((btn) => {
@@ -258,8 +329,28 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
       return;
     }
 
+    if (currentTool === 'stamp') {
+      // One undo snapshot covers both the primary and (optional) mirror stamp.
+      pushUndo();
+      const size = stampSizeFor(currentPresetSize);
+      drawStamp(context, currentShape, point.x, point.y, size, context.strokeStyle);
+      if (symmetryOn) {
+        drawStamp(context, currentShape, mirrorX(point.x, canvas.width), point.y, size, context.strokeStyle);
+      }
+      playHaptic('magic-b');
+      commitDrawing({
+        spriteDataUrl: canvas.toDataURL('image/png'),
+        status: 'preview',
+        message: t('status.stamp.done'),
+        source: 'drawing',
+      });
+      return;
+    }
+
     isDrawing = true;
     canvas.setPointerCapture(event.pointerId);
+    // One snapshot before BOTH the primary and mirror marks, so undo restores
+    // the symmetric pair together (S-036).
     pushUndo();
     applyToolSettings();
 
@@ -272,6 +363,12 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
     context.arc(point.x, point.y, context.lineWidth / 2, 0, Math.PI * 2);
     context.fillStyle = context.strokeStyle;
     context.fill();
+    if (symmetryOn) {
+      // Mirror dot inherits the active composite op (eraser still erases).
+      context.beginPath();
+      context.arc(mirrorX(point.x, canvas.width), point.y, context.lineWidth / 2, 0, Math.PI * 2);
+      context.fill();
+    }
   });
 
   canvas.addEventListener('pointermove', (event) => {
@@ -290,6 +387,16 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
     context.moveTo(lastMid.x, lastMid.y);
     context.quadraticCurveTo(lastPoint.x, lastPoint.y, mid.x, mid.y);
     context.stroke();
+
+    if (symmetryOn) {
+      // Same segment mirrored across the vertical centre, using the pre-update
+      // points. Inherits the active composite op so the eraser mirror erases.
+      const w = canvas.width;
+      context.beginPath();
+      context.moveTo(mirrorX(lastMid.x, w), lastMid.y);
+      context.quadraticCurveTo(mirrorX(lastPoint.x, w), lastPoint.y, mirrorX(mid.x, w), mid.y);
+      context.stroke();
+    }
 
     lastPoint = point;
     lastMid = mid;

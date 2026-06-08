@@ -1,19 +1,90 @@
 import { describe, it, expect } from 'vitest';
 import {
   MAX_HISTORY,
+  STAMP_SHAPES,
   applyRedo,
   applyUndo,
   canRegister,
   capHistory,
   floodFillPixels,
   midpoint,
+  mirrorX,
+  normalizeShape,
   parseColorToRgb,
+  shapePrimitives,
+  stampSizeFor,
   statusFallbackKey,
 } from './draw-logic.js';
 
 describe('midpoint', () => {
   it('averages two points', () => {
     expect(midpoint({ x: 0, y: 0 }, { x: 10, y: 20 })).toEqual({ x: 5, y: 10 });
+  });
+});
+
+describe('mirrorX (symmetry)', () => {
+  it('reflects an x coordinate across the canvas centre', () => {
+    expect(mirrorX(0, 720)).toBe(720);
+    expect(mirrorX(720, 720)).toBe(0);
+    expect(mirrorX(360, 720)).toBe(360); // centre maps to itself
+    expect(mirrorX(200, 720)).toBe(520);
+  });
+});
+
+describe('stampSizeFor', () => {
+  it('scales the brush size by the pinned 3x factor (S-036)', () => {
+    expect(stampSizeFor(8)).toBe(24);
+    expect(stampSizeFor(14)).toBe(42);
+    expect(stampSizeFor(22)).toBe(66);
+  });
+});
+
+describe('normalizeShape', () => {
+  it('keeps a known shape', () => {
+    STAMP_SHAPES.forEach((shape) => expect(normalizeShape(shape)).toBe(shape));
+  });
+  it('falls back to circle for unknown/missing values', () => {
+    expect(normalizeShape('banana')).toBe('circle');
+    expect(normalizeShape(undefined)).toBe('circle');
+    expect(normalizeShape(null)).toBe('circle');
+  });
+});
+
+describe('shapePrimitives', () => {
+  it('returns a single current-colour circle for circle', () => {
+    const prims = shapePrimitives('circle', 30);
+    expect(prims).toEqual([{ type: 'circle', cx: 0, cy: 0, r: 30, fill: 'current' }]);
+  });
+
+  it('returns a current-colour polygon for star/triangle/heart/drop', () => {
+    ['star', 'triangle', 'heart', 'drop'].forEach((shape) => {
+      const prims = shapePrimitives(shape, 30);
+      expect(prims).toHaveLength(1);
+      expect(prims[0].type).toBe('polygon');
+      expect(prims[0].fill).toBe('current');
+      expect(prims[0].points.length).toBeGreaterThanOrEqual(3);
+      prims[0].points.forEach((p) => {
+        expect(typeof p.x).toBe('number');
+        expect(typeof p.y).toBe('number');
+      });
+    });
+  });
+
+  it('star has 10 vertices (5 outer + 5 inner)', () => {
+    expect(shapePrimitives('star', 20)[0].points).toHaveLength(10);
+  });
+
+  it('eye uses fixed white/dark fills so it reads as an eye regardless of pen colour', () => {
+    const prims = shapePrimitives('eye', 30);
+    expect(prims).toHaveLength(3);
+    expect(prims.every((p) => p.type === 'circle')).toBe(true);
+    expect(prims.some((p) => p.fill !== 'current')).toBe(true);
+    expect(prims[0].fill).toBe('#ffffff');
+    expect(prims[1].fill).toBe('#1a1a1a');
+  });
+
+  it('falls back to a circle for an unknown shape', () => {
+    expect(shapePrimitives('banana', 30)[0].type).toBe('circle');
   });
 });
 

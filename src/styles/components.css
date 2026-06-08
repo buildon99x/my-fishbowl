@@ -457,6 +457,105 @@
   transform: scale(1.06);
 }
 
+/* Symmetry toggle (S-036) — deliberately NOT styled like the radio tools so a
+   child reads it as an on/off switch, not a 4th mutually-exclusive tool. */
+.draw-symmetry-btn {
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
+  padding: var(--space-xs) var(--space-md);
+  border: 2px solid var(--color-hairline);
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.draw-symmetry-btn::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--color-muted, #6a6a6a);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.draw-symmetry-btn.is-active,
+.draw-symmetry-btn[aria-pressed='true'] {
+  border-color: var(--color-ink);
+  background: color-mix(in srgb, var(--color-focus) 22%, var(--color-canvas));
+  font-weight: 600;
+}
+
+.draw-symmetry-btn.is-active::before,
+.draw-symmetry-btn[aria-pressed='true']::before {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+}
+
+/* Shape picker — only visible while the stamp tool is active. */
+.draw-shape-row {
+  display: none;
+  gap: var(--space-sm);
+}
+
+.draw-shape-row.is-visible {
+  display: flex;
+}
+
+.draw-shape-btn {
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.draw-shape-btn.is-active,
+.draw-shape-btn[aria-pressed='true'] {
+  border-color: var(--color-ink);
+  background: var(--color-surface-card);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+/* Canvas wrapper holds the live canvas plus the symmetry guide overlay. The
+   guide is a DOM element (never canvas pixels) so it is excluded from the
+   exported PNG sprite. */
+.draw-canvas-wrap {
+  position: relative;
+}
+
+.draw-symmetry-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  border-left: 2px dashed color-mix(in srgb, var(--color-ink) 30%, transparent);
+  transform: translateX(-1px);
+  pointer-events: none;
+  display: none;
+}
+
+.draw-symmetry-guide.is-visible {
+  display: block;
+}
+
 .fish-drawing-canvas,
 .preview-area {
   width: 100%;

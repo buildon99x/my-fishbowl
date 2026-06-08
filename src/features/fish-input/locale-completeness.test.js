@@ -43,6 +43,8 @@ const dynamicKeys = [
   'draw.color.black', 'draw.color.red', 'draw.color.orange', 'draw.color.yellow',
   'draw.color.green', 'draw.color.blue', 'draw.color.purple', 'draw.color.white',
   'draw.size.thin', 'draw.size.medium', 'draw.size.thick',
+  'draw.shape.circle', 'draw.shape.heart', 'draw.shape.star',
+  'draw.shape.eye', 'draw.shape.drop', 'draw.shape.triangle',
 ];
 
 const usedKeys = [...new Set([...extractKeys(viewSource), ...dynamicKeys])];

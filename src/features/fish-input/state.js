@@ -30,6 +30,11 @@ export function createFishInputState() {
     drawTool: 'pen',
     drawColor: '#1a1a1a',
     drawSize: 8,
+    // Left-right symmetry toggle + selected stamp shape (S-036). Like the
+    // tool/color/size above, these are session UI state held on `state` so they
+    // survive the full-DOM re-render; never serialized by saveFishDraft.
+    symmetry: false,
+    drawShape: 'circle',
     isExpanded: false,
     sheetStage: 'closed',
     activeTab: 'catalog',
