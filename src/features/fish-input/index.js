@@ -2,7 +2,7 @@ import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 import { bindKeyboardInset, bindSheetBackdrop, bindSheetGrabber } from '../../lib/bottomSheet.js';
-import { setLang, getCurrentLang, t } from '../../lib/i18n.js';
+import { t } from '../../lib/i18n.js';
 import { buildRegisterMessage } from './messages.js';
 import {
   MAX_HISTORY,
@@ -487,15 +487,6 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   const nameInput = root.querySelector('[data-fish-name]');
   const movementSelect = root.querySelector('[data-fish-movement]');
   const registerButton = root.querySelector('[data-register-fish-image]');
-  const langToggle = root.querySelector('[data-lang-toggle]');
-
-  langToggle?.addEventListener('click', async () => {
-    const next = getCurrentLang() === 'ko' ? 'en' : 'ko';
-    try {
-      await setLang(next);
-    } catch { /* keep current language on failure */ }
-    render();
-  });
 
   toggleButton?.addEventListener('click', () => {
     const next = !state.isExpanded;

@@ -21,14 +21,15 @@
 /* ── Action Button Cluster (top dock grid area) ──────────── */
 
 .prop-action-panel {
-  grid-area: dock;
-  justify-self: center;
-  align-self: start;
+  position: fixed;
+  top: var(--dock-top);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-dock);
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--space-sm);
-  padding-top: var(--dock-top);
   max-width: calc(100vw - var(--safe-left) - var(--safe-right));
 }
 
