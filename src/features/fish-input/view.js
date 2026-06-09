@@ -1,5 +1,4 @@
 import { escapeHtml, safeSpriteUrl } from '../../lib/utils.js';
-import { renderDefaultObjectsCatalog } from '../default-objects/view.js';
 import { t } from '../../lib/i18n.js';
 import { statusFallbackKey, STAMP_SHAPES, normalizeShape } from './draw-logic.js';
 
@@ -29,7 +28,7 @@ function getStatusText(status) {
   return t(statusFallbackKey(status));
 }
 
-function renderCreateTab(state) {
+function renderCreateBody(state) {
   const hasSprite = Boolean(state.spriteDataUrl);
   const statusMessage = state.message || getStatusText(state.status);
   const type = state.type === 'deco' ? 'deco' : 'fish';
@@ -210,15 +209,12 @@ export function renderFishInputPanel(state) {
   const stage = state.sheetStage === 'full' ? 'full' : 'peek';
   const hasSprite = Boolean(state.spriteDataUrl);
   const canRegister = hasSprite && state.status !== 'invalid';
-  const activeTab = state.activeTab === 'create' ? 'create' : 'catalog';
-  const isCreate = activeTab === 'create';
 
   return `
-    <div class="fish-input-backdrop" data-fish-input-backdrop aria-hidden="true"></div>
+    <div class="bottom-sheet-backdrop" aria-hidden="true"></div>
     <section
       class="fish-input-widget bottom-sheet"
       data-sheet-stage="${stage}"
-      data-active-tab="${activeTab}"
       data-touch-area="child"
       aria-labelledby="fish-input-title"
       role="dialog"
@@ -227,7 +223,6 @@ export function renderFishInputPanel(state) {
       <button
         type="button"
         class="bottom-sheet-grabber"
-        data-fish-input-grabber
         aria-label="${t('sheet.expand')}"
       >
         <span class="bottom-sheet-grabber-bar" aria-hidden="true"></span>
@@ -235,47 +230,26 @@ export function renderFishInputPanel(state) {
 
       <header class="bottom-sheet-header">
         <div class="prop-panel-identity">
-          <span class="prop-panel-thumb-icon" aria-hidden="true">➕</span>
+          <span class="prop-panel-thumb-icon" aria-hidden="true">✏️</span>
           <div class="prop-panel-title-group">
-            <span id="fish-input-title" class="prop-panel-name">${t('add.object')}</span>
+            <span id="fish-input-title" class="prop-panel-name">${t('create.title')}</span>
           </div>
         </div>
         <button class="prop-action-btn lang-toggle-btn" type="button" data-lang-toggle aria-label="${t('lang.toggle.label')}" title="한국어 / English">🌐</button>
         <button class="prop-action-btn" type="button" data-toggle-fish-input aria-label="${t('close')}" title="${t('close')}">×</button>
       </header>
 
-      <div class="fish-input-tabs" role="tablist" aria-label="${t('tab.group.label')}">
-        <button
-          type="button"
-          class="fish-input-tab ${!isCreate ? 'is-active' : ''}"
-          role="tab"
-          aria-selected="${!isCreate}"
-          data-fish-input-tab="catalog"
-        >${t('tab.catalog')}</button>
-        <button
-          type="button"
-          class="fish-input-tab ${isCreate ? 'is-active' : ''}"
-          role="tab"
-          aria-selected="${isCreate}"
-          data-fish-input-tab="create"
-        >${t('tab.create')}</button>
-      </div>
-
       <div class="bottom-sheet-body fish-input-panel">
-        ${isCreate ? renderCreateTab(state) : renderDefaultObjectsCatalog()}
+        ${renderCreateBody(state)}
       </div>
 
       <footer class="bottom-sheet-footer">
-        ${
-          isCreate
-            ? `<button
-                class="button button-primary fish-input-register-btn"
-                type="button"
-                data-register-fish-image
-                ${canRegister ? '' : 'disabled'}
-              >${t('register')}</button>`
-            : `<p class="fish-input-footer-hint">${t('catalog.hint')}</p>`
-        }
+        <button
+          class="button button-primary fish-input-register-btn"
+          type="button"
+          data-register-fish-image
+          ${canRegister ? '' : 'disabled'}
+        >${t('register')}</button>
       </footer>
     </section>
   `;

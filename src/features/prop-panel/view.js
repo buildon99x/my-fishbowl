@@ -154,16 +154,18 @@ export function renderPropPanel(target, aquarium, propPanelState) {
   return renderPanelShell(entity, target, typeBadge, contentHtml, propPanelState);
 }
 
-export function renderActionCluster({ feedingState, fishInputState, propPanelState, cleaningState, defaultObjectsCtaPulse }) {
+export function renderActionCluster({ feedingState, fishInputState, defaultObjectsState, propPanelState, cleaningState, defaultObjectsCtaPulse }) {
   const feedActive = feedingState.feedingMode;
-  const addFishActive = fishInputState.isExpanded;
+  const createActive = fishInputState.isExpanded;
+  const catalogActive = defaultObjectsState?.isExpanded ?? false;
   const cleanActive = cleaningState?.cleaningMode ?? false;
   const ctaPulseClass = defaultObjectsCtaPulse ? ' is-cta-pulse' : '';
   const ctaArrow = defaultObjectsCtaPulse
     ? '<span class="default-objects-cta-arrow" aria-hidden="true">↓</span>'
     : '';
-  // CTA pulse now decorates the ➕ button (catalog tab opens by default).
-  const addBtnClass = `prop-btn${addFishActive ? ' is-active' : ''}${ctaPulseClass}`;
+  // S-037: catalog + create are now separate dock buttons. The CTA pulse
+  // decorates the 🎁 catalog button (the easiest first-friend path).
+  const catalogBtnClass = `prop-btn${catalogActive ? ' is-active' : ''}${ctaPulseClass}`;
 
   const godModeButton = import.meta.env.DEV
     ? (() => {
@@ -205,15 +207,25 @@ export function renderActionCluster({ feedingState, fishInputState, propPanelSta
           >🍖</button>
         </div>
 
-        <div class="prop-btn-wrap" data-tooltip="오브젝트 추가">
+        <div class="prop-btn-wrap" data-tooltip="카탈로그">
           <button
-            class="${addBtnClass}"
+            class="${catalogBtnClass}"
             type="button"
-            data-prop-add-fish
-            aria-pressed="${addFishActive}"
-            aria-label="오브젝트 추가"
-          >➕</button>
+            data-prop-catalog
+            aria-pressed="${catalogActive}"
+            aria-label="카탈로그"
+          >🎁</button>
           ${ctaArrow}
+        </div>
+
+        <div class="prop-btn-wrap" data-tooltip="직접 만들기">
+          <button
+            class="prop-btn ${createActive ? 'is-active' : ''}"
+            type="button"
+            data-prop-create
+            aria-pressed="${createActive}"
+            aria-label="직접 만들기"
+          >✏️</button>
         </div>
 
         <div class="prop-btn-wrap" data-tooltip="청소 모드">

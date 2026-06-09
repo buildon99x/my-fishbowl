@@ -72,7 +72,7 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
     }
   }
 
-  function bind(root, { onSeq1Plus, fishInputState, render } = {}) {
+  function bind(root, { onSeq1Plus, catalogState, render } = {}) {
     if (!root) return;
 
     // Help button — always available
@@ -123,9 +123,11 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
       const cta = overlay.querySelector('[data-onboarding-cta]');
       cta?.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (fishInputState) {
-          fishInputState.isExpanded = true;
-          fishInputState.sheetStage = 'peek';
+        // S-037: the first-friend CTA opens the 🎁 catalog window (the simplest
+        // path — pick a preset) rather than the 직접 만들기 sheet.
+        if (catalogState) {
+          catalogState.isExpanded = true;
+          catalogState.sheetStage = 'peek';
         }
         onSeq1Plus?.();
         activity();
