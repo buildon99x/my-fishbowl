@@ -119,10 +119,15 @@
   flex-direction: column;
   gap: var(--space-md);
   align-content: start;
+  /* Vertical scroll only as a short-screen fallback. overflow-x is pinned to
+     hidden so the active button's transform: scale(1.06) (scrollable overflow)
+     can never raise a stray horizontal scrollbar; the 8px padding leaves room
+     for the scaled edge + focus ring so nothing is visibly clipped. */
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 2px;
+  padding: 8px;
 }
 
 .create-rail--tools { align-items: stretch; }
@@ -294,31 +299,43 @@
     grid-template-rows: auto minmax(0, 1fr) auto;
     gap: var(--space-sm);
     padding: var(--space-sm);
+    /* Vertical-only fallback if wrapped rails + canvas exceed the height; never
+       a horizontal scrollbar, so the footer can't be overlapped on tiny screens. */
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
-  /* Tools above the canvas, colours below — both horizontal scrollers. */
+  /* Tools above the canvas, colours below — both WRAP (no horizontal scroll). */
   .create-rail {
     flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     gap: var(--space-sm);
-    overflow-x: auto;
-    overflow-y: visible;
-    padding-bottom: 2px;
+    overflow: visible;
+    padding: 4px;
     flex: 0 0 auto;
   }
   .create-rail--tools { order: 0; }
-  /* Floor the canvas so tall rails (e.g. stamp shape-row visible) on a short
-     landscape phone can't squeeze the 1fr canvas row toward zero. */
-  .create-canvas-stage { order: 1; min-height: 42svh; }
+  /* Floor the canvas so wrapped rails on a short landscape phone can't squeeze
+     the canvas row toward zero. */
+  .create-canvas-stage { order: 1; min-height: 38svh; }
   .create-rail--colors { order: 2; }
 
-  .create-rail-group { flex-direction: row; align-items: center; }
-  .create-window-stage .draw-tool-group { flex-direction: row; }
+  .create-rail-group { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .create-window-stage .draw-tool-group { flex-direction: row; flex-wrap: wrap; justify-content: center; }
   .create-window-stage .draw-tool-btn { justify-content: center; text-align: center; }
+  /* Shapes and colours wrap to as many rows as the width needs — no scroller. */
   .create-window-stage .draw-shape-row.is-visible {
-    grid-template-columns: repeat(6, var(--touch-target-child-recommended));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
   }
-  .create-window-stage .draw-color-row { grid-template-columns: repeat(8, auto); }
+  .create-window-stage .draw-color-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
   .create-window-stage .draw-size-presets { flex-direction: row; }
 }
 
