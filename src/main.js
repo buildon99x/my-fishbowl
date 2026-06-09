@@ -537,7 +537,6 @@ function initApp() {
       exitCleaningMode(appState.cleaningState);
       renderApp(app, aquarium, fishInputState, feedingState, appState);
     }
-
   });
 }
 

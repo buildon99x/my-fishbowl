@@ -31,8 +31,8 @@ function getStatusText(status) {
 function renderCreateBody(state) {
   const hasSprite = Boolean(state.spriteDataUrl);
   const statusMessage = state.message || getStatusText(state.status);
-  const type = state.type === 'deco' ? 'deco' : 'fish';
-  const isFish = type === 'fish';
+  const isFish = state.type !== 'deco';
+  const type = isFish ? 'fish' : 'deco';
   const nameLabel = isFish ? t('fish.name.label') : t('deco.name.label');
   const namePlaceholder = isFish ? t('fish.name.placeholder') : t('deco.name.placeholder');
   const typeBadgeIcon = isFish ? '🐟' : '🪨';
