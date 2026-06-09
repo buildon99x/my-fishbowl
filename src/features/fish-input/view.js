@@ -235,7 +235,6 @@ export function renderFishInputPanel(state) {
             <span id="fish-input-title" class="prop-panel-name">${t('create.title')}</span>
           </div>
         </div>
-        <button class="prop-action-btn lang-toggle-btn" type="button" data-lang-toggle aria-label="${t('lang.toggle.label')}" title="한국어 / English">🌐</button>
         <button class="prop-action-btn" type="button" data-toggle-fish-input aria-label="${t('close')}" title="${t('close')}">×</button>
       </header>
 
