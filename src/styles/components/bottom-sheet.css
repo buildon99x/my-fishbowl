@@ -8,7 +8,6 @@
   pointer-events: auto;
 }
 
-.fish-input-widget.bottom-sheet,
 .default-objects-sheet.bottom-sheet {
   position: fixed;
   left: 50%;
@@ -34,12 +33,10 @@
   transition: max-height 0.2s ease;
 }
 
-.fish-input-widget.bottom-sheet[data-sheet-stage="peek"],
 .default-objects-sheet.bottom-sheet[data-sheet-stage="peek"] {
   max-height: min(40svh, calc(92svh - var(--keyboard-inset)));
 }
 
-.fish-input-widget.bottom-sheet[data-sheet-stage="full"],
 .default-objects-sheet.bottom-sheet[data-sheet-stage="full"] {
   max-height: calc(92svh - var(--keyboard-inset));
 }
@@ -101,16 +98,7 @@
   font-size: var(--text-title-sm);
 }
 
-.fish-input-widget.bottom-sheet .fish-drawing-canvas {
-  touch-action: none;
-  width: min(720px, calc(100vw - 32px));
-  max-width: 100%;
-  aspect-ratio: 3 / 2;
-  height: auto;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .fish-input-widget.bottom-sheet,
   .default-objects-sheet.bottom-sheet { transition: none; }
 }
 

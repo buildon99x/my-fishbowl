@@ -304,9 +304,12 @@
     overflow-x: auto;
     overflow-y: visible;
     padding-bottom: 2px;
+    flex: 0 0 auto;
   }
   .create-rail--tools { order: 0; }
-  .create-canvas-stage { order: 1; }
+  /* Floor the canvas so tall rails (e.g. stamp shape-row visible) on a short
+     landscape phone can't squeeze the 1fr canvas row toward zero. */
+  .create-canvas-stage { order: 1; min-height: 42svh; }
   .create-rail--colors { order: 2; }
 
   .create-rail-group { flex-direction: row; align-items: center; }

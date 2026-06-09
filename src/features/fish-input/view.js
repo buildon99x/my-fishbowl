@@ -257,7 +257,6 @@ export function renderFishInputPanel(state) {
     <section
       class="fish-input-widget create-window"
       data-touch-area="child"
-      data-create-window
       aria-labelledby="fish-input-title"
       role="dialog"
       aria-modal="true"
