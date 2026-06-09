@@ -175,7 +175,12 @@ function renderCanvasStage(state) {
         ${
           showCoach
             ? `<div class="create-coachmark" data-create-coachmark role="note">
-                <span class="create-coachmark-emoji" aria-hidden="true">👆</span>
+                <span class="create-coachmark-demo" aria-hidden="true">
+                  <svg class="create-coachmark-stroke" viewBox="0 0 48 24" fill="none">
+                    <path d="M4 17 Q 14 3, 24 13 T 44 11" />
+                  </svg>
+                  <span class="create-coachmark-pencil">✏️</span>
+                </span>
                 <span>${escapeHtml(t('create.coach.hint'))}</span>
               </div>`
             : ''

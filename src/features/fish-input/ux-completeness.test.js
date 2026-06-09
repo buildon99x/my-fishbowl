@@ -35,6 +35,13 @@ describe('first-run coach-mark visibility', () => {
     );
     expect(html).not.toContain('data-create-coachmark');
   });
+
+  it('carries a wordless draw demonstration for pre-readers', () => {
+    const html = renderFishInputPanel(createState());
+    // An animated self-drawing stroke + pencil, marked decorative for AT.
+    expect(html).toContain('create-coachmark-stroke');
+    expect(html).toContain('create-coachmark-pencil');
+  });
 });
 
 describe('feedback sound ids are real (no silent taps)', () => {

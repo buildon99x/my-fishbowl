@@ -239,15 +239,63 @@
   animation: create-coach-bounce 1.6s ease-in-out infinite;
 }
 
-.create-coachmark-emoji { font-size: 18px; }
-
 @keyframes create-coach-bounce {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50% { transform: translateX(-50%) translateY(-5px); }
 }
 
+/* Non-reader demonstration: a pencil traces a wavy stroke that draws itself,
+   showing "drag to draw" without words (the hint text is for early readers). */
+.create-coachmark-demo {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.create-coachmark-stroke {
+  width: 48px;
+  height: 24px;
+  overflow: visible;
+}
+
+.create-coachmark-stroke path {
+  fill: none;
+  stroke: var(--color-canvas);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: create-coach-draw 1.8s ease-in-out infinite;
+}
+
+.create-coachmark-pencil {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  font-size: 15px;
+  animation: create-coach-pencil 1.8s ease-in-out infinite;
+}
+
+@keyframes create-coach-draw {
+  0% { stroke-dashoffset: 60; }
+  55% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes create-coach-pencil {
+  0% { transform: translateX(0) rotate(0deg); }
+  55% { transform: translateX(38px) rotate(0deg); }
+  100% { transform: translateX(38px) rotate(0deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .create-coachmark { animation: none; }
+  /* Show the completed stroke and park the pencil at the end — no motion. */
+  .create-coachmark-stroke path { animation: none; stroke-dashoffset: 0; }
+  .create-coachmark-pencil { animation: none; transform: translateX(38px); }
 }
 
 /* ---- Upload preview (upload flow only) ------------------------------------
@@ -298,6 +346,20 @@
 .create-window-meta .input-group--name { flex: 1 1 160px; min-width: 140px; }
 .create-window-meta .input-group--movement { flex: 0 0 auto; }
 .create-window-meta .input-group--file { flex: 1 1 180px; min-width: 150px; }
+
+/* De-emphasise the secondary metadata (movement + photo upload) so the primary
+   draw → Add flow stays dominant. Touch targets are unchanged — only the labels
+   and field surface are muted; the name field stays full-strength because naming
+   the fish is part of completing it. */
+.create-window-meta .input-group--movement .input-label,
+.create-window-meta .input-group--file .input-label {
+  opacity: 0.7;
+}
+.create-window-meta .input-group--movement .select-input,
+.create-window-meta .input-group--file .file-input {
+  background: var(--color-surface-soft);
+  font-size: var(--text-body-sm);
+}
 
 .create-window-footer .fish-input-register-btn {
   align-self: stretch;
