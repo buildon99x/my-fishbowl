@@ -86,6 +86,20 @@
   justify-self: end;
 }
 
+/* The × is the only touch exit in a full-screen window (no backdrop/drag-down to
+   close), so raise it from the shared 44px to the child-recommended 56px target
+   and make the glyph bigger so it reads clearly as "get out of here". */
+.create-window-topbar-actions .prop-action-btn {
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
+  font-size: 26px;
+}
+
+.create-window-topbar-actions [data-toggle-fish-input] {
+  background: var(--color-surface-card);
+  border-color: var(--color-muted);
+}
+
 /* ---- Status line ---------------------------------------------------------- */
 
 .create-window .fish-input-status {

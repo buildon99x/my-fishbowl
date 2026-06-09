@@ -138,7 +138,7 @@ function floodFill(ctx, canvas, startX, startY, fillRgb, tolerance = 30) {
   return filled;
 }
 
-function setupDrawingCanvas(root, state, playHaptic = () => {}) {
+function setupDrawingCanvas(root, state, playHaptic = () => {}, playSound = () => {}) {
   const canvas = root.querySelector('[data-fish-canvas]');
   const clearButton = root.querySelector('[data-clear-drawing]');
   const undoButton = root.querySelector('[data-draw-undo]');
@@ -154,9 +154,18 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   let lastPoint = null;
   let lastMid = null;
 
-  // First-run coach-mark over the canvas: dismiss it the moment the child makes
-  // their first mark (any tool), persist the one-time flag, and remove the node
-  // (a stroke does not trigger a full re-render, so hide it from the DOM here).
+  // Multi-channel feedback for a control tap (S-038 UX): visible state change is
+  // already handled by the caller; here we add the haptic + a short tap sound so
+  // selection is never silent (research: silent taps cause "rage tapping").
+  function tapFeedback() {
+    playHaptic('light');
+    playSound('ui.tap');
+  }
+
+  // First-run coach-mark over the canvas: dismiss it on the child's first real
+  // mark (a drawn stroke/stamp/successful fill — not a no-op tap), persist the
+  // one-time flag, and remove the node (a stroke does not trigger a full
+  // re-render, so hide it from the DOM here).
   const coachmark = root.querySelector('[data-create-coachmark]');
   function dismissCoachmark() {
     if (state.coachmarkSeen === true) return;
@@ -264,7 +273,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
       // place (not a full render) keeps the live canvas pixels intact.
       shapeRow?.classList.toggle('is-visible', currentTool === 'stamp');
       applyToolSettings();
-      playHaptic('light');
+      tapFeedback();
     });
   });
 
@@ -277,7 +286,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
         b.classList.toggle('is-active', on);
         b.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
-      playHaptic('light');
+      tapFeedback();
     });
   });
 
@@ -289,7 +298,9 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
     // Guide is a DOM overlay (never canvas pixels) so it stays out of the
     // exported sprite; toggled in place here and re-derived from state on render.
     symmetryGuide?.classList.toggle('is-visible', symmetryOn);
+    // Toggle (not a plain selection): haptic + a distinct on/off chirp, no ui.tap.
     playHaptic('light');
+    playSound(symmetryOn ? 'ui.toggle-on' : 'ui.toggle-off');
   });
 
   sizePresetBtns.forEach((btn) => {
@@ -301,7 +312,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
         b.classList.toggle('is-active', b === btn);
         b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
       });
-      playHaptic('light');
+      tapFeedback();
     });
   });
 
@@ -315,14 +326,13 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
         b.classList.toggle('is-active', b === btn);
         b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
       });
-      playHaptic('light');
+      tapFeedback();
     });
   });
 
   canvas.addEventListener('pointerdown', (event) => {
     if (event.pointerType === 'touch' && !event.isPrimary) return;
 
-    dismissCoachmark();
     const point = getCanvasPoint(canvas, event);
 
     if (currentTool === 'fill') {
@@ -349,6 +359,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
           return;
         }
         playHaptic('magic-b');
+        dismissCoachmark();
         commitDrawing({
           spriteDataUrl: canvas.toDataURL('image/png'),
           status: 'preview',
@@ -368,6 +379,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
         drawStamp(context, currentShape, mirrorX(point.x, canvas.width), point.y, size, context.strokeStyle);
       }
       playHaptic('magic-b');
+      dismissCoachmark();
       commitDrawing({
         spriteDataUrl: canvas.toDataURL('image/png'),
         status: 'preview',
@@ -379,6 +391,9 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
 
     isDrawing = true;
     canvas.setPointerCapture(event.pointerId);
+    // A pen/eraser press always lays a dot — a real first mark — so dismiss the
+    // coach-mark here (a no-op fill on a same-colour region does not, above).
+    dismissCoachmark();
     // One snapshot before BOTH the primary and mirror marks, so undo restores
     // the symmetric pair together (S-036).
     pushUndo();
@@ -473,11 +488,13 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
 
   undoButton?.addEventListener('click', () => {
     if (!state.undoStack.length) return;
+    tapFeedback();
     applyHistory(applyUndo(state.undoStack, state.redoStack, snapshot()));
   });
 
   redoButton?.addEventListener('click', () => {
     if (!state.redoStack.length) return;
+    tapFeedback();
     applyHistory(applyRedo(state.undoStack, state.redoStack, snapshot()));
   });
 
@@ -485,6 +502,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   let clearConfirmTimer = null;
 
   clearButton?.addEventListener('click', () => {
+    tapFeedback();
     if (!clearPending) {
       // First tap: show confirm state
       clearPending = true;
@@ -544,7 +562,8 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   });
 
   const playHaptic = options.playHaptic ?? (() => {});
-  setupDrawingCanvas(root, state, playHaptic);
+  const playSound = options.playSound ?? (() => {});
+  setupDrawingCanvas(root, state, playHaptic, playSound);
 
   nameInput?.addEventListener('input', (event) => {
     state.name = event.target.value;
