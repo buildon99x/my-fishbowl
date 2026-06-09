@@ -186,25 +186,20 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
 
   let currentPresetSize = state.drawSize ?? 8;
   const sizePresetBtns = root.querySelectorAll('[data-draw-size-preset]');
+  const sizeControl = root.querySelector('.draw-size-control');
 
   function applyToolSettings() {
-    const sizeControl = root.querySelector('.draw-size-control');
-    if (currentTool === 'eraser') {
-      context.globalCompositeOperation = 'destination-out';
-      context.lineWidth = currentPresetSize;
-      sizeControl?.classList.remove('is-inactive');
-    } else if (currentTool === 'fill') {
-      context.globalCompositeOperation = 'source-over';
-      sizeControl?.classList.add('is-inactive');
-    } else if (currentTool === 'stamp') {
-      // Stamps paint normally; size stays active because the stamp scales from it.
-      context.globalCompositeOperation = 'source-over';
-      sizeControl?.classList.remove('is-inactive');
-    } else {
-      context.globalCompositeOperation = 'source-over';
-      context.lineWidth = currentPresetSize;
-      sizeControl?.classList.remove('is-inactive');
-    }
+    context.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    if (currentTool !== 'fill' && currentTool !== 'stamp') context.lineWidth = currentPresetSize;
+    sizeControl?.classList.toggle('is-inactive', currentTool === 'fill');
+  }
+
+  function setActiveButton(btns, activeBtn) {
+    btns.forEach((b) => {
+      const on = b === activeBtn;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
   }
 
   context.lineCap = 'round';
@@ -226,12 +221,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
     btn.addEventListener('click', () => {
       currentTool = btn.dataset.drawTool;
       state.drawTool = currentTool;
-      toolButtons.forEach((b) => {
-        b.setAttribute('aria-pressed', 'false');
-        b.classList.remove('is-active');
-      });
-      btn.setAttribute('aria-pressed', 'true');
-      btn.classList.add('is-active');
+      setActiveButton(toolButtons, btn);
       // Reveal the shape picker only while the stamp tool is active. Toggling in
       // place (not a full render) keeps the live canvas pixels intact.
       shapeRow?.classList.toggle('is-visible', currentTool === 'stamp');
@@ -244,11 +234,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
     btn.addEventListener('click', () => {
       currentShape = normalizeShape(btn.dataset.drawShape);
       state.drawShape = currentShape;
-      shapeBtns.forEach((b) => {
-        const on = b === btn;
-        b.classList.toggle('is-active', on);
-        b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
+      setActiveButton(shapeBtns, btn);
       playHaptic('light');
     });
   });
@@ -269,10 +255,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
       currentPresetSize = Number(btn.dataset.drawSizePreset);
       state.drawSize = currentPresetSize;
       if (currentTool !== 'fill') context.lineWidth = currentPresetSize;
-      sizePresetBtns.forEach((b) => {
-        b.classList.toggle('is-active', b === btn);
-        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
-      });
+      setActiveButton(sizePresetBtns, btn);
       playHaptic('light');
     });
   });
@@ -283,10 +266,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
       const color = btn.dataset.color;
       context.strokeStyle = color;
       state.drawColor = color;
-      colorBtns.forEach((b) => {
-        b.classList.toggle('is-active', b === btn);
-        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
-      });
+      setActiveButton(colorBtns, btn);
       playHaptic('light');
     });
   });
@@ -455,24 +435,22 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   let clearPending = false;
   let clearConfirmTimer = null;
 
+  function resetClearButton() {
+    clearPending = false;
+    clearButton.textContent = t('draw.clear');
+    clearButton.classList.remove('is-confirm-pending');
+  }
+
   clearButton?.addEventListener('click', () => {
     if (!clearPending) {
-      // First tap: show confirm state
       clearPending = true;
       clearButton.textContent = t('draw.clear.confirm');
       clearButton.classList.add('is-confirm-pending');
-      clearConfirmTimer = setTimeout(() => {
-        clearPending = false;
-        clearButton.textContent = t('draw.clear');
-        clearButton.classList.remove('is-confirm-pending');
-      }, 2500);
+      clearConfirmTimer = setTimeout(resetClearButton, 2500);
       return;
     }
-    // Second tap: actually clear
-    clearPending = false;
     if (clearConfirmTimer) { window.clearTimeout(clearConfirmTimer); clearConfirmTimer = null; }
-    clearButton.textContent = t('draw.clear');
-    clearButton.classList.remove('is-confirm-pending');
+    resetClearButton();
     context.clearRect(0, 0, canvas.width, canvas.height);
     state.undoStack = [];
     state.redoStack = [];

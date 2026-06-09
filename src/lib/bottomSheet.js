@@ -10,6 +10,11 @@
 //   - grabber element:  `.bottom-sheet-grabber`
 //   - backdrop element:  `.bottom-sheet-backdrop`
 
+function closeSheet(state) {
+  state.sheetStage = 'closed';
+  state.isExpanded = false;
+}
+
 // Short tap = toggle peek<->full. Drag up >= 40 = full. Drag down >= 40 from
 // peek = close. (Identical thresholds to the pre-split S-029 sheet.)
 export function bindSheetGrabber(panel, state, render) {
@@ -48,8 +53,7 @@ export function bindSheetGrabber(panel, state, render) {
       if (startStage === 'full') {
         state.sheetStage = 'peek';
       } else {
-        state.sheetStage = 'closed';
-        state.isExpanded = false;
+        closeSheet(state);
       }
       render();
     }
@@ -62,8 +66,7 @@ export function bindSheetGrabber(panel, state, render) {
 export function bindSheetBackdrop(root, state, render) {
   const backdrop = root.querySelector('.bottom-sheet-backdrop');
   backdrop?.addEventListener('click', () => {
-    state.sheetStage = 'closed';
-    state.isExpanded = false;
+    closeSheet(state);
     render();
   });
 }

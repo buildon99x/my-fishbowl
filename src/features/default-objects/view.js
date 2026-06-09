@@ -5,7 +5,7 @@ import { DEFAULT_OBJECTS_MANIFEST } from '../../assets/default-objects/manifest.
 function renderCard(entry) {
   const isFish = entry.type === 'fish';
   const typeIcon = isFish ? '🐟' : '🪨';
-  const typeText = isFish ? '물고기' : '장식';
+  const typeText = isFish ? t('add.fish') : t('add.deco');
   return `
     <button
       type="button"
@@ -28,7 +28,7 @@ function renderGroup(type, entries) {
   if (entries.length === 0) return '';
   const isFish = type === 'fish';
   const icon = isFish ? '🐟' : '🪨';
-  const label = isFish ? '물고기' : '장식';
+  const label = isFish ? t('add.fish') : t('add.deco');
   return `
     <section class="default-objects-group default-objects-group--${type}" aria-label="${label}">
       <header class="default-objects-group-header">
