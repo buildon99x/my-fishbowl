@@ -1,0 +1,336 @@
+/* 직접 만들기 풀스크린 창 — S-038
+ *
+ * Converts the fish-input surface from a bottom-sheet into a full-screen,
+ * canvas-first window for 6–9 year olds: a large centred canvas flanked by an
+ * always-visible tool rail (left) and colour/size rail (right), with a slim top
+ * bar (title · 물고기/장식 · language · close) and a footer (undo/redo/clear ·
+ * name/upload · Add). The catalog keeps its bottom-sheet (components/bottom-sheet.css);
+ * only `.fish-input-widget.create-window` is restyled here. */
+
+.fish-input-widget.create-window {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-panel);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  background: var(--color-surface-soft);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  padding-bottom: var(--keyboard-inset);
+  animation: create-window-in 0.18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fish-input-widget.create-window { animation: none; }
+}
+
+@keyframes create-window-in {
+  from { opacity: 0; transform: scale(0.99); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ---- Top bar -------------------------------------------------------------- */
+
+.create-window-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-hairline);
+  background: var(--color-surface-soft);
+}
+
+.create-window-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.create-window-icon { font-size: 22px; line-height: 1; }
+
+.create-window-title {
+  font-size: var(--text-title-md);
+  font-weight: 700;
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.create-window-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  justify-self: center;
+}
+
+.create-window-type .prop-type-hint {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.create-window-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  justify-self: end;
+}
+
+/* ---- Status line ---------------------------------------------------------- */
+
+.create-window .fish-input-status {
+  margin: 0;
+  padding: var(--space-xs) var(--space-md);
+  text-align: center;
+  background: color-mix(in srgb, var(--color-focus) 7%, var(--color-surface-soft));
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.create-window .fish-input-status p {
+  margin: 0;
+  font-size: var(--text-title-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* ---- Stage: tool rail | canvas | colour rail ----------------------------- */
+
+.create-window-stage {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: var(--space-md);
+  min-height: 0;
+  min-width: 0;
+  padding: var(--space-md);
+}
+
+.create-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  align-content: start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px;
+}
+
+.create-rail--tools { align-items: stretch; }
+.create-rail--colors { align-items: center; }
+
+.create-rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Tools stack vertically in the left rail. */
+.create-window-stage .draw-tool-group {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.create-window-stage .draw-tool-btn {
+  justify-content: flex-start;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Shape picker becomes a 2-col grid so all six fit the narrow rail. */
+.create-window-stage .draw-shape-row.is-visible {
+  display: grid;
+  grid-template-columns: repeat(2, var(--touch-target-child-recommended));
+  gap: var(--space-xs);
+  justify-content: start;
+}
+
+/* Colours wrap into a tidy 2-column block in the right rail. */
+.create-window-stage .draw-color-row {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: var(--touch-target-child-spacing);
+  justify-content: center;
+}
+
+.create-window-stage .draw-size-presets {
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---- Canvas stage --------------------------------------------------------- */
+
+.create-canvas-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  container-type: size;
+}
+
+.create-window .draw-canvas-wrap {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  /* Fill whichever dimension binds first while staying 3:2, so pointer
+     coordinates map 1:1 to the canvas (no letterboxing). 150cqh = height × 1.5. */
+  width: 100%;
+  width: min(100cqw, 150cqh);
+  max-width: 100%;
+  max-height: 100%;
+  box-shadow: 0 8px 28px rgba(10, 10, 10, 0.12);
+  border-radius: var(--radius-lg);
+}
+
+.create-window .fish-drawing-canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-lg);
+}
+
+/* ---- First-run coach-mark ------------------------------------------------- */
+
+.create-coachmark {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: calc(100% - 24px);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-pill);
+  background: var(--color-ink);
+  color: var(--color-canvas);
+  font-size: var(--text-body-md);
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(10, 10, 10, 0.22);
+  pointer-events: none;
+  animation: create-coach-bounce 1.6s ease-in-out infinite;
+}
+
+.create-coachmark-emoji { font-size: 18px; }
+
+@keyframes create-coach-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-coachmark { animation: none; }
+}
+
+/* ---- Upload preview (upload flow only) ------------------------------------
+ * A drawn sprite IS the canvas, but an uploaded sprite comes from
+ * state.spriteDataUrl, so the upload flow shows it as a floating preview chip
+ * over the (still-present) canvas rather than competing for the main space. */
+
+.create-canvas-stage .preview-area {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: min(38%, 240px);
+  min-height: 0;
+  padding: var(--space-sm);
+  gap: var(--space-xxs);
+  box-shadow: 0 4px 14px rgba(10, 10, 10, 0.16);
+}
+
+.create-canvas-stage .preview-area .fish-preview-image { max-height: 140px; }
+
+/* ---- Footer --------------------------------------------------------------- */
+
+.create-window-footer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + var(--safe-bottom));
+  border-top: 1px solid var(--color-hairline);
+  background: var(--color-surface-soft);
+}
+
+.create-window-history {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.create-window-meta {
+  display: flex;
+  align-items: end;
+  gap: var(--space-md);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.create-window-meta .input-group { gap: var(--space-xxs); }
+.create-window-meta .input-group--name { flex: 1 1 160px; min-width: 140px; }
+.create-window-meta .input-group--movement { flex: 0 0 auto; }
+.create-window-meta .input-group--file { flex: 1 1 180px; min-width: 150px; }
+
+.create-window-footer .fish-input-register-btn {
+  align-self: stretch;
+  min-width: 140px;
+  font-size: var(--text-title-sm);
+}
+
+/* ---- Responsive: stack the rails on narrow / portrait screens ------------- */
+
+@media (max-width: 860px) {
+  .create-window-stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+  }
+
+  /* Tools above the canvas, colours below — both horizontal scrollers. */
+  .create-rail {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-sm);
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 2px;
+  }
+  .create-rail--tools { order: 0; }
+  .create-canvas-stage { order: 1; }
+  .create-rail--colors { order: 2; }
+
+  .create-rail-group { flex-direction: row; align-items: center; }
+  .create-window-stage .draw-tool-group { flex-direction: row; }
+  .create-window-stage .draw-tool-btn { justify-content: center; text-align: center; }
+  .create-window-stage .draw-shape-row.is-visible {
+    grid-template-columns: repeat(6, var(--touch-target-child-recommended));
+  }
+  .create-window-stage .draw-color-row { grid-template-columns: repeat(8, auto); }
+  .create-window-stage .draw-size-presets { flex-direction: row; }
+}
+
+@media (max-width: 620px) {
+  .create-window-topbar {
+    grid-template-columns: auto 1fr auto;
+    row-gap: var(--space-xs);
+  }
+  /* Drop the long title on the smallest screens; the icon + segmented control
+     already say "make a fish/deco". */
+  .create-window-title { display: none; }
+
+  .create-window-footer {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-sm);
+  }
+  .create-window-footer .fish-input-register-btn { width: 100%; }
+}

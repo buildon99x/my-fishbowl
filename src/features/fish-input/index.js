@@ -1,4 +1,4 @@
-import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.js';
+import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft, markCoachmarkSeen } from './state.js';
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 import { bindKeyboardInset, bindSheetBackdrop, bindSheetGrabber } from '../../lib/bottomSheet.js';
@@ -24,6 +24,23 @@ const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
 
 export { createFishInputState, renderFishInputPanel };
+
+// Escape closes the full-screen create window. Bound once for the app lifetime
+// (the panel DOM is rebuilt every render, so a per-render document listener would
+// leak); the latest state/render are read from these module refs.
+let escState = null;
+let escRender = null;
+let escBound = false;
+function bindEscClose() {
+  if (escBound || typeof document === 'undefined') return;
+  escBound = true;
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !escState?.isExpanded) return;
+    escState.isExpanded = false;
+    escState.sheetStage = 'closed';
+    escRender?.();
+  });
+}
 
 function updateState(state, patch, render) {
   Object.assign(state, patch);
@@ -136,6 +153,17 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   let isDrawing = false;
   let lastPoint = null;
   let lastMid = null;
+
+  // First-run coach-mark over the canvas: dismiss it the moment the child makes
+  // their first mark (any tool), persist the one-time flag, and remove the node
+  // (a stroke does not trigger a full re-render, so hide it from the DOM here).
+  const coachmark = root.querySelector('[data-create-coachmark]');
+  function dismissCoachmark() {
+    if (state.coachmarkSeen === true) return;
+    state.coachmarkSeen = true;
+    markCoachmarkSeen();
+    coachmark?.remove();
+  }
   // Seed from state so the selection survives the per-stroke re-render.
   let currentTool = state.drawTool ?? 'pen';
   // Symmetry + stamp shape also live on state (seeded here) so a per-stroke
@@ -294,6 +322,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   canvas.addEventListener('pointerdown', (event) => {
     if (event.pointerType === 'touch' && !event.isPrimary) return;
 
+    dismissCoachmark();
     const point = getCanvasPoint(canvas, event);
 
     if (currentTool === 'fill') {
@@ -488,6 +517,11 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   const movementSelect = root.querySelector('[data-fish-movement]');
   const registerButton = root.querySelector('[data-register-fish-image]');
   const langToggle = root.querySelector('[data-lang-toggle]');
+
+  // Keep the Escape-to-close handler pointed at the live state/render.
+  escState = state;
+  escRender = render;
+  bindEscClose();
 
   langToggle?.addEventListener('click', async () => {
     const next = getCurrentLang() === 'ko' ? 'en' : 'ko';
