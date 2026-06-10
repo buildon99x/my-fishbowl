@@ -55,6 +55,7 @@ import {
   renderMenuButton,
 } from './features/drawer/index.js';
 import { bindFishListEvents } from './features/fish-list/events.js';
+import { bindLangToggle, renderLangToggle } from './features/lang-toggle/index.js';
 import { startChromeIdleWatcher } from './features/chrome-idle/index.js';
 import {
   bindDefaultObjectsEvents,
@@ -275,6 +276,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
       ${cleaningState.cleaningMode ? renderCleaningExitButton() : ''}
       ${renderUndoSnackbar(appState.undoDelete)}
       ${renderMuteToggle(appState.sound.getSettings().masterEnabled)}
+      ${renderLangToggle()}
       ${renderOnboardingOverlay(appState.onboarding.getState())}
       ${appState.sound.shouldShowModal() ? renderSoundModal() : ''}
     </main>
@@ -463,6 +465,7 @@ function renderApp(root, aquarium, fishInputState, feedingState, appState) {
 
   appState.sound.bindModal(root, { onResolved: render });
   appState.sound.bindMuteToggle(root, { render });
+  bindLangToggle(root, { render });
   bindDrawerEvents(root, appState, { render });
 }
 
@@ -535,7 +538,6 @@ function initApp() {
       exitCleaningMode(appState.cleaningState);
       renderApp(app, aquarium, fishInputState, feedingState, appState);
     }
-
   });
 }
 

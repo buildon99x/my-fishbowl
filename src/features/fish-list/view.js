@@ -1,6 +1,7 @@
 import { ALGAE_MAX_LEVEL, getAlgaeStateName } from '../algae/index.js';
-import { escapeHtml } from '../../lib/utils.js';
+import { escapeHtml, safeSpriteUrl } from '../../lib/utils.js';
 import { getFishThumbTransform } from '../../lib/fishSpriteStyle.js';
+import { getCurrentLang } from '../../lib/i18n.js';
 
 export function formatRegisteredTime(value) {
   if (!value) {
@@ -8,7 +9,7 @@ export function formatRegisteredTime(value) {
   }
 
   try {
-    return new Intl.DateTimeFormat('ko-KR', {
+    return new Intl.DateTimeFormat(getCurrentLang(), {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
@@ -71,7 +72,7 @@ export function renderFishList(fishes, selectedFishId, editingTarget) {
           return `
             <div class="fish-list-item ${item.id === selectedFishId || isEditing ? 'is-selected' : ''} is-${type}" role="listitem" data-fish-id="${item.id}">
               <button class="fish-list-select ${isEditing ? 'is-active' : ''}" type="button" data-select-fish="${item.id}" aria-pressed="${isEditing}">
-                <img src="${item.imageUrl}" alt="" class="fish-list-thumb" style="transform: ${getFishThumbTransform(item)};">
+                <img src="${escapeHtml(safeSpriteUrl(item.imageUrl))}" alt="" class="fish-list-thumb" style="transform: ${getFishThumbTransform(item)};">
                 <span class="fish-list-name">${renderNameWithSuffix(item.name)}</span>
                 <span class="fish-list-badge fish-list-badge-${type}" aria-label="${badgeText}">${badgeIcon} ${badgeText}</span>
                 <time class="fish-list-time" datetime="${escapeHtml(item.createdAt)}">${formatRegisteredTime(item.createdAt)}</time>

@@ -2,7 +2,7 @@ import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft, markCoachmarkSe
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 import { bindKeyboardInset, bindSheetBackdrop, bindSheetGrabber } from '../../lib/bottomSheet.js';
-import { setLang, getCurrentLang, t } from '../../lib/i18n.js';
+import { t } from '../../lib/i18n.js';
 import { buildRegisterMessage } from './messages.js';
 import {
   MAX_HISTORY,
@@ -223,25 +223,20 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}, playSound = () =
 
   let currentPresetSize = state.drawSize ?? 8;
   const sizePresetBtns = root.querySelectorAll('[data-draw-size-preset]');
+  const sizeControl = root.querySelector('.draw-size-control');
 
   function applyToolSettings() {
-    const sizeControl = root.querySelector('.draw-size-control');
-    if (currentTool === 'eraser') {
-      context.globalCompositeOperation = 'destination-out';
-      context.lineWidth = currentPresetSize;
-      sizeControl?.classList.remove('is-inactive');
-    } else if (currentTool === 'fill') {
-      context.globalCompositeOperation = 'source-over';
-      sizeControl?.classList.add('is-inactive');
-    } else if (currentTool === 'stamp') {
-      // Stamps paint normally; size stays active because the stamp scales from it.
-      context.globalCompositeOperation = 'source-over';
-      sizeControl?.classList.remove('is-inactive');
-    } else {
-      context.globalCompositeOperation = 'source-over';
-      context.lineWidth = currentPresetSize;
-      sizeControl?.classList.remove('is-inactive');
-    }
+    context.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    if (currentTool !== 'fill' && currentTool !== 'stamp') context.lineWidth = currentPresetSize;
+    sizeControl?.classList.toggle('is-inactive', currentTool === 'fill');
+  }
+
+  function setActiveButton(btns, activeBtn) {
+    btns.forEach((b) => {
+      const on = b === activeBtn;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
   }
 
   context.lineCap = 'round';
@@ -263,12 +258,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}, playSound = () =
     btn.addEventListener('click', () => {
       currentTool = btn.dataset.drawTool;
       state.drawTool = currentTool;
-      toolButtons.forEach((b) => {
-        b.setAttribute('aria-pressed', 'false');
-        b.classList.remove('is-active');
-      });
-      btn.setAttribute('aria-pressed', 'true');
-      btn.classList.add('is-active');
+      setActiveButton(toolButtons, btn);
       // Reveal the shape picker only while the stamp tool is active. Toggling in
       // place (not a full render) keeps the live canvas pixels intact.
       shapeRow?.classList.toggle('is-visible', currentTool === 'stamp');
@@ -281,11 +271,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}, playSound = () =
     btn.addEventListener('click', () => {
       currentShape = normalizeShape(btn.dataset.drawShape);
       state.drawShape = currentShape;
-      shapeBtns.forEach((b) => {
-        const on = b === btn;
-        b.classList.toggle('is-active', on);
-        b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
+      setActiveButton(shapeBtns, btn);
       tapFeedback();
     });
   });
@@ -308,10 +294,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}, playSound = () =
       currentPresetSize = Number(btn.dataset.drawSizePreset);
       state.drawSize = currentPresetSize;
       if (currentTool !== 'fill') context.lineWidth = currentPresetSize;
-      sizePresetBtns.forEach((b) => {
-        b.classList.toggle('is-active', b === btn);
-        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
-      });
+      setActiveButton(sizePresetBtns, btn);
       tapFeedback();
     });
   });
@@ -322,10 +305,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}, playSound = () =
       const color = btn.dataset.color;
       context.strokeStyle = color;
       state.drawColor = color;
-      colorBtns.forEach((b) => {
-        b.classList.toggle('is-active', b === btn);
-        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
-      });
+      setActiveButton(colorBtns, btn);
       tapFeedback();
     });
   });
@@ -501,25 +481,23 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}, playSound = () =
   let clearPending = false;
   let clearConfirmTimer = null;
 
+  function resetClearButton() {
+    clearPending = false;
+    clearButton.textContent = t('draw.clear');
+    clearButton.classList.remove('is-confirm-pending');
+  }
+
   clearButton?.addEventListener('click', () => {
     tapFeedback();
     if (!clearPending) {
-      // First tap: show confirm state
       clearPending = true;
       clearButton.textContent = t('draw.clear.confirm');
       clearButton.classList.add('is-confirm-pending');
-      clearConfirmTimer = setTimeout(() => {
-        clearPending = false;
-        clearButton.textContent = t('draw.clear');
-        clearButton.classList.remove('is-confirm-pending');
-      }, 2500);
+      clearConfirmTimer = setTimeout(resetClearButton, 2500);
       return;
     }
-    // Second tap: actually clear
-    clearPending = false;
     if (clearConfirmTimer) { window.clearTimeout(clearConfirmTimer); clearConfirmTimer = null; }
-    clearButton.textContent = t('draw.clear');
-    clearButton.classList.remove('is-confirm-pending');
+    resetClearButton();
     context.clearRect(0, 0, canvas.width, canvas.height);
     state.undoStack = [];
     state.redoStack = [];
@@ -534,20 +512,16 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   const nameInput = root.querySelector('[data-fish-name]');
   const movementSelect = root.querySelector('[data-fish-movement]');
   const registerButton = root.querySelector('[data-register-fish-image]');
-  const langToggle = root.querySelector('[data-lang-toggle]');
+
+  // The language toggle button now lives in the create-window top bar but is
+  // bound by the shared global bindLangToggle (main.js) — the full-screen window
+  // occludes the app-level toggle, and bindLangToggle binds whichever
+  // [data-lang-toggle] renders first (this one while the window is open).
 
   // Keep the Escape-to-close handler pointed at the live state/render.
   escState = state;
   escRender = render;
   bindEscClose();
-
-  langToggle?.addEventListener('click', async () => {
-    const next = getCurrentLang() === 'ko' ? 'en' : 'ko';
-    try {
-      await setLang(next);
-    } catch { /* keep current language on failure */ }
-    render();
-  });
 
   toggleButton?.addEventListener('click', () => {
     const next = !state.isExpanded;

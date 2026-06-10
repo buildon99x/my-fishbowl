@@ -1,3 +1,5 @@
+import { clamp } from '../../lib/utils.js';
+
 export const DEFAULT_BOUNDS = {
   shape: 'rounded-bowl',
   width: 1152,
@@ -105,20 +107,16 @@ export function jitterPropPosition(aquarium, baseX, baseY) {
   if (fitsAt(baseX, baseY)) return { x: baseX, y: baseY };
 
   for (let i = 0; i < 5; i += 1) {
-    const x = clampPercent(baseX + (Math.random() * 16 - 8));
+    const x = clamp(baseX + (Math.random() * 16 - 8), 4, 96);
     if (fitsAt(x, baseY)) return { x, y: baseY };
   }
   for (let i = 0; i < 5; i += 1) {
-    const x = clampPercent(baseX + (Math.random() * 16 - 8));
-    const y = clampPercent(70 + Math.random() * 15);
+    const x = clamp(baseX + (Math.random() * 16 - 8), 4, 96);
+    const y = clamp(70 + Math.random() * 15, 4, 96);
     if (fitsAt(x, y)) return { x, y };
   }
   return {
-    x: clampPercent(baseX + (Math.random() * 16 - 8)),
-    y: clampPercent(baseY + (Math.random() * 10 - 5)),
+    x: clamp(baseX + (Math.random() * 16 - 8), 4, 96),
+    y: clamp(baseY + (Math.random() * 10 - 5), 4, 96),
   };
-}
-
-function clampPercent(v) {
-  return Math.max(4, Math.min(96, v));
 }
