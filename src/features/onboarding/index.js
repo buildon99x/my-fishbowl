@@ -20,7 +20,7 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
   let pulseRetryCount = 0;
   let canvasIdleTimer = null;
   let outlineVisible = true;
-  const refs = { voiceGuidePlayedForSeq1: false, seq4DoneListenersBound: false };
+  const refs = { voiceGuidePlayedForSeq1: false, seq4DoneListenersBound: false, seq1ListenerBound: false };
 
   function persist() {
     saveOnboardingState(state);
@@ -137,19 +137,24 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
       // Listen at the document level for off-target taps. The overlay itself
       // uses pointer-events: none so taps pass through, which means a
       // bubbling listener on the overlay never fires for non-CTA targets.
-      const docTapHandler = (e) => {
-        if (state.sequence !== 1) {
-          document.removeEventListener('pointerdown', docTapHandler, true);
-          return;
-        }
-        if (!(e.target instanceof HTMLElement)) return;
-        if (e.target.closest('[data-onboarding-cta]')) return;
-        if (e.target.closest('[data-onboarding-help]')) return;
-        if (e.target.closest('[data-sound-modal]')) return;
-        reportPulseRetry();
-        activity();
-      };
-      document.addEventListener('pointerdown', docTapHandler, true);
+      // Guard against accumulating duplicate listeners across re-renders.
+      if (!refs.seq1ListenerBound) {
+        refs.seq1ListenerBound = true;
+        const docTapHandler = (e) => {
+          if (state.sequence !== 1) {
+            document.removeEventListener('pointerdown', docTapHandler, true);
+            refs.seq1ListenerBound = false;
+            return;
+          }
+          if (!(e.target instanceof HTMLElement)) return;
+          if (e.target.closest('[data-onboarding-cta]')) return;
+          if (e.target.closest('[data-onboarding-help]')) return;
+          if (e.target.closest('[data-sound-modal]')) return;
+          reportPulseRetry();
+          activity();
+        };
+        document.addEventListener('pointerdown', docTapHandler, true);
+      }
     }
 
     if (state.sequence === 2) {
