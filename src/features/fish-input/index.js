@@ -1,4 +1,4 @@
-import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft } from './state.js';
+import { DEFAULT_FISH_NAME, createFishInputState, saveFishDraft, markCoachmarkSeen } from './state.js';
 import { renderFishInputPanel } from './view.js';
 import { loadImage, resizeImageToSprite } from '../../lib/spriteResize.js';
 import { bindKeyboardInset, bindSheetBackdrop, bindSheetGrabber } from '../../lib/bottomSheet.js';
@@ -24,6 +24,23 @@ const SUPPORTED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
 
 export { createFishInputState, renderFishInputPanel };
+
+// Escape closes the full-screen create window. Bound once for the app lifetime
+// (the panel DOM is rebuilt every render, so a per-render document listener would
+// leak); the latest state/render are read from these module refs.
+let escState = null;
+let escRender = null;
+let escBound = false;
+function bindEscClose() {
+  if (escBound || typeof document === 'undefined') return;
+  escBound = true;
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !escState?.isExpanded) return;
+    escState.isExpanded = false;
+    escState.sheetStage = 'closed';
+    escRender?.();
+  });
+}
 
 function updateState(state, patch, render) {
   Object.assign(state, patch);
@@ -121,7 +138,7 @@ function floodFill(ctx, canvas, startX, startY, fillRgb, tolerance = 30) {
   return filled;
 }
 
-function setupDrawingCanvas(root, state, playHaptic = () => {}) {
+function setupDrawingCanvas(root, state, playHaptic = () => {}, playSound = () => {}) {
   const canvas = root.querySelector('[data-fish-canvas]');
   const clearButton = root.querySelector('[data-clear-drawing]');
   const undoButton = root.querySelector('[data-draw-undo]');
@@ -136,6 +153,26 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   let isDrawing = false;
   let lastPoint = null;
   let lastMid = null;
+
+  // Multi-channel feedback for a control tap (S-038 UX): visible state change is
+  // already handled by the caller; here we add the haptic + a short tap sound so
+  // selection is never silent (research: silent taps cause "rage tapping").
+  function tapFeedback() {
+    playHaptic('light');
+    playSound('ui.tap');
+  }
+
+  // First-run coach-mark over the canvas: dismiss it on the child's first real
+  // mark (a drawn stroke/stamp/successful fill — not a no-op tap), persist the
+  // one-time flag, and remove the node (a stroke does not trigger a full
+  // re-render, so hide it from the DOM here).
+  const coachmark = root.querySelector('[data-create-coachmark]');
+  function dismissCoachmark() {
+    if (state.coachmarkSeen === true) return;
+    state.coachmarkSeen = true;
+    markCoachmarkSeen();
+    coachmark?.remove();
+  }
   // Seed from state so the selection survives the per-stroke re-render.
   let currentTool = state.drawTool ?? 'pen';
   // Symmetry + stamp shape also live on state (seeded here) so a per-stroke
@@ -226,7 +263,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
       // place (not a full render) keeps the live canvas pixels intact.
       shapeRow?.classList.toggle('is-visible', currentTool === 'stamp');
       applyToolSettings();
-      playHaptic('light');
+      tapFeedback();
     });
   });
 
@@ -235,7 +272,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
       currentShape = normalizeShape(btn.dataset.drawShape);
       state.drawShape = currentShape;
       setActiveButton(shapeBtns, btn);
-      playHaptic('light');
+      tapFeedback();
     });
   });
 
@@ -247,7 +284,9 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
     // Guide is a DOM overlay (never canvas pixels) so it stays out of the
     // exported sprite; toggled in place here and re-derived from state on render.
     symmetryGuide?.classList.toggle('is-visible', symmetryOn);
+    // Toggle (not a plain selection): haptic + a distinct on/off chirp, no ui.tap.
     playHaptic('light');
+    playSound(symmetryOn ? 'ui.toggle-on' : 'ui.toggle-off');
   });
 
   sizePresetBtns.forEach((btn) => {
@@ -256,7 +295,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
       state.drawSize = currentPresetSize;
       if (currentTool !== 'fill') context.lineWidth = currentPresetSize;
       setActiveButton(sizePresetBtns, btn);
-      playHaptic('light');
+      tapFeedback();
     });
   });
 
@@ -267,7 +306,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
       context.strokeStyle = color;
       state.drawColor = color;
       setActiveButton(colorBtns, btn);
-      playHaptic('light');
+      tapFeedback();
     });
   });
 
@@ -300,6 +339,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
           return;
         }
         playHaptic('magic-b');
+        dismissCoachmark();
         commitDrawing({
           spriteDataUrl: canvas.toDataURL('image/png'),
           status: 'preview',
@@ -319,6 +359,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
         drawStamp(context, currentShape, mirrorX(point.x, canvas.width), point.y, size, context.strokeStyle);
       }
       playHaptic('magic-b');
+      dismissCoachmark();
       commitDrawing({
         spriteDataUrl: canvas.toDataURL('image/png'),
         status: 'preview',
@@ -330,6 +371,9 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
 
     isDrawing = true;
     canvas.setPointerCapture(event.pointerId);
+    // A pen/eraser press always lays a dot — a real first mark — so dismiss the
+    // coach-mark here (a no-op fill on a same-colour region does not, above).
+    dismissCoachmark();
     // One snapshot before BOTH the primary and mirror marks, so undo restores
     // the symmetric pair together (S-036).
     pushUndo();
@@ -424,11 +468,13 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
 
   undoButton?.addEventListener('click', () => {
     if (!state.undoStack.length) return;
+    tapFeedback();
     applyHistory(applyUndo(state.undoStack, state.redoStack, snapshot()));
   });
 
   redoButton?.addEventListener('click', () => {
     if (!state.redoStack.length) return;
+    tapFeedback();
     applyHistory(applyRedo(state.undoStack, state.redoStack, snapshot()));
   });
 
@@ -442,6 +488,7 @@ function setupDrawingCanvas(root, state, playHaptic = () => {}) {
   }
 
   clearButton?.addEventListener('click', () => {
+    tapFeedback();
     if (!clearPending) {
       clearPending = true;
       clearButton.textContent = t('draw.clear.confirm');
@@ -466,6 +513,16 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   const movementSelect = root.querySelector('[data-fish-movement]');
   const registerButton = root.querySelector('[data-register-fish-image]');
 
+  // The language toggle button now lives in the create-window top bar but is
+  // bound by the shared global bindLangToggle (main.js) — the full-screen window
+  // occludes the app-level toggle, and bindLangToggle binds whichever
+  // [data-lang-toggle] renders first (this one while the window is open).
+
+  // Keep the Escape-to-close handler pointed at the live state/render.
+  escState = state;
+  escRender = render;
+  bindEscClose();
+
   toggleButton?.addEventListener('click', () => {
     const next = !state.isExpanded;
     updateState(
@@ -479,7 +536,8 @@ export function bindFishInputEvents(root, state, render, options = {}) {
   });
 
   const playHaptic = options.playHaptic ?? (() => {});
-  setupDrawingCanvas(root, state, playHaptic);
+  const playSound = options.playSound ?? (() => {});
+  setupDrawingCanvas(root, state, playHaptic, playSound);
 
   nameInput?.addEventListener('input', (event) => {
     state.name = event.target.value;

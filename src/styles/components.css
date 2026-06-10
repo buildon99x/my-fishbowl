@@ -262,20 +262,13 @@
   font-weight: 600;
 }
 
-.fish-input-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-md);
-}
-
 .input-group {
   display: grid;
   gap: var(--space-xs);
 }
 
 .input-label,
-.preview-label,
-.draw-toolbar span {
+.preview-label {
   color: var(--color-muted);
   font-size: var(--text-body-sm);
   font-weight: 500;
@@ -307,43 +300,10 @@
   padding-top: 10px;
 }
 
-.draw-area,
 .preview-area {
   display: grid;
   gap: var(--space-xs);
   align-content: start;
-}
-
-.draw-area {
-  grid-column: 1 / -1;
-  /* Surface the drawing canvas + toolbar at the top of the create tab so it is
-     immediately usable without scrolling; metadata inputs sit below and the
-     register button lives in the always-visible sticky footer. */
-  order: -1;
-}
-
-.preview-area {
-  grid-column: 1 / -1;
-}
-
-.draw-toolbar {
-  display: grid;
-  gap: var(--space-sm);
-}
-
-.draw-toolbar-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.draw-toolbar-row--controls {
-  justify-content: space-between;
-}
-
-.draw-toolbar-row--controls .draw-toolbar-actions {
-  margin-left: auto;
 }
 
 .draw-toolbar-actions {
@@ -422,14 +382,14 @@
   align-items: center;
 }
 
-/* Visible swatch stays 36px (so the 8-swatch row footprint doesn't grow and
-   reintroduce the draw-tab scroll), while a ::before overlay expands the tap
-   target to 56px (S-024 child-recommended). border:2px keeps the white
-   swatch's edge visible via the inline border-color in view.js. */
+/* Full-screen create window (S-038) has room for a 48px visual swatch — the
+   child-recommended touch size — while a ::before overlay still pads the tap
+   target out to 60px. border:2px keeps the white swatch's edge visible via the
+   inline border-color in view.js. */
 .draw-color-btn {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 2px solid transparent;
   background-color: var(--swatch-color);
@@ -443,7 +403,7 @@
 .draw-color-btn::before {
   content: '';
   position: absolute;
-  inset: -10px;
+  inset: -6px;
   border-radius: 50%;
 }
 
@@ -650,29 +610,6 @@
 @media (max-width: 760px) {
   .aquarium-bowl {
     width: min(168vw, calc(82svh * 1.477));
-  }
-
-  .fish-input-widget {
-    right: 12px;
-    bottom: 12px;
-    width: calc(100vw - 24px);
-  }
-
-  .fish-input-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-sm);
-  }
-
-  .preview-area {
-    grid-column: 1;
-  }
-
-  .draw-toolbar-row--controls {
-    justify-content: flex-start;
-  }
-
-  .draw-toolbar-row--controls .draw-toolbar-actions {
-    margin-left: auto;
   }
 }
 

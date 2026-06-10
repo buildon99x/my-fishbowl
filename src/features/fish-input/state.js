@@ -1,5 +1,24 @@
 export const FISH_DRAFT_STORAGE_KEY = 'my-fishbowl:fish-draft';
+export const COACHMARK_STORAGE_KEY = 'my-fishbowl:create-coachmark-seen';
 export const DEFAULT_FISH_NAME = '이름 없는 친구';
+
+// Whether the first-run drawing coach-mark has already been dismissed. Stored as
+// a tiny one-time flag (separate from the draft) so the hint shows only once.
+function loadCoachmarkSeen() {
+  try {
+    return localStorage.getItem(COACHMARK_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markCoachmarkSeen() {
+  try {
+    localStorage.setItem(COACHMARK_STORAGE_KEY, '1');
+  } catch {
+    /* non-fatal: the hint simply reappears next session */
+  }
+}
 
 function normalizeType(value) {
   return value === 'deco' ? 'deco' : 'fish';
@@ -37,6 +56,8 @@ export function createFishInputState() {
     drawShape: 'circle',
     isExpanded: false,
     sheetStage: 'closed',
+    // First-run coach-mark: shown over the canvas until the child draws once.
+    coachmarkSeen: loadCoachmarkSeen(),
   };
 }
 

@@ -65,15 +65,15 @@ describe('child-area component sizes', () => {
   });
 });
 
-describe('color swatch keeps a 36px visual with an expanded hit area', () => {
-  it('visual circle stays 36px and the row uses the child spacing', () => {
-    expect(block(components, '.draw-color-btn')).toMatch(/width:\s*36px/);
+describe('color swatch uses a 48px child-recommended visual with an expanded hit area', () => {
+  it('visual circle is 48px and the row uses the child spacing (S-038 full-screen)', () => {
+    expect(block(components, '.draw-color-btn')).toMatch(/width:\s*48px/);
     expect(block(components, '.draw-color-row')).toMatch(/child-spacing/);
   });
 
-  it('expands the tap target via a ::before overlay (footprint stays 36)', () => {
+  it('still pads the tap target out via a ::before overlay', () => {
     const before = block(components, '.draw-color-btn::before');
-    const hitExpanded = /inset:\s*-10px/.test(before);
+    const hitExpanded = /inset:\s*-6px/.test(before);
     expect(hitExpanded).toBe(true);
   });
 });

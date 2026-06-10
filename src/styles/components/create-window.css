@@ -1,0 +1,432 @@
+/* 직접 만들기 풀스크린 창 — S-038
+ *
+ * Converts the fish-input surface from a bottom-sheet into a full-screen,
+ * canvas-first window for 6–9 year olds: a large centred canvas flanked by an
+ * always-visible tool rail (left) and colour/size rail (right), with a slim top
+ * bar (title · 물고기/장식 · language · close) and a footer (undo/redo/clear ·
+ * name/upload · Add). The catalog keeps its bottom-sheet (components/bottom-sheet.css);
+ * only `.fish-input-widget.create-window` is restyled here. */
+
+.fish-input-widget.create-window {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-panel);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  background: var(--color-surface-soft);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  padding-bottom: var(--keyboard-inset);
+  animation: create-window-in 0.18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fish-input-widget.create-window { animation: none; }
+}
+
+@keyframes create-window-in {
+  from { opacity: 0; transform: scale(0.99); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ---- Top bar -------------------------------------------------------------- */
+
+.create-window-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-hairline);
+  background: var(--color-surface-soft);
+}
+
+.create-window-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.create-window-icon { font-size: 22px; line-height: 1; }
+
+.create-window-title {
+  font-size: var(--text-title-md);
+  font-weight: 700;
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.create-window-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  justify-self: center;
+}
+
+.create-window-type .prop-type-hint {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.create-window-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  justify-self: end;
+}
+
+/* The × is the only touch exit in a full-screen window (no backdrop/drag-down to
+   close), so raise it from the shared 44px to the child-recommended 56px target
+   and make the glyph bigger so it reads clearly as "get out of here". */
+.create-window-topbar-actions .prop-action-btn {
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
+  font-size: 26px;
+}
+
+.create-window-topbar-actions [data-toggle-fish-input] {
+  background: var(--color-surface-card);
+  border-color: var(--color-muted);
+}
+
+/* ---- Status line ---------------------------------------------------------- */
+
+.create-window .fish-input-status {
+  margin: 0;
+  padding: var(--space-xs) var(--space-md);
+  text-align: center;
+  background: color-mix(in srgb, var(--color-focus) 7%, var(--color-surface-soft));
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.create-window .fish-input-status p {
+  margin: 0;
+  font-size: var(--text-title-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* ---- Stage: tool rail | canvas | colour rail ----------------------------- */
+
+.create-window-stage {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: var(--space-md);
+  min-height: 0;
+  min-width: 0;
+  padding: var(--space-md);
+}
+
+.create-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  align-content: start;
+  /* Vertical scroll only as a short-screen fallback. overflow-x is pinned to
+     hidden so the active button's transform: scale(1.06) (scrollable overflow)
+     can never raise a stray horizontal scrollbar; the 8px padding leaves room
+     for the scaled edge + focus ring so nothing is visibly clipped. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px;
+}
+
+.create-rail--tools { align-items: stretch; }
+.create-rail--colors { align-items: center; }
+
+.create-rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Tools stack vertically in the left rail. */
+.create-window-stage .draw-tool-group {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.create-window-stage .draw-tool-btn {
+  justify-content: flex-start;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Shape picker becomes a 2-col grid so all six fit the narrow rail. */
+.create-window-stage .draw-shape-row.is-visible {
+  display: grid;
+  grid-template-columns: repeat(2, var(--touch-target-child-recommended));
+  gap: var(--space-xs);
+  justify-content: start;
+}
+
+/* Colours wrap into a tidy 2-column block in the right rail. */
+.create-window-stage .draw-color-row {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: var(--touch-target-child-spacing);
+  justify-content: center;
+}
+
+.create-window-stage .draw-size-presets {
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---- Canvas stage --------------------------------------------------------- */
+
+.create-canvas-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  container-type: size;
+}
+
+.create-window .draw-canvas-wrap {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  /* Fill whichever dimension binds first while staying 3:2, so pointer
+     coordinates map 1:1 to the canvas (no letterboxing). 150cqh = height × 1.5. */
+  width: 100%;
+  width: min(100cqw, 150cqh);
+  max-width: 100%;
+  max-height: 100%;
+  box-shadow: 0 8px 28px rgba(10, 10, 10, 0.12);
+  border-radius: var(--radius-lg);
+}
+
+.create-window .fish-drawing-canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-lg);
+}
+
+/* ---- First-run coach-mark ------------------------------------------------- */
+
+.create-coachmark {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: calc(100% - 24px);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-pill);
+  background: var(--color-ink);
+  color: var(--color-canvas);
+  font-size: var(--text-body-md);
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(10, 10, 10, 0.22);
+  pointer-events: none;
+  animation: create-coach-bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes create-coach-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* Non-reader demonstration: a pencil traces a wavy stroke that draws itself,
+   showing "drag to draw" without words (the hint text is for early readers). */
+.create-coachmark-demo {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.create-coachmark-stroke {
+  width: 48px;
+  height: 24px;
+  overflow: visible;
+}
+
+.create-coachmark-stroke path {
+  fill: none;
+  stroke: var(--color-canvas);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: create-coach-draw 1.8s ease-in-out infinite;
+}
+
+.create-coachmark-pencil {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  font-size: 15px;
+  animation: create-coach-pencil 1.8s ease-in-out infinite;
+}
+
+@keyframes create-coach-draw {
+  0% { stroke-dashoffset: 60; }
+  55% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes create-coach-pencil {
+  0% { transform: translateX(0) rotate(0deg); }
+  55% { transform: translateX(38px) rotate(0deg); }
+  100% { transform: translateX(38px) rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-coachmark { animation: none; }
+  /* Show the completed stroke and park the pencil at the end — no motion. */
+  .create-coachmark-stroke path { animation: none; stroke-dashoffset: 0; }
+  .create-coachmark-pencil { animation: none; transform: translateX(38px); }
+}
+
+/* ---- Upload preview (upload flow only) ------------------------------------
+ * A drawn sprite IS the canvas, but an uploaded sprite comes from
+ * state.spriteDataUrl, so the upload flow shows it as a floating preview chip
+ * over the (still-present) canvas rather than competing for the main space. */
+
+.create-canvas-stage .preview-area {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: min(38%, 240px);
+  min-height: 0;
+  padding: var(--space-sm);
+  gap: var(--space-xxs);
+  box-shadow: 0 4px 14px rgba(10, 10, 10, 0.16);
+}
+
+.create-canvas-stage .preview-area .fish-preview-image { max-height: 140px; }
+
+/* ---- Footer --------------------------------------------------------------- */
+
+.create-window-footer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + var(--safe-bottom));
+  border-top: 1px solid var(--color-hairline);
+  background: var(--color-surface-soft);
+}
+
+.create-window-history {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.create-window-meta {
+  display: flex;
+  align-items: end;
+  gap: var(--space-md);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.create-window-meta .input-group { gap: var(--space-xxs); }
+.create-window-meta .input-group--name { flex: 1 1 160px; min-width: 140px; }
+.create-window-meta .input-group--movement { flex: 0 0 auto; }
+.create-window-meta .input-group--file { flex: 1 1 180px; min-width: 150px; }
+
+/* De-emphasise the secondary metadata (movement + photo upload) so the primary
+   draw → Add flow stays dominant. Touch targets are unchanged — only the labels
+   and field surface are muted; the name field stays full-strength because naming
+   the fish is part of completing it. */
+.create-window-meta .input-group--movement .input-label,
+.create-window-meta .input-group--file .input-label {
+  opacity: 0.7;
+}
+.create-window-meta .input-group--movement .select-input,
+.create-window-meta .input-group--file .file-input {
+  background: var(--color-surface-soft);
+  font-size: var(--text-body-sm);
+}
+
+.create-window-footer .fish-input-register-btn {
+  align-self: stretch;
+  min-width: 140px;
+  font-size: var(--text-title-sm);
+}
+
+/* ---- Responsive: stack the rails on narrow / portrait screens ------------- */
+
+@media (max-width: 860px) {
+  .create-window-stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    /* Vertical-only fallback if wrapped rails + canvas exceed the height; never
+       a horizontal scrollbar, so the footer can't be overlapped on tiny screens. */
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* Tools above the canvas, colours below — both WRAP (no horizontal scroll). */
+  .create-rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-sm);
+    overflow: visible;
+    padding: 4px;
+    flex: 0 0 auto;
+  }
+  .create-rail--tools { order: 0; }
+  /* Floor the canvas so wrapped rails on a short landscape phone can't squeeze
+     the canvas row toward zero. */
+  .create-canvas-stage { order: 1; min-height: 38svh; }
+  .create-rail--colors { order: 2; }
+
+  .create-rail-group { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .create-window-stage .draw-tool-group { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .create-window-stage .draw-tool-btn { justify-content: center; text-align: center; }
+  /* Shapes and colours wrap to as many rows as the width needs — no scroller. */
+  .create-window-stage .draw-shape-row.is-visible {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .create-window-stage .draw-color-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .create-window-stage .draw-size-presets { flex-direction: row; }
+}
+
+@media (max-width: 620px) {
+  .create-window-topbar {
+    grid-template-columns: auto 1fr auto;
+    row-gap: var(--space-xs);
+  }
+  /* Drop the long title on the smallest screens; the icon + segmented control
+     already say "make a fish/deco". */
+  .create-window-title { display: none; }
+
+  .create-window-footer {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-sm);
+  }
+  .create-window-footer .fish-input-register-btn { width: 100%; }
+}
