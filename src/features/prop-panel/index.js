@@ -9,7 +9,7 @@ import {
   bindPropTypeSegmentedEvents,
 } from './events.js';
 
-export function bindActionClusterEvents(root, { fishInputState, propPanelState }, callbacks) {
+export function bindActionClusterEvents(root, { fishInputState, defaultObjectsState, propPanelState }, callbacks) {
   const { render, onFeedingToggle, onFoodTypeChange, onCleaningToggle } = callbacks;
 
   root.querySelector('[data-prop-feed]')?.addEventListener('click', () => {
@@ -21,14 +21,25 @@ export function bindActionClusterEvents(root, { fishInputState, propPanelState }
     onFoodTypeChange(e.target.value);
   });
 
-  root.querySelector('[data-prop-add-fish]')?.addEventListener('click', () => {
+  // S-037: 🎁 catalog and ✏️ create are separate windows. Opening either closes
+  // the other window and the prop-panel — only one bottom surface at a time.
+  root.querySelector('[data-prop-catalog]')?.addEventListener('click', () => {
+    const next = !defaultObjectsState.isExpanded;
+    defaultObjectsState.isExpanded = next;
+    defaultObjectsState.sheetStage = next ? 'peek' : 'closed';
+    if (next) {
+      fishInputState.isExpanded = false;
+      propPanelState.editingTarget = null;
+    }
+    render();
+  });
+
+  root.querySelector('[data-prop-create]')?.addEventListener('click', () => {
     const next = !fishInputState.isExpanded;
     fishInputState.isExpanded = next;
     fishInputState.sheetStage = next ? 'peek' : 'closed';
     if (next) {
-      fishInputState.activeTab = 'catalog';
-      // S-034: opening the ➕ sheet closes the prop-panel so the two bottom
-      // surfaces don't stack on narrow screens.
+      defaultObjectsState.isExpanded = false;
       propPanelState.editingTarget = null;
     }
     render();

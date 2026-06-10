@@ -18,17 +18,22 @@
   background: url('../../../assets/food/bloodworm.svg') center / contain no-repeat;
   filter: drop-shadow(0 2px 4px rgba(120, 20, 10, 0.35));
 }
-/* ── Action Button Cluster (S-033: grid dock area) ──────────── */
+/* ── Action Button Cluster (top dock grid area) ──────────── */
 
 .prop-action-panel {
-  grid-area: dock;
-  justify-self: center;
-  align-self: end;
+  position: fixed;
+  top: var(--dock-top);
+  left: 50%;
+  transform: translateX(-50%);
+  /* Sit above the aquarium (the bowl's filter makes it a z-auto stacking
+     context) but below the corner chrome (menu/mute/language) so the centered
+     cluster never steals taps from those controls when they overlap on narrow
+     viewports. */
+  z-index: calc(var(--z-chrome) - 1);
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--space-sm);
-  padding-bottom: var(--dock-bottom);
   max-width: calc(100vw - var(--safe-left) - var(--safe-right));
 }
 
@@ -36,12 +41,12 @@
 
 .prop-panel {
   position: fixed;
-  top: var(--safe-top);
+  top: calc(var(--dock-top) + var(--dock-height) + var(--space-sm));
   right: var(--safe-right);
   z-index: var(--z-panel);
   width: min(360px, calc(100vw - var(--safe-left) - var(--safe-right)));
   max-height: calc(
-    100svh - var(--safe-top) - var(--dock-height) - var(--dock-bottom) - var(--space-lg)
+    100svh - var(--dock-top) - var(--dock-height) - var(--space-sm) - var(--safe-bottom) - var(--space-lg)
   );
   display: flex;
   flex-direction: column;
@@ -90,6 +95,7 @@
     max-height: 70svh;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     transform: translateY(0);
+    z-index: calc(var(--z-panel, 30) + 2);
   }
 
   @starting-style {
@@ -183,6 +189,7 @@
 .prop-panel-body {
   padding: var(--space-md);
   overflow-y: auto;
+  overscroll-behavior: contain;
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -222,12 +229,12 @@
 
 .prop-control-input {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--touch-target-min);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-sm);
   font: inherit;
-  font-size: var(--text-body-sm);
+  font-size: var(--font-size-min);
   color: var(--color-ink);
   background: var(--color-canvas);
   box-sizing: border-box;
@@ -240,12 +247,12 @@
 
 .prop-control-number {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--touch-target-min);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-sm);
   font: inherit;
-  font-size: var(--text-body-sm);
+  font-size: var(--font-size-min);
   color: var(--color-ink);
   background: var(--color-canvas);
   box-sizing: border-box;
@@ -274,7 +281,7 @@
 .prop-control-range {
   flex: 1;
   width: 100%;
-  height: 28px;
+  height: 36px;
   cursor: pointer;
   accent-color: var(--color-brand-teal);
 }
@@ -413,13 +420,7 @@
   gap: var(--space-xs);
   flex-wrap: nowrap;
   max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.prop-btn-cluster::-webkit-scrollbar {
-  display: none;
+  overflow: visible;
 }
 
 .prop-btn-wrap {
@@ -432,7 +433,7 @@
 .prop-btn-wrap::before {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: calc(100% + 10px);
+  top: calc(100% + 10px);
   left: 50%;
   white-space: nowrap;
   border: 1px solid var(--color-hairline);
@@ -444,9 +445,10 @@
   background: color-mix(in srgb, var(--color-surface-soft) 95%, transparent);
   backdrop-filter: blur(8px);
   box-shadow: 0 4px 12px rgba(10, 10, 10, 0.08);
+  z-index: 10;
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, 4px);
+  transform: translate(-50%, -4px);
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
@@ -484,7 +486,7 @@
   font-size: 29px;
   line-height: 1;
   background: color-mix(in srgb, var(--color-surface-soft) 90%, transparent);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(6px);
   box-shadow: 0 4px 14px rgba(10, 10, 10, 0.08);
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
@@ -512,7 +514,7 @@
 .prop-feed-submenu {
   display: none;
   position: absolute;
-  bottom: calc(100% + 10px);
+  top: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
   align-items: center;
@@ -522,7 +524,7 @@
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--color-surface-soft) 95%, transparent);
   backdrop-filter: blur(8px);
-  z-index: 1;
+  z-index: 100;
 }
 
 .prop-btn-wrap:hover .prop-feed-submenu,
@@ -538,7 +540,7 @@
 }
 
 .prop-food-type-select {
-  min-height: 36px;
+  min-height: var(--touch-target-min);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-xs);
@@ -546,7 +548,7 @@
   background: color-mix(in srgb, var(--color-surface-soft) 95%, transparent);
   backdrop-filter: blur(8px);
   font: inherit;
-  font-size: var(--text-caption-uc);
+  font-size: var(--font-size-min);
   cursor: pointer;
 }
 
@@ -603,10 +605,6 @@
 }
 
 @media (max-width: 760px) {
-  .prop-action-panel {
-    bottom: 12px;
-  }
-
   .prop-btn {
     width: 60px;
     height: 60px;
@@ -663,8 +661,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
   border: none;
   border-radius: var(--radius-sm);
   padding: 0;

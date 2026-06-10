@@ -2,9 +2,12 @@ const CTA_SEEN_KEY = 'defaultObjects.cta.seen';
 const DEBOUNCE_MS = 200;
 
 export function createDefaultObjectsState() {
-  // S-031: `open` was for the standalone modal; the catalog now always lives
-  // inside the ➕ sheet tab so visibility is owned by fishInputState.
+  // S-037: the catalog is its own bottom-sheet window again, reached from the
+  // 🎁 dock button. Visibility lives here (same `{ isExpanded, sheetStage }`
+  // shape as fishInputState) so the shared bottom-sheet helpers drive it.
   return {
+    isExpanded: false,
+    sheetStage: 'peek',
     lastClickAt: new Map(),
     ctaPulseShownThisSession: false,
   };

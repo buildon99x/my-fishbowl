@@ -20,7 +20,7 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
   let pulseRetryCount = 0;
   let canvasIdleTimer = null;
   let outlineVisible = true;
-  const refs = { voiceGuidePlayedForSeq1: false, seq4DoneListenersBound: false };
+  const refs = { voiceGuidePlayedForSeq1: false, seq4DoneListenersBound: false, seq1ListenerBound: false };
 
   function persist() {
     saveOnboardingState(state);
@@ -72,7 +72,7 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
     }
   }
 
-  function bind(root, { onSeq1Plus, fishInputState, render } = {}) {
+  function bind(root, { onSeq1Plus, catalogState, render } = {}) {
     if (!root) return;
 
     // Help button — always available
@@ -123,9 +123,11 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
       const cta = overlay.querySelector('[data-onboarding-cta]');
       cta?.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (fishInputState) {
-          fishInputState.isExpanded = true;
-          fishInputState.sheetStage = 'peek';
+        // S-037: the first-friend CTA opens the 🎁 catalog window (the simplest
+        // path — pick a preset) rather than the 직접 만들기 sheet.
+        if (catalogState) {
+          catalogState.isExpanded = true;
+          catalogState.sheetStage = 'peek';
         }
         onSeq1Plus?.();
         activity();
@@ -135,19 +137,24 @@ export function createOnboardingController({ getRoot, getSound, onAdvance, onRes
       // Listen at the document level for off-target taps. The overlay itself
       // uses pointer-events: none so taps pass through, which means a
       // bubbling listener on the overlay never fires for non-CTA targets.
-      const docTapHandler = (e) => {
-        if (state.sequence !== 1) {
-          document.removeEventListener('pointerdown', docTapHandler, true);
-          return;
-        }
-        if (!(e.target instanceof HTMLElement)) return;
-        if (e.target.closest('[data-onboarding-cta]')) return;
-        if (e.target.closest('[data-onboarding-help]')) return;
-        if (e.target.closest('[data-sound-modal]')) return;
-        reportPulseRetry();
-        activity();
-      };
-      document.addEventListener('pointerdown', docTapHandler, true);
+      // Guard against accumulating duplicate listeners across re-renders.
+      if (!refs.seq1ListenerBound) {
+        refs.seq1ListenerBound = true;
+        const docTapHandler = (e) => {
+          if (state.sequence !== 1) {
+            document.removeEventListener('pointerdown', docTapHandler, true);
+            refs.seq1ListenerBound = false;
+            return;
+          }
+          if (!(e.target instanceof HTMLElement)) return;
+          if (e.target.closest('[data-onboarding-cta]')) return;
+          if (e.target.closest('[data-onboarding-help]')) return;
+          if (e.target.closest('[data-sound-modal]')) return;
+          reportPulseRetry();
+          activity();
+        };
+        document.addEventListener('pointerdown', docTapHandler, true);
+      }
     }
 
     if (state.sequence === 2) {

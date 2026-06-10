@@ -1,3 +1,5 @@
+import { t } from '../../lib/i18n.js';
+
 const COMPLETION_THRESHOLD = 0.8;
 
 const BRUSH_RADIUS = 40;
@@ -123,9 +125,15 @@ export function bindCleaningEvents(root, aquarium, appState, { render, save }) {
 
   const algaeCanvas = root.querySelector('[data-algae-canvas]');
   const cursor = root.querySelector('[data-cleaning-cursor]');
+  const hint = root.querySelector('[data-cleaning-hint]');
   const progressFill = root.querySelector('[data-cleaning-progress-fill]');
   const progressLabel = root.querySelector('[data-cleaning-progress-label]');
   const progressBar = root.querySelector('[data-cleaning-progress-bar]');
+
+  // Dismiss the scrub hint on the first brush stroke (no re-render needed).
+  function hideHint() {
+    hint?.classList.add('is-hidden');
+  }
 
   function updateProgressUI() {
     const pct = Math.round(cleaningState.cleaningProgress * 100);
@@ -135,6 +143,7 @@ export function bindCleaningEvents(root, aquarium, appState, { render, save }) {
   }
 
   function onBrush(clientX, clientY) {
+    hideHint();
     const progress = applyBrush(algaeCanvas, clientX, clientY, cleaningState);
     updateProgressUI();
 
@@ -152,7 +161,7 @@ export function bindCleaningEvents(root, aquarium, appState, { render, save }) {
       const msg = document.createElement('div');
       msg.className = 'cleaning-complete-message';
       msg.dataset.cleaningComplete = '';
-      msg.textContent = '✨ 청소 완료!';
+      msg.textContent = t('cleaning.done');
       overlay.appendChild(msg);
 
       cleaningState.completionTimer = window.setTimeout(() => {

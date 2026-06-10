@@ -73,8 +73,11 @@
   gap: 8px;
   max-height: min(44vh, 420px);
   margin-top: 14px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   padding-right: 2px;
+  scrollbar-gutter: stable;
 }
 
 /* S-035: drawer 내부 fish-list 빈 상태. 어항 빈 상태(.aquarium-empty)와
@@ -114,6 +117,7 @@
 .fish-list-item {
   display: grid;
   gap: var(--space-xs);
+  min-height: 64px;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
   padding: var(--space-sm);
@@ -149,7 +153,7 @@
 
 .fish-list-name {
   overflow: hidden;
-  font-size: var(--text-caption);
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-ink);
   text-overflow: ellipsis;
@@ -157,6 +161,7 @@
 }
 
 .fish-list-time {
+  display: none;
   color: var(--color-muted);
   font-size: var(--text-caption-uc);
   font-weight: 500;
@@ -174,8 +179,8 @@
    buttons replace 편집/감추기/삭제 text labels; aria-label provides the
    accessible name. */
 .fish-action-button {
-  width: 44px;
-  height: 44px;
+  width: var(--touch-target-child);
+  height: var(--touch-target-child);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -243,26 +248,18 @@
 }
 
 /* fish-input-widget styling moved to components/bottom-sheet.css (S-029). */
-
-.fish-input-panel {
-  max-height: min(780px, calc(100vh - 18px - 72px - 32px));
-  overflow: auto;
-  padding: var(--space-lg);
-}
+/* Scroll + padding are owned by .bottom-sheet-body (it shares this element);
+   .fish-input-panel must NOT re-declare max-height/overflow or a second scroll
+   container is created on the same node (competing max-heights). */
 
 .fish-input-status {
   margin-bottom: var(--space-md);
 }
 
 .fish-input-status p {
-  color: var(--color-muted);
-  font-size: var(--text-body-sm);
-}
-
-.fish-input-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-md);
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .input-group {
@@ -271,8 +268,7 @@
 }
 
 .input-label,
-.preview-label,
-.draw-toolbar span {
+.preview-label {
   color: var(--color-muted);
   font-size: var(--text-body-sm);
   font-weight: 500;
@@ -295,42 +291,229 @@
 .text-input:focus,
 .file-input:focus,
 .select-input:focus {
-  outline: none;
-  border-color: var(--color-ink);
-  border-width: 2px;
-  padding: calc(var(--space-sm) - 1px) calc(var(--space-md) - 1px);
+  border: 1px solid var(--color-brand-teal);
+  outline: 2px solid var(--color-brand-teal);
+  outline-offset: 0px;
 }
 
 .file-input {
   padding-top: 10px;
 }
 
-.draw-area,
 .preview-area {
   display: grid;
   gap: var(--space-xs);
   align-content: start;
 }
 
-.draw-area {
-  grid-column: 1 / -1;
-}
-
-.preview-area {
-  grid-column: 1 / -1;
-}
-
-.draw-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-}
-
 .draw-toolbar-actions {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+}
+
+.draw-tool-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 8px); /* xs→sm으로 더 여유있게 */
+}
+
+.draw-tool-btn {
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.draw-tool-btn:hover {
+  background: var(--color-surface-card);
+}
+
+.draw-tool-btn.is-active,
+.draw-tool-btn[aria-pressed='true'] {
+  background: var(--color-ink);
+  color: var(--color-canvas);
+  border-color: var(--color-ink);
+  font-weight: 600;
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+/* Draw toolbar — disabled state */
+.draw-toolbar-actions button:disabled,
+.draw-tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Draw toolbar — pen size control */
+.draw-size-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs, 4px);
+}
+
+.draw-size-control.is-inactive {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.button.is-confirm-pending {
+  background: var(--color-error, #ef4444);
+  color: #fff;
+  border-color: var(--color-error, #ef4444);
+}
+
+.draw-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--touch-target-child-spacing);
+  align-items: center;
+}
+
+/* Full-screen create window (S-038) has room for a 48px visual swatch — the
+   child-recommended touch size — while a ::before overlay still pads the tap
+   target out to 60px. border:2px keeps the white swatch's edge visible via the
+   inline border-color in view.js. */
+.draw-color-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background-color: var(--swatch-color);
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.draw-color-btn::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+}
+
+.draw-color-btn.is-active {
+  border-color: var(--color-ink);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-focus);
+}
+
+.draw-color-btn:hover {
+  transform: scale(1.06);
+}
+
+/* Symmetry toggle (S-036) — deliberately NOT styled like the radio tools so a
+   child reads it as an on/off switch, not a 4th mutually-exclusive tool. */
+.draw-symmetry-btn {
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
+  padding: var(--space-xs) var(--space-md);
+  border: 2px solid var(--color-hairline);
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.draw-symmetry-btn::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--color-muted, #6a6a6a);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.draw-symmetry-btn.is-active,
+.draw-symmetry-btn[aria-pressed='true'] {
+  border-color: var(--color-ink);
+  background: color-mix(in srgb, var(--color-focus) 22%, var(--color-canvas));
+  font-weight: 600;
+}
+
+.draw-symmetry-btn.is-active::before,
+.draw-symmetry-btn[aria-pressed='true']::before {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+}
+
+/* Shape picker — only visible while the stamp tool is active. */
+.draw-shape-row {
+  display: none;
+  gap: var(--space-sm);
+}
+
+.draw-shape-row.is-visible {
+  display: flex;
+}
+
+.draw-shape-btn {
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.draw-shape-btn.is-active,
+.draw-shape-btn[aria-pressed='true'] {
+  border-color: var(--color-ink);
+  background: var(--color-surface-card);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+/* Canvas wrapper holds the live canvas plus the symmetry guide overlay. The
+   guide is a DOM element (never canvas pixels) so it is excluded from the
+   exported PNG sprite. */
+.draw-canvas-wrap {
+  position: relative;
+}
+
+.draw-symmetry-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  border-left: 2px dashed color-mix(in srgb, var(--color-ink) 30%, transparent);
+  transform: translateX(-1px);
+  pointer-events: none;
+  display: none;
+}
+
+.draw-symmetry-guide.is-visible {
+  display: block;
 }
 
 .fish-drawing-canvas,
@@ -353,6 +536,11 @@
   display: block;
   touch-action: none;
   cursor: crosshair;
+}
+
+.fish-drawing-canvas.is-processing {
+  cursor: wait;
+  opacity: 0.85;
 }
 
 .preview-area {
@@ -392,10 +580,11 @@
 
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.48;
+  opacity: 0.35;
 }
 
 .button-primary {
+  min-height: 52px;
   color: var(--color-on-primary);
   background: var(--color-primary);
 }
@@ -405,7 +594,8 @@
 }
 
 .button-secondary {
-  min-height: 36px;
+  min-height: 44px;
+  min-width: 44px;
   padding: var(--space-xs) var(--space-sm);
   color: var(--color-ink);
   border-color: var(--color-hairline);
@@ -420,24 +610,6 @@
 @media (max-width: 760px) {
   .aquarium-bowl {
     width: min(168vw, calc(82svh * 1.477));
-  }
-
-  .fish-input-widget {
-    right: 12px;
-    bottom: 12px;
-    width: calc(100vw - 24px);
-  }
-
-  .fish-input-panel {
-    max-height: min(860px, calc(100vh - 92px));
-  }
-
-  .fish-input-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .preview-area {
-    grid-column: 1;
   }
 }
 
@@ -455,13 +627,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 10px 16px;
   border: 1px solid transparent;
   border-radius: calc(var(--radius-md) - 4px);
   background: transparent;
   color: var(--color-ink);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  min-height: 44px;
   opacity: 0.7;
 }
 .prop-type-option.is-active {
@@ -551,7 +724,7 @@
 .prop-undo-snackbar {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--dock-bottom) + var(--dock-height) + 12px);
+  bottom: calc(var(--safe-bottom) + 24px);
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
@@ -568,3 +741,48 @@
 @media (prefers-reduced-motion: reduce) {
   .prop-panel-status, .prop-type-option { transition: none !important; }
 }
+
+.draw-size-presets {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.draw-size-preset-btn {
+  min-width: var(--touch-target-child-recommended);
+  min-height: var(--touch-target-child-recommended);
+  border: 2px solid var(--color-border, #d1d5db);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  touch-action: manipulation;
+}
+
+.draw-size-preset-btn.is-active {
+  border-color: var(--color-ink);
+  background: var(--color-surface-soft, #f1efe8);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draw-tool-btn.is-active,
+  .draw-color-btn.is-active,
+  .draw-size-preset-btn.is-active {
+    transform: none;
+  }
+}
+
+.draw-size-preset-btn::before {
+  content: '';
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.draw-size-preset-btn[data-size-label="thin"]::before { width: 4px; height: 4px; }
+.draw-size-preset-btn[data-size-label="medium"]::before { width: 8px; height: 8px; }
+.draw-size-preset-btn[data-size-label="thick"]::before { width: 14px; height: 14px; }

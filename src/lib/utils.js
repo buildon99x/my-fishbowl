@@ -20,3 +20,22 @@ export function escapeHtml(value) {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 }
+
+/**
+ * Validate and sanitise a sprite URL before inserting into a src attribute.
+ * Allows data URLs (local canvas drawings) and same-origin/https Blob URLs.
+ * Returns an empty string for anything else to prevent XSS via crafted URLs.
+ */
+export function safeSpriteUrl(url) {
+  if (typeof url !== 'string' || url === '') return '';
+  if (url.startsWith('data:image/')) return url;
+  try {
+    const parsed = new URL(url, location.origin);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:' || parsed.protocol === 'blob:') {
+      return parsed.href;
+    }
+  } catch {
+    // malformed URL — fall through
+  }
+  return '';
+}

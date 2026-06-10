@@ -6,12 +6,14 @@ export function bindDrawerEvents(root, appState, { render }) {
   const close = () => {
     if (!appState.drawerOpen) return;
     appState.drawerOpen = false;
+    appState.sound?.playSound?.('ui.panel-close');
     render();
   };
 
   const open = () => {
     if (appState.drawerOpen) return;
     appState.drawerOpen = true;
+    appState.sound?.playSound?.('ui.panel-open');
     render();
   };
 

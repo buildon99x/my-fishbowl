@@ -93,6 +93,28 @@
   }
 }
 
+.cleaning-hint {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  z-index: 13;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-pill);
+  background: rgba(10, 10, 10, 0.72);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 0.25s ease;
+}
+
+.cleaning-hint.is-hidden {
+  opacity: 0;
+}
+
 .cleaning-complete-message {
   position: absolute;
   top: 50%;
@@ -126,7 +148,7 @@
 /* S-031: sticky 끝내기 button (top-center) for cleaning mode */
 .cleaning-exit-btn {
   position: fixed;
-  top: calc(var(--safe-top) + 12px);
+  top: calc(var(--dock-top) + var(--dock-height) + var(--space-sm));
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-overlay);
@@ -149,4 +171,20 @@
 .cleaning-exit-btn:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-brand-ochre) 50%, transparent);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cleaning-touch-ripple {
+    animation: none;
+    opacity: 0.5;
+  }
+
+  .cleaning-complete-message {
+    animation: none;
+    opacity: 1;
+  }
+
+  .cleaning-hint {
+    transition: none;
+  }
 }

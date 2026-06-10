@@ -15,6 +15,7 @@
     scaleY(calc(var(--fish-scale-y, 1) * var(--fish-flip-y, 1)));
   transform-origin: center;
   transition: filter 0.15s ease;
+  will-change: transform;
 }
 
 .fish-sprite.is-selected {
@@ -89,7 +90,7 @@
 
 .long-press-toast {
   position: fixed;
-  bottom: calc(var(--dock-bottom) + var(--dock-height) + 60px);
+  bottom: calc(var(--safe-bottom) + 24px);
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-toast);

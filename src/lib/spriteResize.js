@@ -1,5 +1,9 @@
-const SPRITE_WIDTH = 240;
-const SPRITE_HEIGHT = 160;
+// 2x the original 240x160 so uploaded sprites stay crisp at the aquarium render
+// size on high-DPI screens. Drawn sprites bypass this resize and keep their
+// native 720x480 canvas resolution (see fish-input/index.js) — do NOT route the
+// drawing path through here or it would downgrade drawn crispness.
+export const SPRITE_WIDTH = 480;
+export const SPRITE_HEIGHT = 320;
 
 export function loadImage(src) {
   return new Promise((resolve, reject) => {

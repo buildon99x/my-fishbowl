@@ -39,6 +39,34 @@ describe('createFishInputState', () => {
     expect(state.name).toBe('Nemo');
     expect(state.movementEnabled).toBe(false);
   });
+
+  it('initializes empty undo/redo history that survives re-renders', () => {
+    const state = createFishInputState();
+    expect(state.undoStack).toEqual([]);
+    expect(state.redoStack).toEqual([]);
+  });
+
+  it('marks hasContent when a drawn draft is restored, blank otherwise', () => {
+    expect(createFishInputState().hasContent).toBe(false);
+    mockStorage.setItem(FISH_DRAFT_STORAGE_KEY, JSON.stringify({
+      spriteDataUrl: 'data:image/png;base64,abc', source: 'drawing',
+    }));
+    expect(createFishInputState().hasContent).toBe(true);
+  });
+});
+
+describe('saveFishDraft does not persist runtime history', () => {
+  it('omits undo/redo stacks and hasContent from the stored draft', () => {
+    const state = {
+      name: 'Dot', spriteDataUrl: 'data:image/png;base64,xyz', source: 'drawing',
+      movementEnabled: true, hasContent: true, undoStack: [1, 2], redoStack: [3],
+    };
+    saveFishDraft(state);
+    const stored = JSON.parse(mockStorage.getItem(FISH_DRAFT_STORAGE_KEY));
+    expect(stored.undoStack).toBeUndefined();
+    expect(stored.redoStack).toBeUndefined();
+    expect(stored.hasContent).toBeUndefined();
+  });
 });
 
 describe('saveFishDraft', () => {

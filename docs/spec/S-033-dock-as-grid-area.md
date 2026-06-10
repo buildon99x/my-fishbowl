@@ -6,6 +6,8 @@
 - 구현 여부: in-progress
 - 검증 여부: not-tested
 
+> 갱신(PR #96): dock grid-area 메커니즘은 유지하되, 모바일 하단 브라우저 chrome에 가려지는 문제를 피하기 위해 dock row를 화면 **상단**으로 이동. 아래 "하단" 위치 서술은 "상단"으로 읽는다. "어항이 dock 영역을 양보하고 fish/이끼/먹이가 dock에 가려지지 않는다"는 핵심 원칙은 그대로 유효.
+
 ## 목표
 
 - 현재 `position: fixed`로 어항(hero) 위에 떠 있는 `.prop-action-panel`(dock)이 항상 어항 하단 ~80px를 가리는 문제를 해결한다.

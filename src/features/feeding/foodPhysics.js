@@ -1,6 +1,7 @@
 import { FOOD_CONFIGS } from './foodConfig.js';
 
 const SWAY_PERIOD_MS = 1200;
+const UNLANDED_FOOD_TTL_MS = 30_000;
 
 export function tickFoodPhysics(food, deltaSeconds) {
   const config = FOOD_CONFIGS[food.type] ?? FOOD_CONFIGS.pellet;
@@ -26,5 +27,5 @@ export function isFoodExpired(food, nowMs) {
   if (food.landedAt !== null) {
     return nowMs - food.landedAt > config.landedTtl;
   }
-  return nowMs - food.createdAt > 30000;
+  return nowMs - food.createdAt > UNLANDED_FOOD_TTL_MS;
 }
